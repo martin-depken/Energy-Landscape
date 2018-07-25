@@ -1,0 +1,14 @@
+Results for high-throughput biochemical profiling of S. pyogenes dCas9
+
+Evan Boyle
+Greenleaf lab
+contact: eaboyle@stanford.edu
+
+Bundled in this tar file are the fit slopes from fluorescence readings for the lambda1 target discussed in Boyle, Andreasson, Chircus, et al.
+The kmc_cas9.py performs kinetic Monte Carlo strand invasion simulations. It will operate on any sequence, but the results in the paper are restricted to the lambda1 target.
+By providing the one of the slope files to the kmc script (via the reference_table option), it will compute the Euclidean distance between the simulated dCas9 occupancy across bound states and the observed value from HiTS-FLIP.
+
+DNA molecules are simulated in 'pseudotime' where events are queued based off of relative energies -- unstable states quickly queue to become the next event in pseudotime whereas stable states wait in line for their priority. dCas9 sgRNA traverses the complementary DNA strands through 20 states, which reflect base-pairing at each nucleotide matching the protospacer.
+
+You can change the energies attributed to mismatches and other features, and how long to wait in 'pseudotime' before ending the simulation. The default values for various parameters were those chosen by grid search as discussed in the manuscript.
+
