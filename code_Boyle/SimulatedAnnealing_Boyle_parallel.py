@@ -134,7 +134,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
         # Input: parameters X, output: updates values of parameters X if accepted
         X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
 
-    
+
     # Close worker processes
     if SA.MP:
         print 'Close workers..'
@@ -191,7 +191,7 @@ def V(SA, xdata,ydata,yerr,params):
 
 
     # ********** SPECIFIC TO Boyle et al. dataset & position independent model **************
-    on_target_occupancy = dCas9Boyle.calc_Boyle(CalcOccupancy=True, CalcOffRate=False, CalcOnRate=False,
+    on_target_occupancy,_,_ = dCas9Boyle.calc_Boyle(CalcOccupancy=True, CalcOffRate=False, CalcOnRate=False,
                parameters=params, mismatch_positions=[])
     # ***************************************************************************************
 
@@ -201,13 +201,14 @@ def V(SA, xdata,ydata,yerr,params):
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
-            InputJob = [params, xdata,ydata,[],on_target_occupancy]
+            InputJob = [params, xdata[i],ydata[i],[],on_target_occupancy]
             SA.inQ.put(InputJob)
 
         # Retreive the results from the results Que and add together to construct Chi-squared
         objective_sum = 0.0
         for i in range(len(xdata)):
             objective_sum += SA.outQ.get()
+
 
     # No multiprocessing
     else:
@@ -281,7 +282,7 @@ class SimAnneal():
             self.processes = [mp.Process(target=multiprocessing_main_worker,args=(self.inQ,self.outQ,self.objective_function)) for i in range(self.nprocs)]
             for w in self.processes:
                 w.start()
-            print self.processes
+            # print self.processes
         else:
             self.nprocs = None
             self.inQ=None
@@ -474,6 +475,8 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
             xdata = job[1]
             ydata = job[2]
             yerr  = job[3]
+
+
             if len(job)>3:
                 addidtional_argument = job[4]
                 output = calc_objective_function(parameter_values, xdata, ydata, yerr, addidtional_argument)
