@@ -1,3 +1,1 @@
-# Energy-Landscape-dCas9-
-
-$\lamdba$ 
+# Energy_Landscape_dCas9
