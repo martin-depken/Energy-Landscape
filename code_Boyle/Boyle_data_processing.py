@@ -8,7 +8,7 @@ Preprosses the data files from Boyle et al. to be used for Simmulated Annealing
 Behrouz Eslami & Misha Klein    Depken lab 
 '''
 
-def prepare_multiprocessing(replica='1', path='Data_Boyle/'):
+def prepare_multiprocessing(replica='1', path='../Data_Boyle/'):
     '''
     Prepares the data in such a format that it is usable for multiprocessing and Simmulated Annealing.
 
