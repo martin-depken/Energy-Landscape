@@ -8,7 +8,7 @@ Preprosses the data files from Boyle et al. to be used for Simmulated Annealing
 Behrouz Eslami & Misha Klein    Depken lab 
 '''
 
-def prepare_multiprocessing(replica='1', path='Data_Boyle/'):
+def prepare_multiprocessing(replica='1', path='../Data_Boyle/'):
     '''
     Prepares the data in such a format that it is usable for multiprocessing and Simmulated Annealing.
 
@@ -41,10 +41,26 @@ def prepare_multiprocessing(replica='1', path='Data_Boyle/'):
     xdata = np.array(Combined_Data.MM_pos)
     return xdata, ydata
 
+def weights_averages(replica='1', path='../Data_Boyle/'):
+    '''
+    Weights used for different datasets (occupancy, on-rate and off-rate)
+    within the Chi-Square calculation during fitting
+
+    Here use the averages of each dataset as the weights to get all terms in Chi-Squared
+    of same order of magnitude (use inverse square for ChiSquare).
+
+    :param replica: ID of '1' or '2'
+    :param path: data files Boyle (not collected)
+    :return: vector with the weights to be fed into the Simulated Annealing code
+    '''
+    DataTable = read(replica,path)
+    OccWeight = (DataTable.occ.apply(np.mean).mean() )**(-2)
+    OnWeight = (DataTable.on_slope.apply(np.mean).dropna().mean() )**(-2)
+    OffWeight= (DataTable.off_slope.apply(np.mean).dropna().mean())**(-2)
+    return np.array([OccWeight,OnWeight,OffWeight])
 
 
-
-def read(replica='1',path='Data_Boyle/'):
+def read(replica='1',path='../Data_Boyle/'):
     '''
     Load the datafiles with the original data from Boyle et al. and aggregate them into a single dataframe
     :param replica: 1 or 2
