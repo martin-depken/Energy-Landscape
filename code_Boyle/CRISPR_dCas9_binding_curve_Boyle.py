@@ -12,7 +12,7 @@ Main functions
 
 def calc_Chi_square(parameters,xdata,ydata,yerr,
                     ONtarget_occupancy,
-                    weights=[1.0,1.0,1.0],
+                    weights=np.array([1.0,1.0,1.0]),
                     guide_length=20, model_id='general_energies'):
     '''
 
@@ -174,10 +174,13 @@ def get_energies(epsilon,mismatch_positions, guide_length=20):
     :param mismatch_positions: each mismach position has a range [1,2, ... , 20]
     :return: vector with the minima in the landscape
     '''
+    if type(mismatch_positions)==type([]):
+        mismatch_positions = np.array(mismatch_positions)
     new_epsilon = epsilon.copy()
     epsI = new_epsilon[(guide_length+1):]
     energies = new_epsilon[0:(guide_length+1)]
-    energies[mismatch_positions] += epsI[np.array(mismatch_positions).astype(int)-1]
+    if len(mismatch_positions) >0:
+        energies[mismatch_positions] += epsI[(mismatch_positions.astype(int)-1)]
     return energies
 
 
@@ -239,7 +242,7 @@ def get_Probability(rate_matrix, initial_condition,T=12*3600):
     matrix_exponent = linalg.expm(+M*T)
     return matrix_exponent.dot(P0)
 
-def calc_association_rate(rate_matrix,timepoints=[500.,1000.,1500.],guide_length=20):
+def calc_association_rate(rate_matrix,timepoints=[500.,1000.,1500.],guide_length=20,rel_concentration=0.1):
     '''
     Association experiment for the effective on-rate:
     (repeating the protocol as used in Boyle et al.)
@@ -249,9 +252,15 @@ def calc_association_rate(rate_matrix,timepoints=[500.,1000.,1500.],guide_length
     #1) Calculate bound fraction for specified time points:
     # Association experiment starts with all dCas9 being unbound:
     everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+
+    #3) Association rate is taken at 1nM the other data at 10nM --> adjust k_on appropriatly:
+    new_rate_matrix = rate_matrix.copy()
+    new_rate_matrix[0][0] *= rel_concentration  #rel_concentration=1 corresponds to 10nM
+    new_rate_matrix[1][0] *= rel_concentration
+
     bound_fraction = []
     for time in timepoints:
-        Probabilities = get_Probability(rate_matrix=rate_matrix,initial_condition=everything_unbound,T=time)
+        Probabilities = get_Probability(rate_matrix=new_rate_matrix,initial_condition=everything_unbound,T=time)
         bound_fraction.append( np.sum(Probabilities[1:]))
 
     #2) Use least-squares to fit straight line with origin forced through zero:

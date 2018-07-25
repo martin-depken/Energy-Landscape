@@ -201,7 +201,7 @@ def V(SA, xdata,ydata,yerr,params):
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
-            InputJob = [params, xdata,ydata,yerr,on_target_occupancy]
+            InputJob = [params, xdata,ydata,[],on_target_occupancy]
             SA.inQ.put(InputJob)
 
         # Retreive the results from the results Que and add together to construct Chi-squared
