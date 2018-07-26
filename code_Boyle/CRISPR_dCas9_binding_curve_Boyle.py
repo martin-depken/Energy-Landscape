@@ -39,6 +39,7 @@ def calc_Chi_square(parameters,xdata,ydata,yerr,
     :param model_id:
     :return:
     '''
+
     # 0) Unpack xdata and ydata from Simulated Annealing
     Occ_data = ydata[0]
     Asso_data= ydata[1]
@@ -83,7 +84,6 @@ def calc_Chi_square(parameters,xdata,ydata,yerr,
         residual[1] = np.sum((Asso_data - Asso_model) ** 2)
     if not np.math.isnan(Disso_model):
         residual[2] = np.sum((Disso_data - Disso_model) ** 2)
-
     # 6) Take weights of different maps into account (and take the sum/ inner product )
     Chi_square = weights.dot(residual)
     return Chi_square
@@ -178,9 +178,10 @@ def get_energies(epsilon,mismatch_positions, guide_length=20):
         mismatch_positions = np.array(mismatch_positions)
     new_epsilon = epsilon.copy()
     epsI = new_epsilon[(guide_length+1):]
-    energies = new_epsilon[0:(guide_length+1)]
-    if len(mismatch_positions) >0:
-        energies[mismatch_positions] += epsI[(mismatch_positions.astype(int)-1)]
+    energies = -1*new_epsilon[0:(guide_length+1)] # convention: epsC>0 means downward slope
+    energies[0] = new_epsilon[0]                 # convention: epsPAM>0 means upward slope
+    if len(mismatch_positions)>0:
+        energies[mismatch_positions.astype(int)] += epsI[(mismatch_positions.astype(int)-1)]
     return energies
 
 
