@@ -310,7 +310,7 @@ def least_squares(x_points, y_points):
     XT = X.transpose()
     Y = y_points
 
-    a = np.dot(np.matmul(np.linalg.inv(np.matmul(XT, X)), XT), Y)
+    a = np.dot(np.dot(np.linalg.inv(np.dot(XT, X)), XT), Y)
 
     intercept = a[0]
     slope = a[1]
