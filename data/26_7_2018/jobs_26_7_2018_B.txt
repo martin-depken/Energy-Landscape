@@ -1,0 +1,1 @@
+1	general_energies	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/monitor_26_7_2018_sim_B.txt	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/fit_26_7_2018_sim_B.txt	
