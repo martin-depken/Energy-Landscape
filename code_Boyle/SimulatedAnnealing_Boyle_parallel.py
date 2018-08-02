@@ -18,7 +18,8 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                 Tstart=0.1, delta=2.0, tol=1E-3, Tfinal=0.01,adjust_factor=1.1, cooling_rate=0.85, N_int=1000,
                  AR_low=40, AR_high=60, use_multiprocessing=False, nprocs=4, use_relative_steps=True,
                    output_file_results = 'fit_results.txt',
-                   output_file_monitor = 'monitor.txt'):
+                   output_file_monitor = 'monitor.txt',
+                   output_file_init_monitor='init_monitor.txt'):
     '''
     Use Simmulated Annealing to perform Least-Square Fitting
 
@@ -66,7 +67,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    objective_function=objective_function)
 
     # Adjust initial temperature
-    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
+    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
     print('Initial temp:  ', SA.T)
     # store initial Temperature
     SA.initial_temperature = SA.T
@@ -137,7 +138,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
 
     # Close worker processes
     if SA.MP:
-        print 'Close workers..'
+        print('Close workers..')
         for i in range(SA.nprocs):
             SA.inQ.put(None)
         for w in SA.processes:
@@ -298,6 +299,7 @@ class SimAnneal():
                 self.objective_function = LogLikeLihood
 
         self.Monitor = {}
+        self.InitialMonitor = {}
         self.RelativeSteps = use_relative_steps
         return
 
@@ -320,7 +322,6 @@ def TakeStep(SA,X):
         X = np.exp(X)
     else:
         Xtrial = X + np.random.uniform(-delta, delta, size=len(X))
-
     return Xtrial
 
 
@@ -342,7 +343,12 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     :return: current solution (rejected Xtrial) or updated solution (accepted Xtrial)
     '''
     Xtrial = TakeStep(SA, X)
+
+    # print Xtrial
+    # print X
+
     while (Xtrial < lwrbnd).any() or (Xtrial > upbnd).any():
+        # print 'oops, solution not within bounds! Trying again...'
         Xtrial = TakeStep(SA,X)
 
     # Let V({dataset}|{parameterset}) be your residual function.
@@ -413,8 +419,10 @@ def update_temperature(SA):
 
 
 
-
-def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
+'''
+Initial Temperature 
+'''
+def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
     '''
     Finds starting temperature for SA optimisation by performing some initial iterations until acceptance ratio
     is within acceptable bounds.
@@ -430,6 +438,7 @@ def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     steps = 0
     while True:
         steps +=1
+        # print steps
         if (steps % SA.interval == 0):
             AR = (SA.accept / float(SA.interval)) * 100
             if AR > SA.upperbnd:
@@ -441,6 +450,7 @@ def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
             else:
                 SA.accept = 0
                 break
+            write_initial_monitor(AR,SA,initial_monitor_file)
         X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
     return
 
@@ -485,7 +495,7 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
             # Perform the job:
             OutQ.put(output)
         except Exception, e:
-            print "error!", e
+            print("error!", e.message)
             break
 
 
@@ -539,4 +549,33 @@ def write_parameters(X, SA, output_file):
     output_file.write(str(SA.potential) + '\t')
     output_file.write(str(SA.EQ) + '\t')
     output_file.write('\n')
+    return
+
+
+
+def write_initial_monitor(AR, SA,output_file_name):
+    '''
+    Additional monitor file while Initial loop is running
+
+
+
+    makes a file with following information:
+    --------------------------------------
+    (last recorded) temperature:
+    (last recorded) acceptance ratio:
+    (last recorded) stepsize:
+    '''
+
+    # Since I want to overwrite the content, I re-open the file
+    output_file = open(output_file_name, 'w')
+
+
+    SA.InitialMonitor['(last recorded) Temperature'] = SA.T
+    SA.InitialMonitor['(last recorded) Acceptance Ratio'] = AR
+    SA.InitialMonitor['(last recorded) stepsize'] = SA.step_size
+
+    for key in SA.InitialMonitor:
+        output_file.write(str(key) + ':' + str(SA.InitialMonitor[key]) + '\n' )
+
+    output_file.close()
     return
