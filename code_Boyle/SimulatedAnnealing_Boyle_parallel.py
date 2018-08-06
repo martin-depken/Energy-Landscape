@@ -114,7 +114,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                 Temperature_Cycle(SA, Eavg)
 
                 # update monitor file:
-                write_monitor(SA, output_file_monitor)
+                write_monitor(SA, output_file_monitor,steps)
 
                 # Reset the cummalative sum/ average Energy:
                 Eavg = 0
@@ -450,7 +450,7 @@ def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
             else:
                 SA.accept = 0
                 break
-            write_initial_monitor(AR,SA,initial_monitor_file)
+            write_initial_monitor(AR,SA,initial_monitor_file,steps)
         X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
     return
 
@@ -503,7 +503,7 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
 '''
 Output Files
 '''
-def write_monitor(SA, output_file_name):
+def write_monitor(SA, output_file_name,steps):
     '''
     makes a file with following information:
     --------------------------------------
@@ -521,6 +521,7 @@ def write_monitor(SA, output_file_name):
     SA.Monitor['(last recorded) stepsize'] = SA.step_size
     SA.Monitor['(last recorded) chi-squared'] = SA.potential
     SA.Monitor['succes'] = SA.StopCondition
+    SA.Monitor['iterations'] = steps
 
     for key in SA.Monitor:
         output_file.write(str(key) + ':' + str(SA.Monitor[key]) + '\n' )
@@ -553,7 +554,7 @@ def write_parameters(X, SA, output_file):
 
 
 
-def write_initial_monitor(AR, SA,output_file_name):
+def write_initial_monitor(AR, SA,output_file_name,steps):
     '''
     Additional monitor file while Initial loop is running
 
@@ -573,6 +574,7 @@ def write_initial_monitor(AR, SA,output_file_name):
     SA.InitialMonitor['(last recorded) Temperature'] = SA.T
     SA.InitialMonitor['(last recorded) Acceptance Ratio'] = AR
     SA.InitialMonitor['(last recorded) stepsize'] = SA.step_size
+    SA.InitialMonitor['iterations']=steps
 
     for key in SA.InitialMonitor:
         output_file.write(str(key) + ':' + str(SA.InitialMonitor[key]) + '\n' )
