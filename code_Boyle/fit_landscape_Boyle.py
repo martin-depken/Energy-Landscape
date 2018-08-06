@@ -27,12 +27,12 @@ def main(argv):
     #################
 
     # Loading the data
-    path_to_Boyle_data= '..'+'/Data_Boyle/'
+    path_to_Boyle_data= '../'+'/Data_Boyle/'
     replica_ID = argv[1]
 
 
     # Simmulated Annealing
-    nmbr_cores = 199
+    nmbr_cores = 4
     model_ID =  argv[2]
     monitor_file = argv[3]
     fit_result_file = argv[4]
@@ -79,14 +79,14 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=160.,             # infered from overnight run on my computer
+                                Tstart=0.01,             # infered from overnight run on my computer
                                 use_relative_steps=False,
                                 delta=1.0,
                                 tol=1E-5,
                                 Tfinal=0.0,
                                 adjust_factor=1.1,
                                 cooling_rate=0.99,
-                                N_int=100,
+                                N_int=1000,
                                 AR_low=40,
                                 AR_high=60,
                                 use_multiprocessing=True,
