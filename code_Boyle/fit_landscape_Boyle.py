@@ -2,8 +2,8 @@ import numpy as np
 import functools
 import sys
 
-# PATH_HPC05 = '/home/mklein1/Energy_Landscape_dCas9/'
-# sys.path.append(PATH_HPC05)
+PATH_HPC05 = '/home/mklein1/Energy_Landscape_dCas9/'
+sys.path.append(PATH_HPC05)
 import Boyle_data_processing
 import CRISPR_dCas9_binding_curve_Boyle as CRISPR
 import SimulatedAnnealing_Boyle_parallel as SA
@@ -27,12 +27,13 @@ def main(argv):
     #################
 
     # Loading the data
-    path_to_Boyle_data= '../'+'/Data_Boyle/'
+
+    path_to_Boyle_data= PATH_HPC05+'/Data_Boyle/'
     replica_ID = argv[1]
 
 
     # Simmulated Annealing
-    nmbr_cores = 4
+    nmbr_cores = 199
     model_ID =  argv[2]
     monitor_file = argv[3]
     fit_result_file = argv[4]
@@ -40,8 +41,8 @@ def main(argv):
     gRNA_length = 20
     Weights_Datasets = Boyle_data_processing.weights_averages(replica_ID,path_to_Boyle_data)
 
-    upper_bnd = [5.0] + [5.0]*20 + [5.0]*20 +    [100.]+    [1000.] # estimated upper bounds based on Koen's previous results.
-    lower_bnd = [-5.0]  + [-5.0]*20 + [-5.0]*20 + [-5.0] + [-5.0]  #last element is rate from solution to PAM. Second to last is internal forward rate
+    upper_bnd = [5.0] + [5.0]*20 + [5.0]*20 +    [10.]+    [100.] # estimated upper bounds based on Koen's previous results.
+    lower_bnd = [-5.0]  + [-5.0]*20 + [-5.0]*20 + [0.0] + [0.0]  #last element is rate from solution to PAM. Second to last is internal forward rate
     initial_guess = [2.5] + [2.5]*20 +[2.5]*20 +      [1.0] +    [100.]
 
     ###########################
@@ -79,7 +80,7 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=0.01,             # infered from overnight run on my computer
+                                Tstart=210.,             # infered from run on my computer
                                 use_relative_steps=False,
                                 delta=1.0,
                                 tol=1E-5,
