@@ -438,7 +438,7 @@ def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
     steps = 0
     while True:
         steps +=1
-        # print steps
+        print steps
         if (steps % SA.interval == 0):
             AR = (SA.accept / float(SA.interval)) * 100
             if AR > SA.upperbnd:
