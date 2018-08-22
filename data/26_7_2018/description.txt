@@ -1,0 +1,93 @@
+20/08/2018 (fldr: 26_8_2018, simulations: Q,R,S,T,V)
+==============================
+* Previious set worked OK. Gaved consistent results and all converged to a good fit 
+* Constraint epsilon_I to be constant (position independent):
+	model_ID == "constant_eps_I"
+* Changed boundaries: 10kT maximum (in stead of 5 kT)
+* Initial temp guess increased based on previous fits 
+* 5 replicates (each on 20 cores) 
+
+
+17/08/2018 (fldr: 26_8_2018, simulations: L,M,N,O,P)
+====================
+* Fits that did not work well ended up with some epsilon_I (mismatch penalties) being negative (turning into a gain instead). 
+* constraint them to zero 
+* 5 replicates (each on 20 cores).
+
+
+12/08/2018 (fldr_26_7_2018, simulations: G,H,I,J,K)
+=====================
+* Started an additional 5 runs (will be gone this week anyways)
+
+
+
+
+09/08/2018 (fldr_26_7_2018)
+===========
+* By accident started simulation C again. 
+**** Renamed file to:               *** (to prevent it from being overwritten) 
+
+* Started simulations D,E and F 
+
+
+08/08/2018 (fldr:26_7_2018 simulation:D, E and F)
+=========================
+* Repeat simulation C  (Simulation worked, very good fit, not conclusivein terms of structure of energy landscape)  
+* 3 additional replicates 
+
+
+07/08/2018 (fldr:26_7_2018 simulation:C)
+===========================
+* found bug in previous run: Rates were allowed to be negative. 
+* retry with only positive rates. 
+* Had discussions with cluster maintainance guys. Apparently node-to-node communication was not actually working. 
+* restarted simulation with 20 cores in total (19 + 1) 
+
+
+31/07/2018 (fldr:26_7_2018 simulation:C)
+========================
+* simulation B: Better result (by eye) than simulation A
+* Retry without using log-moves in Metropolis
+* Use upper/lower bound of energies of ±5kT (not 10kT as previous)
+ 
+
+
+
+
+30/07/2018 (fldr:26_7_2018  simulation:B)
+=====================
+* checked results simulation A. Fit seemed to have worked
+* Repeat with stricter tolerance: 1E-3 --> 1E-5 
+* other settings the same 
+* Adjusted code fit_landscape.py --> returns the time taken for the simulation
+* !!! RENAME THE FILES BEFORE TRANSFERING TO OWN COMPUTER !!  (filename accidentally reused) 
+
+
+
+26/07/2018 (simulation A)
+==========================
+* Made codes for preprocessing Boyle Data and adjusted Simmulated Annealing accordingly 
+* Fit landscape without having equillibrium assumption for occupancy
+* Relative steps 
+* weights: Average values in each dataset (same as Koen) 
+* cooling rate: 0.99
+* Tstart: 0.1 
+* initial condition: [5.0] + [5.0]*20 +[5.0]*20 +      [1.0] +    [100.]
+* upper bound: [10.0] + [10.0]*20 + [10.0]*20 +    [100.]+    [1000.]
+* lower bound: [0.0001]  + [0.0001]*20 + [0.0001]*20 + [0.0001] + [0.0001]
+* model: 'general_energies' 
+* 199x + 1x = 200x
+
+27/07/2018 (simulation B):
+====================
+* Run on my laptop using 4 cores at least managed to produce the monitor & fit_result files. 
+* Initial temperature: 169.28927393268415
+* Another try without cross-node comunication: 20x (19 + 1) 
+* set initial temperature close to 160.0 
+
+
+26/07/2018 (retry simulation A):
+=====================
+* Apparently 'np.matmul()' is not recognised on cluster. Exchanged it for for np.dot()
+
+

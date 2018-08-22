@@ -1,0 +1,3 @@
+1	general_energies	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/monitor_26_7_2018_sim_D.txt	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/fit_26_7_2018_sim_D.txt	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/init_monitor_26_7_2018_sim_D.txt
+1	general_energies	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/monitor_26_7_2018_sim_E.txt	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/fit_26_7_2018_sim_E.txt	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/init_monitor_26_7_2018_sim_E.txt
+1	general_energies	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/monitor_26_7_2018_sim_F.txt	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/fit_26_7_2018_sim_F.txt	/home/mklein1/Energy_Landscape_dCas9/26_7_2018/init_monitor_26_7_2018_sim_F.txt
