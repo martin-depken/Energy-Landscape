@@ -158,6 +158,22 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates = np.ones(guide_length + 2) * parameters[-2] #internal rates
         forward_rates[0] = parameters[-1]  # from solution to PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
+
+    if model_id == 'constant_eps_I':
+        # General position dependency for matches, constant mismatch penalty
+        epsPAM = parameters[0]
+        epsilonC = parameters[1:(guide_length+1)]
+        epsilonI = parameters[guide_length+1]
+
+        epsilon = np.zeros(2 * guide_length + 1)
+        epsilon[0] = epsPAM
+        epsilon[1:(guide_length+1)] = epsilonC
+        epsilon[(guide_length+1):] = epsilonI
+
+        forward_rates = np.ones(guide_length + 2) * parameters[-2] #internal rates
+        forward_rates[0] = parameters[-1]  # from solution to PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+
     return epsilon, forward_rates
 
 
