@@ -142,7 +142,8 @@ def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     rate_matrix = build_rate_matrix(forward_rates, backward_rates)
     return rate_matrix
 
-def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
+
+def unpack_parameters(parameters, model_id='general_energies', guide_length=20):
     '''
     Use model ID to construct vector of epsilon values and forward rates.
 
@@ -152,30 +153,52 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     :param guide_length:
     :return:
     '''
+
+    epsilon = np.zeros(2 * guide_length + 1)
     if model_id == 'general_energies':
         # General position dependency + minimal amount of rates
         epsilon = parameters[:-2]
-        forward_rates = np.ones(guide_length + 2) * parameters[-2] #internal rates
+        forward_rates = np.ones(guide_length + 2) * parameters[-2]  # internal rates
         forward_rates[0] = parameters[-1]  # from solution to PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
     if model_id == 'constant_eps_I':
         # General position dependency for matches, constant mismatch penalty
         epsPAM = parameters[0]
-        epsilonC = parameters[1:(guide_length+1)]
-        epsilonI = parameters[guide_length+1]
+        epsilonC = parameters[1:(guide_length + 1)]
+        epsilonI = parameters[guide_length + 1]
 
-        epsilon = np.zeros(2 * guide_length + 1)
         epsilon[0] = epsPAM
-        epsilon[1:(guide_length+1)] = epsilonC
-        epsilon[(guide_length+1):] = epsilonI
+        epsilon[1:(guide_length + 1)] = epsilonC
+        epsilon[(guide_length + 1):] = epsilonI
 
-        forward_rates = np.ones(guide_length + 2) * parameters[-2] #internal rates
+        forward_rates = np.ones(guide_length + 2) * parameters[-2]  # internal rates
         forward_rates[0] = parameters[-1]  # from solution to PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
-    return epsilon, forward_rates
+    if model_id == 'init_limit_lock_const_EpsI':
+        e_PAM = parameters[0]
+        ec_1 = parameters[1]
+        ec_first = parameters[2]
+        ec_second = parameters[3]
+        e_I = parameters[4]
+        x = parameters[5]
+        k_PAM = parameters[6]
+        k_1 = parameters[7]
+        k = parameters[8]
 
+        epsilon[0] = e_PAM
+        epsilon[1] = ec_1
+        epsilon[2:x + 1] = ec_first
+        epsilon[x + 1:guide_length + 1] = ec_second
+        epsilon[guide_length + 1:] = e_I
+
+        forward_rates = np.ones(guide_length + 2) * k  # internal rates
+        forward_rates[0] = k_PAM
+        forward_rates[1] = k_1
+        forward_rates[-1] = 0.0
+
+    return epsilon, forward_rates
 
 
 def get_energies(epsilon,mismatch_positions, guide_length=20):
