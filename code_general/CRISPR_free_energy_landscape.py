@@ -47,7 +47,6 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         k_1 = parameters[7]
         k = parameters[8]
 
-        epsilon = np.zeros(2 * guide_length + 1)
         epsilon[0] = e_PAM
         epsilon[1] = ec_1
         epsilon[2:x + 1] = ec_first
