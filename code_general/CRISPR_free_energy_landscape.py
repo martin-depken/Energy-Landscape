@@ -15,6 +15,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     '''
 
     epsilon = np.zeros(2 * guide_length + 1)
+
     if model_id == 'general_energies':
         # General position dependency + minimal amount of rates
         epsilon = parameters[:-2]
@@ -44,8 +45,10 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         e_I = parameters[4]
         x = parameters[5]
         k_PAM = parameters[6]
-        k_1 = parameters[7]
+        E_barr = parameters[7]
         k = parameters[8]
+        k_1 = k*np.exp(-E_barr)
+
 
         epsilon[0] = e_PAM
         epsilon[1] = ec_1
