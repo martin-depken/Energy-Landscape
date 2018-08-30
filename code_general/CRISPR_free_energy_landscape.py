@@ -61,6 +61,69 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
 
+    if model_id == 'init_limit_two_drops_fixed_BP':
+
+        pos1 = 10
+        pos2 = 18
+
+        e_PAM = parameters[0]
+        ec_1 = parameters[1]
+        ec_first = parameters[2]
+        drop1 = parameters[3]
+        ec_second = parameters[4]
+        drop2 = parameters[5]
+        ec_third = parameters[6]
+        e_I = parameters[7]
+        k_PAM = parameters[8]
+        E_barr = parameters[9]
+        k = parameters[10]
+        k_1 = k*np.exp(-E_barr)
+
+        epsilon[0] = e_PAM
+        epsilon[1] = ec_1
+        epsilon[2:pos1 + 1] = ec_first
+        epsilon[pos1+1] = drop1
+        epsilon[pos1 + 2:pos2 + 1] = ec_second
+        epsilon[pos2+1]= drop2
+        epsilon[pos2+2:guide_length+1] = ec_third
+        epsilon[guide_length+1:] = e_I
+
+        forward_rates = np.ones(guide_length + 2) * k  # internal rates
+        forward_rates[0] = k_PAM
+        forward_rates[1] = k_1
+        forward_rates[-1] = 0.0
+
+        if model_id == 'init_limit_two_drops':
+
+            e_PAM = parameters[0]
+            ec_1 = parameters[1]
+            ec_first = parameters[2]
+            drop1 = parameters[3]
+            ec_second = parameters[4]
+            drop2 = parameters[5]
+            ec_third = parameters[6]
+            pos1 = parameters[7]
+            pos2 = parameters[8]
+            e_I = parameters[9]
+            k_PAM = parameters[10]
+            E_barr = parameters[11]
+            k = parameters[12]
+            k_1 = k * np.exp(-E_barr)
+
+            epsilon[0] = e_PAM
+            epsilon[1] = ec_1
+            epsilon[2:pos1 + 1] = ec_first
+            epsilon[pos1 + 1] = drop1
+            epsilon[pos1 + 2:pos2 + 1] = ec_second
+            epsilon[pos2 + 1] = drop2
+            epsilon[pos2 + 2:guide_length + 1] = ec_third
+            epsilon[guide_length + 1:] = e_I
+
+            forward_rates = np.ones(guide_length + 2) * k  # internal rates
+            forward_rates[0] = k_PAM
+            forward_rates[1] = k_1
+            forward_rates[-1] = 0.0
+
     return epsilon, forward_rates
 
 
@@ -77,15 +140,16 @@ def plot_landscape(parameters, model_id):
     landscape = [0.0]
     for eps in epsilon_C:
         landscape.append(landscape[-1] + eps)
-    plt.plot(landscape, marker='s')
+    plt.plot(range(-1,21),landscape, marker='s')
 
     # window dressing:
     plt.xlabel('targeting progression', fontsize=15)
     plt.ylabel(r'free-energy ($k_BT$)',fontsize=15)
-    plt.xticks([i for i in range(1,21)],
-               [1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
+    plt.xticks(range(-1,21),
+               ['S', 'P',1,'', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
                ,fontsize=15);
     plt.yticks(fontsize=15)
+    plt.grid('on')
     sns.despine()
     return landscape
 
