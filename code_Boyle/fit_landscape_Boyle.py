@@ -41,9 +41,9 @@ def main(argv):
     gRNA_length = 20
     Weights_Datasets = Boyle_data_processing.weights_averages(replica_ID,path_to_Boyle_data)
 
-    upper_bnd = [10.0] + [10.0]*20 + [10.0]*1 +    [10.]+    [100.] # estimated upper bounds based on Koen's previous results.
-    lower_bnd = [-10.0]  + [0.0]*20 + [0.0]*1 + [0.0] + [0.0]  #last element is rate from solution to PAM. Second to last is internal forward rate
-    initial_guess = [5.0] + [5.0]*20 +[5.0]*1 +      [1.0] +    [100.]
+    upper_bnd = [10.0] + [0.0] + [2.0]   + [10.0] + [2.0] + [10.0] + [2.0] + [10.0] + [1000.0] + [15.0] + [100.]
+    lower_bnd = [0.0]  + [-10.0] +[-2.0] + [0.0] + [-2.0] + [0.0] + [-2.0] + [0.0] + [0.0] +[0.0] + [0.0]
+    initial_guess = [5.0] + [-5.0] + [0.0] +[5.0] + [0.0] + [5.0] + [0.0] + [5.0] +[100.0] + [7.5] + [10.0]
 
     ###########################
     # /* Objective function *\#
