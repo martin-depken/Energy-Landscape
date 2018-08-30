@@ -33,7 +33,7 @@ def main(argv):
 
 
     # Simmulated Annealing
-    nmbr_cores = 199
+    nmbr_cores = 19
     model_ID =  argv[2]
     monitor_file = argv[3]
     fit_result_file = argv[4]
@@ -41,9 +41,9 @@ def main(argv):
     gRNA_length = 20
     Weights_Datasets = Boyle_data_processing.weights_averages(replica_ID,path_to_Boyle_data)
 
-    upper_bnd = [5.0] + [5.0]*20 + [5.0]*20 +    [10.]+    [100.] # estimated upper bounds based on Koen's previous results.
-    lower_bnd = [-5.0]  + [-5.0]*20 + [-5.0]*20 + [0.0] + [0.0]  #last element is rate from solution to PAM. Second to last is internal forward rate
-    initial_guess = [2.5] + [2.5]*20 +[2.5]*20 +      [1.0] +    [100.]
+    upper_bnd = [10.0] + [10.0]*20 + [10.0]*1 +    [10.]+    [100.] # estimated upper bounds based on Koen's previous results.
+    lower_bnd = [-10.0]  + [0.0]*20 + [0.0]*1 + [0.0] + [0.0]  #last element is rate from solution to PAM. Second to last is internal forward rate
+    initial_guess = [5.0] + [5.0]*20 +[5.0]*1 +      [1.0] +    [100.]
 
     ###########################
     # /* Objective function *\#
@@ -80,7 +80,7 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=210.,             # infered from run on my computer
+                                Tstart=500.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=1.0,
                                 tol=1E-5,
