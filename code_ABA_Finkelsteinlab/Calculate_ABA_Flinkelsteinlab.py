@@ -1,6 +1,9 @@
 import numpy as np
 from scipy import linalg
 from scipy.optimize import curve_fit
+import sys
+sys.path.append('../code_general/')
+from CRISPR_free_energy_landscape import unpack_parameters
 
 def calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):
     rate_matrix = get_master_equation(parameters, mismatch_positions, model_id, guide_length)
@@ -46,26 +49,6 @@ def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     backward_rates = get_backward_rates(energies, forward_rates,guide_length )
     rate_matrix = build_rate_matrix(forward_rates, backward_rates)
     return rate_matrix
-
-def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
-    '''
-    Use model ID to construct vector of epsilon values and forward rates.
-
-    For every paramaterisation add a new case/ model_id
-    :param parameters:
-    :param model_id:
-    :param guide_length:
-    :return:
-    '''
-    if model_id == 'general_energies':
-        # General position dependency + minimal amount of rates
-        epsilon = parameters[:-2]
-        forward_rates = np.ones(guide_length + 2) * parameters[-2] #internal rates
-        forward_rates[0] = parameters[-1]  # from solution to PAM
-        forward_rates[-1] = 0.0  # dCas9 does not cleave
-    return epsilon, forward_rates
-
-
 
 def get_energies(epsilon,mismatch_positions, guide_length=20):
     '''
@@ -125,14 +108,6 @@ def build_rate_matrix(forward_rates, backward_rates):
 
     rate_matrix = np.diag(diagonal1, k=0) + np.diag(diagonal2, k=1) + np.diag(diagonal3, k=-1)
 
-    # for diag in range(3):
-    #     if diag == 0:
-    #         rate_matrix = rate_matrix + np.diag(diagonal1, k=0)
-    #     elif diag == 1:
-    #         rate_matrix = rate_matrix + np.diag(diagonal2, k=1)
-    #     elif diag == 2:
-    #         rate_matrix = rate_matrix + np.diag(diagonal3, k=-1)
-
     return rate_matrix
 
 def get_Probability(rate_matrix, initial_condition,T=12*3600):
@@ -147,3 +122,17 @@ def get_Probability(rate_matrix, initial_condition,T=12*3600):
     M = rate_matrix
     matrix_exponent = linalg.expm(+M*T)
     return matrix_exponent.dot(P0)
+
+'''
+Other useful functions 
+'''
+def calc_binding_curve(parameters, concentration, reference, mismatch_positions, T_list, model_id='general_energies', guide_length=20):
+
+    rate_matrix = get_master_equation(parameters, mismatch_positions, model_id, guide_length)
+    rel_concentration = concentration/reference
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    new_rate_matrix = rate_matrix.copy()
+    new_rate_matrix[0][0] *= rel_concentration
+    new_rate_matrix[1][0] *= rel_concentration
+    Probability = map(lambda t: 1-get_Probability(new_rate_matrix, everything_unbound, t)[0], T_list)
+    return Probability
