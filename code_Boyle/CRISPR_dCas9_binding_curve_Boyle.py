@@ -2,8 +2,8 @@ import numpy as np
 from scipy import linalg
 import sys
 PATH_HPC05 = '/home/mklein1/Energy_Landscape_dCas9/'
-sys.path.append(PATH_HPC05)
-#sys.path.append('../code_general/')
+#sys.path.append(PATH_HPC05)
+sys.path.append('../code_general/')
 from CRISPR_free_energy_landscape import unpack_parameters
 
 ''''
