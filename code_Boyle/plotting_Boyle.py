@@ -7,7 +7,7 @@ current_colors = sns.color_palette()
 import sys
 sys.path.append('../code_Boyle/')
 import CRISPR_dCas9_binding_curve_Boyle as dCas9
-reload(dCas9);
+reload(dCas9)
 
 
 def load_simm_anneal(filename, Nparams):
@@ -64,32 +64,35 @@ def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenD
     # 1) settings based on physical quantity you want to plot
     if kind == 'Occupancy':
         colormap = 'Greens'
-        val_min = 0
-        val_max = 1
         data_file = 'DataOccupancy.txt'
         title = 'Occupancy (after 12 hrs) \n relative to cognate site'
     elif kind == 'OnRate':
         colormap = 'Reds'
-        val_min = 0
-        val_max = 0.0003
         data_file = 'DataOnRate.txt'
         title = r'Associaton rate 1nM ($s^{-1}$)'
     elif kind == 'OffRate':
         colormap = 'Blues'
-        val_min = 0
-        val_max = 0.0002
         data_file = 'DataOffRate.txt'
         title = r'Dissociaton rate 10nM ($s^{-1}$)'
 
+
     # 2) load the experimental dataset
     experiment = np.loadtxt(delimiter=',' , fname=fldr_Boyle_data + data_file)
+
+    val_min = 0
+    val_max_1 = np.nanmax(experiment)
+    val_max_2 = np.max(model)
+    val_max = np.max(np.array([val_max_1, val_max_2]))
+    val_max = (1+0.05)*val_max
+    if kind == 'Occupancy':
+        val_max = 1
 
     # 3) plot the data:
     mask_exp = np.zeros(shape=experiment.shape)
     for i in range(len(experiment)):
         for j in range(i - 1, len(experiment)):
             mask_exp[i, j] = 1
-    sns.heatmap(experiment, cmap=colormap, mask=mask_exp, cbar=True, vmin=0, vmax=None);
+    sns.heatmap(experiment, cmap=colormap, mask=mask_exp, cbar=True, vmin=0, vmax=val_max);
 
     # 4) Plot the model prediction alongside
     mask = np.ones(shape=model.shape)
@@ -116,20 +119,14 @@ def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_B
     # 1) settings based on physical quantity you want to plot
     if kind == 'Occupancy':
         color = 'green'
-        val_max = 1.2
-        val_min = -(0.03) * val_max
         data_file = 'DataOccupancy.txt'
         ylabel = 'Occupancy (after 12 hrs) \n relative to cognate site'
     elif kind == 'OnRate':
         color = 'red'
-        val_max = 0.0003
-        val_min = -(0.03)* val_max
         data_file = 'DataOnRate.txt'
         ylabel = r'Associaton rate 1nM ($s^{-1}$)'
     elif kind == 'OffRate':
         color = 'blue'
-        val_max = 0.00020
-        val_min = -(0.03) * val_max
         data_file = 'DataOffRate.txt'
         ylabel = r'Dissociation rate 10nM ($s^{-1}$)'
 
@@ -138,6 +135,12 @@ def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_B
 
     # 3) extract single-mismatches from entire prediction
     model= np.diag(model)
+
+    val_max_1 = np.nanmax(experiment)
+    val_max_2 = np.max(model)
+    val_max = np.max(np.array([val_max_1, val_max_2]))
+    val_max = (1+0.05)*val_max
+    val_min = -(0.03) * val_max
 
     #4) plot
     positions = 20 - np.arange(0,20)
