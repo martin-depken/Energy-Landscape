@@ -93,36 +93,36 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
 
-        if model_id == 'init_limit_two_drops':
+    if model_id == 'init_limit_two_drops':
 
-            e_PAM = parameters[0]
-            ec_1 = parameters[1]
-            ec_first = parameters[2]
-            drop1 = parameters[3]
-            ec_second = parameters[4]
-            drop2 = parameters[5]
-            ec_third = parameters[6]
-            pos1 = parameters[7]
-            pos2 = parameters[8]
-            e_I = parameters[9]
-            k_PAM = parameters[10]
-            E_barr = parameters[11]
-            k = parameters[12]
-            k_1 = k * np.exp(-E_barr)
+        e_PAM = parameters[0]
+        ec_1 = parameters[1]
+        ec_first = parameters[2]
+        drop1 = parameters[3]
+        ec_second = parameters[4]
+        drop2 = parameters[5]
+        ec_third = parameters[6]
+        pos1 = parameters[7]
+        pos2 = parameters[8]
+        e_I = parameters[9]
+        k_PAM = parameters[10]
+        E_barr = parameters[11]
+        k = parameters[12]
+        k_1 = k * np.exp(-E_barr)
 
-            epsilon[0] = e_PAM
-            epsilon[1] = ec_1
-            epsilon[2:pos1 + 1] = ec_first
-            epsilon[pos1 + 1] = drop1
-            epsilon[pos1 + 2:pos2 + 1] = ec_second
-            epsilon[pos2 + 1] = drop2
-            epsilon[pos2 + 2:guide_length + 1] = ec_third
-            epsilon[guide_length + 1:] = e_I
+        epsilon[0] = e_PAM
+        epsilon[1] = ec_1
+        epsilon[2:pos1 + 1] = ec_first
+        epsilon[pos1 + 1] = drop1
+        epsilon[pos1 + 2:pos2 + 1] = ec_second
+        epsilon[pos2 + 1] = drop2
+        epsilon[pos2 + 2:guide_length + 1] = ec_third
+        epsilon[guide_length + 1:] = e_I
 
-            forward_rates = np.ones(guide_length + 2) * k  # internal rates
-            forward_rates[0] = k_PAM
-            forward_rates[1] = k_1
-            forward_rates[-1] = 0.0
+        forward_rates = np.ones(guide_length + 2) * k  # internal rates
+        forward_rates[0] = k_PAM
+        forward_rates[1] = k_1
+        forward_rates[-1] = 0.0
 
     return epsilon, forward_rates
 
