@@ -3,6 +3,15 @@ import matplotlib.pylab as plt
 import seaborn as sns
 sns.set_style('ticks')
 
+
+choose_model = ['general_energies',
+                'constant_eps_I',
+                'init_limit_lock_const_EpsI',
+                'init_limit_two_drops_fixed_BP',
+                'init_limit_two_drops']
+
+
+
 def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     '''
     Use model ID to construct vector of epsilon values and forward rates.
@@ -15,7 +24,6 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     '''
 
     epsilon = np.zeros(2 * guide_length + 1)
-
     if model_id == 'general_energies':
         # General position dependency + minimal amount of rates
         epsilon = parameters[:-2]
@@ -62,7 +70,6 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = 0.0
 
     if model_id == 'init_limit_two_drops_fixed_BP':
-
         pos1 = 10
         pos2 = 18
 
@@ -94,7 +101,6 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = 0.0
 
     if model_id == 'init_limit_two_drops':
-
         e_PAM = parameters[0]
         ec_1 = parameters[1]
         ec_first = parameters[2]
@@ -123,7 +129,6 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[0] = k_PAM
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
-
     return epsilon, forward_rates
 
 
