@@ -61,6 +61,8 @@ def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenD
     :param fldr_Boyle_data:
     :return:
     '''
+
+    Ng = 20
     # 1) settings based on physical quantity you want to plot
     if kind == 'Occupancy':
         colormap = 'Greens'
@@ -102,12 +104,9 @@ def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenD
     sns.heatmap(model, cmap=colormap, mask=mask, cbar=True, vmin=val_min, vmax=val_max);
 
     # 5) Adjust ticks and labels to get correct nucleotide positions
-    plt.xticks([i + 0.5 for i in range(20)],
-               [20, '', '', '', 15, '', '', '', '', 10, '', '', '', '', 5, '', '', '', '', 1], rotation=0,
-               fontsize=15);
-    plt.yticks([i + 0.5 for i in range(20)],
-               [1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0,
-               fontsize=15);
+    ax = plt.gca()
+    ax.set_xticklabels(map(lambda x: str(int(Ng-x)), ax.get_xticks() - 0.5));
+    ax.set_yticklabels(map(lambda x: str(int(Ng-x)), ax.get_yticks() - 0.5));
 
     # 6) Further window dressing
     plt.xlabel('mismatch 1', fontsize=15)
@@ -173,15 +172,16 @@ def plot_landscape(parameters, model_id):
     landscape = [0.0]
     for eps in epsilon_C:
         landscape.append(landscape[-1] + eps)
-    plt.plot(landscape, marker='s')
+    plt.plot(range(-1,21),landscape, marker='s')
 
     # window dressing:
     plt.xlabel('targeting progression', fontsize=15)
     plt.ylabel(r'free-energy ($k_BT$)',fontsize=15)
-    plt.xticks([i for i in range(1,21)],
-               [1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
+    plt.xticks(range(-1,21),
+               ['S', 'P',1,'', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
                ,fontsize=15);
     plt.yticks(fontsize=15)
+    plt.grid('on')
     sns.despine()
     return landscape
 
@@ -195,13 +195,13 @@ def plot_mismatch_penalties(parameters, model_id):
     '''
     epsilon, fwrd_rates = dCas9.unpack_parameters(parameters, model_id, guide_length=20)
     epsilon_I = epsilon[21:]
-    plt.bar([i + 1 for i in range(20)], epsilon_I)
+    plt.bar(range(1,21), epsilon_I)
 
     # window dressing:
     plt.xlabel('targeting progression', fontsize=15)
-    plt.ylabel(r'free-energy ($k_BT$)',fontsize=15)
-    plt.xticks([i for i in range(1,21)],
+    plt.ylabel(r'mismatch penalties ($k_BT$)',fontsize=15)
+    plt.xticks(np.arange(1,21)+0.5,
                [1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
                ,fontsize=15);
     plt.yticks(fontsize=15)
-    return
+    return epsilon_I
