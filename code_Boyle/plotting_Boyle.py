@@ -106,7 +106,8 @@ def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenD
     # 5) Adjust ticks and labels to get correct nucleotide positions
     ax = plt.gca()
     ax.set_xticklabels(map(lambda x: str(int(Ng-x)), ax.get_xticks() - 0.5));
-    ax.set_yticklabels(map(lambda x: str(int(Ng-x)), ax.get_yticks() - 0.5));
+    #ax.set_yticklabels(map(lambda x: str(int(Ng-x)), ax.get_yticks() - 0.5));
+    ax.set_yticklabels(map(lambda x: str(int(x+1)), ax.get_yticks() - 0.5));
 
     # 6) Further window dressing
     plt.xlabel('mismatch 1', fontsize=15)
