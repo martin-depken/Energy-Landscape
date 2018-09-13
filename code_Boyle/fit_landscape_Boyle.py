@@ -39,7 +39,8 @@ def main(argv):
     fit_result_file = argv[4]
     init_monitor_file = argv[5]
     gRNA_length = 20
-    Weights_Datasets = Boyle_data_processing.weights_averages(replica_ID,path_to_Boyle_data)
+    # Weights_Datasets = Boyle_data_processing.weights_averages(replica_ID,path_to_Boyle_data)
+    Weights_Datasets = np.array([1.0,1.0,1.0])
 
     upper_bnd = [10.0] + [0.0] + [2.0]   + [10.0] + [2.0] + [10.0] + [2.0] + [10.0] + [1000.0] + [15.0] + [100.]
     lower_bnd = [0.0]  + [-10.0] +[-2.0] + [0.0] + [-2.0] + [0.0] + [-2.0] + [0.0] + [0.0] +[0.0] + [0.0]
@@ -54,15 +55,17 @@ def main(argv):
                         model_id=model_ID)
 
 
+    OnTarget = functools.partial(CRISPR.calc_Boyle, model_id=model_ID)
 
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata, ydata = Boyle_data_processing.prepare_multiprocessing(replica_ID,path_to_Boyle_data)
+    xdata, ydata, yerr = Boyle_data_processing.prepare_multiprocessing(replica_ID,path_to_Boyle_data)
 
 
-
-
+    # print "test ... " + ' \n'
+    # KineticModel(np.array(initial_guess),xdata,ydata,np.array([]),1.0)
+    #
 
     ##############################################
     # /*   Call the Simulated Annealing code   *\#
@@ -74,12 +77,13 @@ def main(argv):
 
     fit_result = SA.sim_anneal_fit(xdata=xdata,
                                    ydata=ydata,
-                                   yerr = np.array([]),
+                                   yerr = yerr,
                                    Xstart= np.array(initial_guess),
                                    lwrbnd= np.array(lower_bnd),
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
+                                on_target_function=OnTarget,
                                 Tstart=500.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=1.0,

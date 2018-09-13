@@ -19,6 +19,10 @@ def prepare_multiprocessing(replica='1', path='../Data_Boyle/'):
     with every element of ydata containing a set of three datasets
     corresponding to the mismatch configuration shown of the coreesponding element of xdata
 
+    yerr = [ (occ_err, on_err,off_err) , (occ_err,on_err,off_err), ....]
+    with every element of ydata containing a set of three datasets
+    corresponding to the mismatch configuration shown of the coreesponding element of xdata
+
     :param replica: 1 or 2
     :param path: path to data files
     :return:
@@ -32,6 +36,11 @@ def prepare_multiprocessing(replica='1', path='../Data_Boyle/'):
     on = np.array(Combined_Data.on_slope)
     off = np.array(Combined_Data.off_slope)
 
+
+    occ_error = np.array(Combined_Data.occ_error)
+    on_error = np.array(Combined_Data.on_error)
+    off_error = np.array(Combined_Data.off_error)
+
     # 3) Get ydata in the format wanted
     ydata = []
     for i in range(len(occ)):
@@ -39,7 +48,12 @@ def prepare_multiprocessing(replica='1', path='../Data_Boyle/'):
 
     # 4) Get xdata (Mismatch locations)
     xdata = np.array(Combined_Data.MM_pos)
-    return xdata, ydata
+
+    # 5) Get yerr in the format wanted
+    yerr = []
+    for i in range(len(occ)):
+        yerr.append((occ_error[i],on_error[i],off_error[i]))
+    return xdata, ydata, yerr
 
 def weights_averages(replica='1', path='../Data_Boyle/'):
     '''
@@ -67,31 +81,37 @@ def read(replica='1',path='../Data_Boyle/'):
     :param path: path to data files
     :return: pandas dataframe
     '''
-    occ = pd.read_csv(path + 'occupancy_rep' + str(replica)+'_processed.txt')
-    kon = pd.read_csv(path + 'second_fit_data.summarized.on.1nM.rep'+str(replica)+'.txt', delimiter='\t')
-    koff = pd.read_csv(path +'second_fit_data.summarized.off.10nM.rep' +str(replica)+'.txt', delimiter='\t')
-    kon = kon[kon['nmut']<3][['mutations', 'slope']]
-    koff = koff[koff['nmut']<3][['mutations', 'slope']]
-    occ = occ[['mutations', 'Ratio']]
+    occ = pd.read_csv(path + 'occupancy_rep' + str(replica) + '_processed_with_errors.txt')
+    kon = pd.read_csv(path + 'second_fit_data.summarized.on.1nM.rep' + str(replica) + '.txt', delimiter='\t')
+    koff = pd.read_csv(path + 'second_fit_data.summarized.off.10nM.rep' + str(replica) + '.txt', delimiter='\t')
+    kon = kon[kon['nmut'] < 3][['mutations', 'slope', 'se']]
+    koff = koff[koff['nmut'] < 3][['mutations', 'slope', 'se']]
+    occ = occ[['mutations', 'Ratio', 'rel_err_Ratio']]
     kon.rename(columns={'slope': 'on_slope'}, inplace=True)
     koff.rename(columns={'slope': 'off_slope'}, inplace=True)
     occ.rename(columns={'Ratio': 'occ'}, inplace=True)
+    kon.rename(columns={'se': 'on_error'}, inplace=True)
+    koff.rename(columns={'se': 'off_error'}, inplace=True)
+    occ.rename(columns={'rel_err_Ratio': 'occ_error'}, inplace=True)
     koff['off_slope'] *= -1
     Full_data = kon.copy()
     Full_data = Full_data.merge(koff, how='outer', on='mutations')
     Full_data = Full_data.merge(occ, how='outer', on='mutations')
     Full_data['MM_pos'] = Full_data['mutations'].apply(get_pos)
-    Full_data['PAM_mut']=Full_data['MM_pos'].apply(find_PAM_mutations)
+    Full_data['PAM_mut'] = Full_data['MM_pos'].apply(find_PAM_mutations)
     Full_data['mm_ID'] = Full_data['MM_pos'].apply(string_get_pos)
-    no_PAM = Full_data[Full_data.PAM_mut==False]
-    Combined_Data = no_PAM[['mm_ID','occ','on_slope','off_slope']]
+    no_PAM = Full_data[Full_data.PAM_mut == False]
+    Combined_Data = no_PAM[['mm_ID', 'occ', 'on_slope', 'off_slope', 'on_error', 'off_error', 'occ_error']]
     Combined_Data = Combined_Data.groupby('mm_ID').agg(lambda x: list(x))
     Combined_Data = Combined_Data.reset_index()
     Combined_Data['MM_pos'] = Combined_Data['mm_ID'].apply(get_pos_again)
-    Combined_Data = Combined_Data[['MM_pos', 'occ','on_slope','off_slope']]
+    Combined_Data = Combined_Data[['MM_pos', 'occ', 'on_slope', 'off_slope', 'on_error', 'off_error', 'occ_error']]
     Combined_Data['occ'] = Combined_Data['occ'].apply(remove_NaN)
     Combined_Data['on_slope'] = Combined_Data['on_slope'].apply(remove_NaN)
     Combined_Data['off_slope'] = Combined_Data['off_slope'].apply(remove_NaN)
+    Combined_Data['occ_error'] = Combined_Data['occ_error'].apply(remove_NaN)
+    Combined_Data['on_error'] = Combined_Data['on_error'].apply(remove_NaN)
+    Combined_Data['off_error'] = Combined_Data['off_error'].apply(remove_NaN)
     return(Combined_Data)
 
 

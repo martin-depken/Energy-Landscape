@@ -14,7 +14,7 @@ import CRISPR_dCas9_binding_curve_Boyle as dCas9Boyle
 Main function
 '''
 def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_multi_processing_in_stead',
-                   objective_function='chi_squared',
+                   objective_function='chi_squared', on_target_function = 'function_name',
                 Tstart=0.1, delta=2.0, tol=1E-3, Tfinal=0.01,adjust_factor=1.1, cooling_rate=0.85, N_int=1000,
                  AR_low=40, AR_high=60, use_multiprocessing=False, nprocs=4, use_relative_steps=True,
                    output_file_results = 'fit_results.txt',
@@ -64,7 +64,8 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    use_multiprocessing=use_multiprocessing,
                    nprocs=nprocs,
                    use_relative_steps=use_relative_steps,
-                   objective_function=objective_function)
+                   objective_function=objective_function,
+                   on_target_function= on_target_function)
 
     # Adjust initial temperature
     InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
@@ -103,7 +104,6 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
 
             # update the intermediate results:
             write_parameters(X, SA,OutputFitResults)
-            write_monitor(SA,output_file_monitor)   # might want to ommit this call and only write if SA.EQ == True (see call below)
 
             if SA.EQ:
                 Eavg /= SA.interval
@@ -122,6 +122,8 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                 # stop the entire algorithm if condition is met:
                 if SA.StopCondition:
                     break
+            else:
+                write_monitor(SA, output_file_monitor,steps)  # might want to ommit this call and only write if SA.EQ == True (see call below)
 
             # updates stepsize based on Acceptance ratio and checks if you will update
             #  Temperature next time around (updates value "SimAnneal.EQ" to "TRUE")
@@ -192,8 +194,11 @@ def V(SA, xdata,ydata,yerr,params):
 
 
     # ********** SPECIFIC TO Boyle et al. dataset & position independent model **************
-    on_target_occupancy,_,_ = dCas9Boyle.calc_Boyle(CalcOccupancy=True, CalcOffRate=False, CalcOnRate=False,
-               parameters=params, mismatch_positions=[])
+    # on_target_occupancy,_,_ = dCas9Boyle.calc_Boyle(CalcOccupancy=True, CalcOffRate=False, CalcOnRate=False,
+    #            parameters=params, mismatch_positions=[],model_id='init_limit_two_drops_fixed_BP')
+
+    on_target_occupancy, _, _ = SA.on_target_function(CalcOccupancy=True, CalcOffRate=False, CalcOnRate=False,
+                                                      parameters=params, mismatch_positions=[])
     # ***************************************************************************************
 
 
@@ -202,7 +207,7 @@ def V(SA, xdata,ydata,yerr,params):
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
-            InputJob = [params, xdata[i],ydata[i],[],on_target_occupancy]
+            InputJob = [params, xdata[i],ydata[i],yerr[i],on_target_occupancy]
             SA.inQ.put(InputJob)
 
         # Retreive the results from the results Que and add together to construct Chi-squared
@@ -254,7 +259,7 @@ class SimAnneal():
     '''
 
     def __init__(self, model, Tstart, delta, tol, Tfinal,adjust_factor, cooling_rate, N_int,
-                 AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function):
+                 AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, on_target_function):
         self.model = model
         self.T = Tstart
         self.step_size = delta
@@ -297,6 +302,10 @@ class SimAnneal():
                 self.objective_function = RelativeError
             if objective_function == 'Maximum Likelihood':
                 self.objective_function = LogLikeLihood
+
+
+        # To properly calculate the on-target's values using different parameterizations.
+        self.on_target_function = on_target_function
 
         self.Monitor = {}
         self.InitialMonitor = {}
@@ -438,7 +447,6 @@ def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
     steps = 0
     while True:
         steps +=1
-        print steps
         if (steps % SA.interval == 0):
             AR = (SA.accept / float(SA.interval)) * 100
             if AR > SA.upperbnd:
