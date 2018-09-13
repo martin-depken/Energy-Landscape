@@ -42,10 +42,15 @@ def calc_Chi_square(parameters,xdata,ydata,yerr,
     :return:
     '''
 
-    # 0) Unpack xdata and ydata from Simulated Annealing
+    # 0) Unpack xdata, ydata and yerr from Simulated Annealing
     Occ_data = ydata[0]
     Asso_data= ydata[1]
     Disso_data=ydata[2]
+
+    Occ_error = yerr[0]
+    Asso_error= yerr[1]
+    Disso_error=yerr[2]
+
     mismatch_positions = xdata
 
     # 1) For all configurations of two mismatches we have the relative bound fraction (occupancy)
@@ -81,11 +86,11 @@ def calc_Chi_square(parameters,xdata,ydata,yerr,
     residual = np.zeros(3)
     if not np.math.isnan(AbsOcc_model):
         Occ_model = AbsOcc_model / ONtarget_occupancy
-        residual[0] = np.sum((Occ_data - Occ_model) ** 2)
+        residual[0] = np.sum(((Occ_data-Occ_model)/Occ_error)**2  )
     if not np.math.isnan(Asso_model):
-        residual[1] = np.sum((Asso_data - Asso_model) ** 2)
+        residual[1] = np.sum(((Asso_data - Asso_model)/Asso_error) ** 2)
     if not np.math.isnan(Disso_model):
-        residual[2] = np.sum((Disso_data - Disso_model) ** 2)
+        residual[2] = np.sum( ((Disso_data - Disso_model)/Disso_error) ** 2)
     # 6) Take weights of different maps into account (and take the sum/ inner product )
     Chi_square = weights.dot(residual)
     return Chi_square
