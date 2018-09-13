@@ -5,6 +5,7 @@ sns.set_style('ticks')
 
 
 choose_model = ['general_energies',
+                'init_limit_general_energies',
                 'constant_eps_I',
                 'init_limit_lock_const_EpsI',
                 'init_limit_two_drops_fixed_BP',
