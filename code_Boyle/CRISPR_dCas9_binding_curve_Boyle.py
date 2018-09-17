@@ -56,7 +56,10 @@ def calc_Chi_square(parameters,xdata,ydata,yerr,
     mismatch_positions = xdata
 
     # 1) For all configurations of two mismatches we have the relative bound fraction (occupancy)
-    CalculateOccupancy = True
+    # However, we want to have the option to not fit to the occupancy map. In this case, empty data is provided
+    CalculateOccupancy = False
+    if len(Occ_data) > 0:
+        CalculateOccupancy = True
 
     # 2) If we have the effective association rate predict it with the model:
     CalculateAssociation = False

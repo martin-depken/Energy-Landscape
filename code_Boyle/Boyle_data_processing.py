@@ -8,7 +8,9 @@ Preprosses the data files from Boyle et al. to be used for Simmulated Annealing
 Behrouz Eslami & Misha Klein    Depken lab 
 '''
 
-def prepare_multiprocessing(replica='1', path='../Data_Boyle/'):
+
+def prepare_multiprocessing(replica='1', path='../Data_Boyle/',
+                            use_on_rate=True, use_off_rate=True, use_occupancy=True):
     '''
     Prepares the data in such a format that it is usable for multiprocessing and Simmulated Annealing.
 
@@ -31,15 +33,43 @@ def prepare_multiprocessing(replica='1', path='../Data_Boyle/'):
     # 1) Read the datafiles and preposses them into a Pandas dataframe:
     Combined_Data = read(replica, path)
 
-    # 2) Get the three datasets
-    occ = np.array(Combined_Data.occ)
-    on = np.array(Combined_Data.on_slope)
-    off = np.array(Combined_Data.off_slope)
+    # 2) Get the three datasets (if we choose to not fit any of the datasets, supply empty lists in stead.
+    # The Chi2 calculation then knows how to handle it) 
+    if use_occupancy:
+        occ = np.array(Combined_Data.occ)
+        occ_error = np.array(Combined_Data.occ_error)
+    else:
+        occ = []
+        occ_error = []
+        for i in range(len(Combined_Data.occ)):
+            occ.append([])
+            occ_error.append([])
+        occ = np.array(occ)
+        occ_error = np.array(occ_error)
 
+    if use_on_rate:
+        on = np.array(Combined_Data.on_slope)
+        on_error = np.array(Combined_Data.on_error)
+    else:
+        on = []
+        on_error = []
+        for i in range(len(Combined_Data.on_slope)):
+            on.append([])
+            on_error.append([])
+        on = np.array(on)
+        on_error = np.array(on_error)
 
-    occ_error = np.array(Combined_Data.occ_error)
-    on_error = np.array(Combined_Data.on_error)
-    off_error = np.array(Combined_Data.off_error)
+    if use_off_rate:
+        off = np.array(Combined_Data.off_slope)
+        off_error = np.array(Combined_Data.off_error)
+    else:
+        off = []
+        off_error = []
+        for i in range(len(Combined_Data.off_slope)):
+            off.append([])
+            off_error.append([])
+        off = np.array(off)
+        off_error = np.array(off_error)
 
     # 3) Get ydata in the format wanted
     ydata = []
@@ -52,7 +82,7 @@ def prepare_multiprocessing(replica='1', path='../Data_Boyle/'):
     # 5) Get yerr in the format wanted
     yerr = []
     for i in range(len(occ)):
-        yerr.append((occ_error[i],on_error[i],off_error[i]))
+        yerr.append((occ_error[i], on_error[i], off_error[i]))
     return xdata, ydata, yerr
 
 def weights_averages(replica='1', path='../Data_Boyle/'):
