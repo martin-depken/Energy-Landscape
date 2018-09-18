@@ -33,7 +33,7 @@ def main(argv):
 
 
     # Simmulated Annealing
-    nmbr_cores = 1
+    nmbr_cores = 19
     model_ID =  argv[2]
     monitor_file = argv[3]
     fit_result_file = argv[4]
