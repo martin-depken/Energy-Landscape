@@ -3,7 +3,7 @@ from scipy import linalg
 import sys
 PATH_HPC05 = '/home/mklein1/Energy_Landscape_dCas9/'
 sys.path.append(PATH_HPC05)
-# sys.path.append('../code_general/')
+sys.path.append('../code_general/')
 from read_model_ID import unpack_parameters
 
 

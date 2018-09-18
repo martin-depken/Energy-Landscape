@@ -8,7 +8,9 @@ import sys
 sys.path.append('../code_Boyle/')
 import CRISPR_dCas9_binding_curve_Boyle as dCas9
 reload(dCas9)
-
+sys.path.append('../code_general/')
+import read_model_ID
+reload(read_model_ID);
 
 def load_simm_anneal(filename, Nparams):
     '''
@@ -167,7 +169,7 @@ def plot_landscape(parameters, model_id):
     :param model_id:
     :return:
     '''
-    epsilon, fwrd_rates = dCas9.unpack_parameters(parameters, model_id, guide_length=20)
+    epsilon, fwrd_rates = read_model_ID.unpack_parameters(parameters, model_id, guide_length=20)
     epsilon_C = epsilon[:21]
     epsilon_C[1:] *= -1
     landscape = [0.0]
@@ -194,7 +196,7 @@ def plot_mismatch_penalties(parameters, model_id):
     :param model_id:
     :return:
     '''
-    epsilon, fwrd_rates = dCas9.unpack_parameters(parameters, model_id, guide_length=20)
+    epsilon, fwrd_rates = read_model_ID.unpack_parameters(parameters, model_id, guide_length=20)
     epsilon_I = epsilon[21:]
     plt.bar(range(1,21), epsilon_I)
 
