@@ -17,10 +17,11 @@ def plot_landscape(parameters, model_id):
     epsilon, fwrd_rates = read_model_ID.unpack_parameters(parameters, model_id, guide_length=20)
     epsilon_C = epsilon[:21]
     epsilon_C[1:] *= -1
+
     landscape = [0.0]
     for eps in epsilon_C:
         landscape.append(landscape[-1] + eps)
-    plt.plot(range(-1,21),landscape, marker='s')
+    plt.plot(range(-1,21),landscape, marker='s');
 
     # window dressing:
     plt.xlabel('targeting progression', fontsize=15)

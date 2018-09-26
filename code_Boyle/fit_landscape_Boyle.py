@@ -43,9 +43,9 @@ def main(argv):
     Weights_Datasets = np.array([1.0,1.0,1.0])
 
 
-    upper_bnd = [10.0] + [10.0]*20 + [10.0]*20 + [10.0] + [6.0] + [8.0]
-    lower_bnd = [0.0] + [-10.0]*20 + [0.0]*20 + [0.0] + [0.0] + [0.0]
-    initial_guess = [5.0] + [0.0]*20 + [5.0]*20 + [5.0] + [3.0] + [4.0]
+    upper_bnd = [20.0] + [20.0]*20  + [20.0]*20 + [7.0] *21
+    lower_bnd = [0.0]  + [-20.0]*20 + [0.0]*20  + [-7.0] *21
+    initial_guess = [10.0] + [0.0]*20 + [10.0]*20 + [0.0] *21
 
     ###########################
     # /* Objective function *\#
@@ -64,7 +64,7 @@ def main(argv):
     xdata, ydata, yerr = Boyle_data_processing.prepare_multiprocessing(replica_ID,path_to_Boyle_data,
                                                                        use_occupancy=True,
                                                                        use_on_rate=True,
-                                                                       use_off_rate=False)
+                                                                       use_off_rate=True)
 
 
     # print "test ... " + ' \n'
