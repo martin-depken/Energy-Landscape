@@ -1,7 +1,9 @@
 import numpy as np
 
-choose_model = ['general_energies',
+choose_model = ['general_energies_rates',
+                'general_energies',
                 'init_limit_general_energies',
+                'init_limit_fast_internal_general_energies',
                 'constant_eps_I',
                 'init_limit_lock_const_EpsI',
                 'init_limit_two_drops_fixed_BP',
@@ -24,6 +26,12 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
 
+    if model_id == 'general_energies_rates':
+        epsilon = parameters[:(2*guide_length+1)]
+        forward_rates = np.ones(guide_length + 2)
+        forward_rates[:-1] = 10**np.array(parameters[(2*guide_length+1):])
+        forward_rates[-1] = 0.0 # dCas9 does not cleave
+
     if model_id == 'general_energies':
         # General position dependency + minimal amount of rates
         epsilon = parameters[:-2]
@@ -32,13 +40,30 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
     if model_id == 'init_limit_general_energies':
-        # General position dependency + minimal amount of rates
+        # General position dependency
         epsilon = parameters[:-3]
         forward_rates = np.ones(guide_length + 2) * 10**parameters[-2] #internal rates
         forward_rates[0] = 10**parameters[-1]  # from solution to PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
         # first rate from PAM into R-loop is less or equal to other internal rates
-        forward_rates[1] = np.exp(-parameters[-3])*10**parameters[-2]
+        forward_rates[1] = np.exp(-parameters[-3])* 10**parameters[-2]
+
+    if model_id == 'init_limit_fast_internal_general_energies':
+        # General position dependency for energies
+        epsilon = parameters[:-3]
+
+        internal_rates = 10**parameters[-1]  #  directly set the rate (the order of magnitude)
+        rate_sol_to_PAM = 10**parameters[-3]  # directly set a rate (the order of magnitude)
+        rate_PAM_to_R1 = np.exp(-parameters[-2]+ epsilon[1]) * internal_rates   # through placement of the transition state above R1's energy.
+
+        forward_rates = np.ones(guide_length + 2)* internal_rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = 0.0
+
+
+
+
 
     if model_id == 'constant_eps_I':
         # General position dependency for matches, constant mismatch penalty
