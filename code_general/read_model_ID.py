@@ -48,6 +48,21 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         # first rate from PAM into R-loop is less or equal to other internal rates
         forward_rates[1] = np.exp(-parameters[-3])* 10**parameters[-2]
 
+
+    if model_id == 'init_limit_general_energies_v2':
+        # General position dependency
+        epsilon = parameters[:-3]
+
+        rate_sol_to_PAM = 10**parameters[-3]
+        rate_PAM_to_R1  = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+
+
     if model_id == 'init_limit_fast_internal_general_energies':
         # General position dependency for energies
         epsilon = parameters[:-3]
