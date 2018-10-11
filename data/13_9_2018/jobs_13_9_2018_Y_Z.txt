@@ -1,0 +1,2 @@
+1	init_limit_general_energies_v2	/home/mklein1/Energy_Landscape_dCas9/13_9_2018/monitor_13_9_2018_sim_Y.txt	/home/mklein1/Energy_Landscape_dCas9/13_9_2018/fit_13_9_2018_sim_Y.txt	/home/mklein1/Energy_Landscape_dCas9/13_9_2018/init_monitor_13_9_2018_sim_Y.txt	1
+1	init_limit_general_energies_v2	/home/mklein1/Energy_Landscape_dCas9/13_9_2018/monitor_13_9_2018_sim_Z.txt	/home/mklein1/Energy_Landscape_dCas9/13_9_2018/fit_13_9_2018_sim_Z.txt	/home/mklein1/Energy_Landscape_dCas9/13_9_2018/init_monitor_13_9_2018_sim_Z.txt	1
