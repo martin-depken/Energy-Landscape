@@ -73,7 +73,8 @@ def make_block_ID(MM_pos_list):
     return '|'.join(map(str, [bi, bf]))
 
 
-def plot_block_mm_ABA(data, data_name='Finkelstein Data', Canonical=True, Plot=True):
+def plot_block_mm_ABA(data, data_name='Finkelstein Data', Canonical=True, Plot=True,
+                      SaveFigures=False, figure_names=['figure1','figure 2']):
     data['Mutation Type'].fillna('', inplace=True)
     select_multi_mm = data['Mutation Type'].apply(lambda x: np.unique(np.array(x.split('|')))[0] == 'r')
     multi_mm_data = data[(data['Canonical'] == Canonical) & (select_multi_mm) & (data['Mutation Count'] > 2)][['Mutation ID', 'Delta ABA (kBT)', 'Uncertainty']]
@@ -94,14 +95,18 @@ def plot_block_mm_ABA(data, data_name='Finkelstein Data', Canonical=True, Plot=T
     if Plot:
         plt.figure()
         sns.heatmap(block_mm_map, cmap='coolwarm', cbar=True, vmin=0, vmax=block_mm_data_mean['Delta ABA (kBT)'].max())
+
         plt.xlabel('Block end', fontsize=15)
         plt.ylabel('Block start', fontsize=15)
         plt.title('$\Delta$ABA - ' + data_name, fontsize=15)
         if not Canonical:
             plt.title('$\Delta$ABA - ' + data_name + ' - Noncanonical', fontsize=15)
         ax = plt.gca()
-        ax.set_xticklabels(map(lambda x: str(int(x)), ax.get_xticks() + 0.5));
-        ax.set_yticklabels(map(lambda x: str(int(x)), ax.get_yticks() + 0.5));
+        ax.set_xticklabels(map(lambda x: str(int(x)), ax.get_xticks() + 0.5),fontsize=15);
+        ax.set_yticklabels(map(lambda x: str(int(x)), 20 -ax.get_yticks() + 0.5), fontsize=15,rotation=0);
+        if SaveFigures:
+            plt.savefig(figure_names[0],format='pdf',bbox_inches='tight')
+
 
     block_start_mm_data = block_mm_data_mean.set_index('Position').groupby(
         lambda x: int(x.split('|')[0])).mean().reset_index().rename(columns={'index': 'Block start'})
@@ -114,6 +119,13 @@ def plot_block_mm_ABA(data, data_name='Finkelstein Data', Canonical=True, Plot=T
         plt.title(data_name, fontsize=15)
         if not Canonical:
             plt.title(data_name + ' - Noncanonical', fontsize=15)
+
+
+        plt.xticks(fontsize=15);
+        plt.yticks(fontsize=15);
+        if SaveFigures:
+            plt.savefig(figure_names[1],format='pdf',bbox_inches='tight')
+
 
     return block_mm_data_mean, block_mm_map, block_start_mm_data
 
