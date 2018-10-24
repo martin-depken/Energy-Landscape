@@ -39,6 +39,12 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[0] = parameters[-1]  # from solution to PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
+    if model_id == 'general_energies_v2':
+        # General position dependency + minimal amount of rates
+        epsilon = parameters[:-2]
+        forward_rates = np.ones(guide_length + 2) * 10**parameters[-2] #internal rates
+        forward_rates[0] = 10**parameters[-1]  # from solution to PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
 
     if model_id == 'init_limit_general_energies_v0':
         # General position dependency
