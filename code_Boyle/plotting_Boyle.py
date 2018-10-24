@@ -12,7 +12,7 @@ sys.path.append('../code_general/')
 import read_model_ID
 reload(read_model_ID);
 
-def load_simm_anneal(filename, Nparams):
+def load_simm_anneal(filename, Nparams, fatch_solution='final'):
     '''
     Load the parameter set from simmulated annealing.
     Fix indexing based on parameterisation to correctly import the table
@@ -25,7 +25,11 @@ def load_simm_anneal(filename, Nparams):
     final_result = []
     for param in range(1, Nparams + 1):
         col = 'Parameter ' + str(param)
-        final_result.append(fit[col].iloc[-1])
+
+        if fatch_solution == 'final':
+            final_result.append(fit[col].iloc[-1])
+        else:
+            final_result.append(fit[col].iloc[fatch_solution])
 
     sa_result = np.array(final_result)
     return sa_result
@@ -55,7 +59,7 @@ def calc_predictions(parameters,model_id):
     return Pbound_predict, on_rate_predict, off_rate_predict
 
 
-def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/'):
+def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/',axis=None,cbar=True):
     '''
     Plot heatmap for double mismatches with Boyle's data in below diagonal and model above the diagonal
     :param model: matrix with double-mismatch values
@@ -91,33 +95,40 @@ def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenD
     if kind == 'Occupancy':
         val_max = 1
 
+
+    if axis is None:
+        ax = plt.gca()
+    else:
+        ax = axis
+
     # 3) plot the data:
     mask_exp = np.zeros(shape=experiment.shape)
     for i in range(len(experiment)):
         for j in range(i - 1, len(experiment)):
             mask_exp[i, j] = 1
-    sns.heatmap(experiment, cmap=colormap, mask=mask_exp, cbar=True, vmin=0, vmax=val_max);
+    sns.heatmap(experiment, cmap=colormap, mask=mask_exp, cbar=cbar, vmin=0, vmax=val_max,ax=ax);
 
     # 4) Plot the model prediction alongside
     mask = np.ones(shape=model.shape)
     for i in range(len(model)):
         for j in range(i + 1, len(model)):
             mask[i, j] = 0
-    sns.heatmap(model, cmap=colormap, mask=mask, cbar=True, vmin=val_min, vmax=val_max);
+    sns.heatmap(model, cmap=colormap, mask=mask, cbar=cbar, vmin=val_min, vmax=val_max,ax=ax);
 
     # 5) Adjust ticks and labels to get correct nucleotide positions
-    ax = plt.gca()
+
+
     ax.set_xticklabels(map(lambda x: str(int(Ng-x)), ax.get_xticks() - 0.5));
     #ax.set_yticklabels(map(lambda x: str(int(Ng-x)), ax.get_yticks() - 0.5));
     ax.set_yticklabels(map(lambda x: str(int(x+1)), ax.get_yticks() - 0.5));
 
     # 6) Further window dressing
-    plt.xlabel('mismatch 1', fontsize=15)
-    plt.ylabel('mismatch 2', fontsize=15)
-    plt.title(title, fontsize=15);
+    ax.set_xlabel('mismatch 1', fontsize=15)
+    ax.set_ylabel('mismatch 2', fontsize=15)
+    ax.set_title(title, fontsize=15);
     return
 
-def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/'):
+def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/',axis=None):
     # 1) settings based on physical quantity you want to plot
     if kind == 'Occupancy':
         color = 'green'
@@ -146,65 +157,26 @@ def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_B
 
     #4) plot
     positions = 20 - np.arange(0,20)
-    plt.plot(positions, experiment, linestyle='dashed', marker='s', color=color,label='Data')
-    plt.plot(positions, model, linestyle='solid', marker='^', color=color, label='Model')
+    if axis is None:
+        plt.plot(positions, experiment, linestyle='dashed', marker='s', color=color,label='Data')
+        plt.plot(positions, model, linestyle='solid', marker='^', color=color, label='Model')
+        ax=plt.gca()
+    else:
+        ax = axis
+        ax.plot(positions, experiment, linestyle='dashed', marker='s', color=color, label='Data')
+        ax.plot(positions, model, linestyle='solid', marker='^', color=color, label='Model')
+
 
     #5) aesthetic and window dressing
-    plt.ylim(val_min,val_max )
-    plt.xlim(1, 21)
-    plt.xlabel('mismatch position', fontsize=15)
-    plt.ylabel(ylabel, fontsize=15)
-    plt.xticks([i + 0.5 for i in range(20)],
-               [1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0,
-               fontsize=15);
-    plt.yticks(fontsize=15)
-    plt.legend(loc='best', fontsize=12, frameon=True)
-    sns.despine()
+    ax.set_ylim(val_min,val_max )
+    ax.set_xlim(1, 21)
+    ax.set_xlabel('mismatch position', fontsize=15)
+    ax.set_ylabel(ylabel, fontsize=15)
+    ax.set_xticks([i + 0.5 for i in range(20)])
+    ax.set_xticklabels([1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20],
+                       rotation=0,
+                       fontsize=15);
+    ax.set_yticklabels(ax.get_yticks(),fontsize=15)
+    ax.legend(loc='best', fontsize=12, frameon=True)
+    sns.despine(ax=ax)
     return
-
-def plot_landscape(parameters, model_id):
-    '''
-    Plot the free-energy landscape of the on-target
-    :param parameters:
-    :param model_id:
-    :return:
-    '''
-    epsilon, fwrd_rates = read_model_ID.unpack_parameters(parameters, model_id, guide_length=20)
-    epsilon_C = epsilon[:21]
-    epsilon_C[1:] *= -1
-    landscape = [0.0]
-    for eps in epsilon_C:
-        landscape.append(landscape[-1] + eps)
-    plt.plot(range(-1,21),landscape, marker='s')
-
-    # window dressing:
-    plt.xlabel('targeting progression', fontsize=15)
-    plt.ylabel(r'free-energy ($k_BT$)',fontsize=15)
-    plt.xticks(range(-1,21),
-               ['S', 'P',1,'', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
-               ,fontsize=15);
-    plt.yticks(fontsize=15)
-    plt.grid('on')
-    sns.despine()
-    return landscape
-
-
-def plot_mismatch_penalties(parameters, model_id):
-    '''
-    plot mismatch penalties VS position as a bar plot
-    :param parameters:
-    :param model_id:
-    :return:
-    '''
-    epsilon, fwrd_rates = read_model_ID.unpack_parameters(parameters, model_id, guide_length=20)
-    epsilon_I = epsilon[21:]
-    plt.bar(range(1,21), epsilon_I)
-
-    # window dressing:
-    plt.xlabel('targeting progression', fontsize=15)
-    plt.ylabel(r'mismatch penalties ($k_BT$)',fontsize=15)
-    plt.xticks(np.arange(1,21)+0.5,
-               [1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
-               ,fontsize=15);
-    plt.yticks(fontsize=15)
-    return epsilon_I
