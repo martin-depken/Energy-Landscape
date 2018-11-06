@@ -29,7 +29,7 @@ reload(Bdata);
 
 import CRISPR_dCas9_binding_curve_Boyle as dCas9
 reload(dCas9);
-sys.path.append('../code_Pclv /')
+sys.path.append('../code_Pclv/')
 import CRISPR_Kinetic_model as Pclv
 reload(Pclv);
 
@@ -221,13 +221,16 @@ def median_solution(simset):
 
 
 def calc_rate_PAM_to_Rloop(kf, kOT, energy_landscape):
-    Delta = np.diff(energy_landscape)
-    Kd = np.exp(+Delta[0] + np.log(10.0))
+    Epsilon = np.diff(energy_landscape)
+    Delta = -np.diff(energy_landscape)
+    Delta[0] *= -1
+
+    Kd = np.exp(+Epsilon[0] + np.log(10.0))
 
     P2 = Pclv.Pclv(Delta[2:])
     c = kOT * (1 + Kd)
-    E1 = Delta[1]
-    alpha = 1.0 /(kf * P2) * np.exp(-E1) * c
+    E1 = Epsilon[1]
+    alpha = 1.0 /(kf * P2) * np.exp(+E1) * c
     kPR = c * (1 - alpha) ** (-1)
     return kPR , alpha
 
@@ -248,8 +251,8 @@ def test_forward_rate(kf, kOT, energy_landscape, epsilon_I,
     new_parameters = list(Epsilon) + list(epsilon_I)
     # kSP should be irrelevant once equil. between P and S is reached
 
-    # new_parameters.append(np.log10(10 ** 3))
-    new_parameters.append(np.log10(3.888293))
+    new_parameters.append(np.log10(10 ** 3))
+    # new_parameters.append(np.log10(3.888293))
     new_parameters.append(np.log10(kPR))
     new_parameters.append(np.log10(kf))
     new_parameters = np.array(new_parameters)
@@ -298,7 +301,7 @@ def optimize_forward_rate(simset, forward_rates, mode='mean'):
 
     # Now find the optimum:
     kf_opt = kf_vals[np.argmin(V)]
-    kf_opt = 808.418035
+    # kf_opt = 808.418035
     V_opt, parameters_opt = test_forward_rate(kf=kf_opt,
                                       kOT=kOT,
                                       energy_landscape=landscape_avg,
