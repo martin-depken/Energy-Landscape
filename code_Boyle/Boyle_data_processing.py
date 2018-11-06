@@ -11,7 +11,8 @@ Behrouz Eslami & Misha Klein    Depken lab
 
 def prepare_multiprocessing(replica='1', path='../Data_Boyle/',
                             use_on_rate=True, use_off_rate=True, use_occupancy=True,
-                            use_blocks_only=False):
+                            use_blocks_only=False,
+                            use_single_mm_only=False):
     '''
     Prepares the data in such a format that it is usable for multiprocessing and Simmulated Annealing.
 
@@ -32,7 +33,7 @@ def prepare_multiprocessing(replica='1', path='../Data_Boyle/',
     '''
 
     # 1) Read the datafiles and preposses them into a Pandas dataframe:
-    Combined_Data = read(replica, path, consecutive_mm=use_blocks_only)
+    Combined_Data = read(replica, path, consecutive_mm=use_blocks_only, single_mm=use_single_mm_only)
 
     # 2) Get the three datasets (if we choose to not fit any of the datasets, supply empty lists in stead.
     # The Chi2 calculation then knows how to handle it) 
@@ -105,7 +106,7 @@ def weights_averages(replica='1', path='../Data_Boyle/'):
     return np.array([OccWeight,OnWeight,OffWeight])
 
 
-def read(replica='1',path='../Data_Boyle/', consecutive_mm=False):
+def read(replica='1',path='../Data_Boyle/', consecutive_mm=False, single_mm=False):
     '''
     Load the datafiles with the original data from Boyle et al. and aggregate them into a single dataframe
     :param replica: 1 or 2
@@ -147,6 +148,10 @@ def read(replica='1',path='../Data_Boyle/', consecutive_mm=False):
 
     if consecutive_mm:
         Combined_Data = Combined_Data[Combined_Data['MM_pos'].apply(find_consecutive)]
+
+    if single_mm:
+        Combined_Data = Combined_Data[Combined_Data['MM_pos'].apply(len) == 1]
+
     return(Combined_Data)
 
 

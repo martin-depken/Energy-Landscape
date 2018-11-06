@@ -117,7 +117,7 @@ def plot_mismatch_penalties(parameters, model_id,axis=None):
         ax = plt.gca()
     else:
         ax = axis
-    ax.bar(range(1,21), epsilon_I)
+    ax.bar(range(1,21), epsilon_I, alpha=0.5)
     # window dressing:
     ax.set_xlabel('targeting progression', fontsize=15)
     ax.set_ylabel(r'mismatch penalties ($k_BT$)',fontsize=15)
