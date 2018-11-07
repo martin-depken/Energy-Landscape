@@ -326,4 +326,4 @@ def write_parameters(parameters, model_id, filename,
     for param in parameters:
         O.write(str(param) + '\n')
     O.close()
-    return 
+    return

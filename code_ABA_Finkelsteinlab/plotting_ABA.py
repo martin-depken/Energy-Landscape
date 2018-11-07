@@ -75,6 +75,8 @@ def make_block_ID(MM_pos_list):
 
 def plot_block_mm_ABA(data, data_name='Finkelstein Data', Canonical=True, Plot=True,
                       SaveFigures=False, figure_names=['figure1','figure 2']):
+
+
     data['Mutation Type'].fillna('', inplace=True)
     select_multi_mm = data['Mutation Type'].apply(lambda x: np.unique(np.array(x.split('|')))[0] == 'r')
     multi_mm_data = data[(data['Canonical'] == Canonical) & (select_multi_mm) & (data['Mutation Count'] > 2)][['Mutation ID', 'Delta ABA (kBT)', 'Uncertainty']]

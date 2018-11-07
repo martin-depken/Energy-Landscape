@@ -3,7 +3,7 @@ from scipy import linalg
 from scipy.optimize import curve_fit
 import sys
 sys.path.append('../code_general/')
-from CRISPR_free_energy_landscape import unpack_parameters
+from read_model_ID import unpack_parameters
 
 def calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):
     rate_matrix = get_master_equation(parameters, mismatch_positions, model_id, guide_length)
