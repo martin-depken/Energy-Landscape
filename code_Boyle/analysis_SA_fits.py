@@ -311,3 +311,19 @@ def optimize_forward_rate(simset, forward_rates, mode='mean'):
                                       yerr=yerr)
 
     return V, kf_vals, kf_opt, parameters_opt, V_opt
+
+
+
+def write_parameters(parameters, model_id, filename,
+                    today, fit_info, mode):
+
+    O = open(filename, 'w')
+    O.write('# date of modification: ' + today + '\n')
+    O.write('# model ID: '+ model_id + '\n')
+    O.write('# SA fits used: ' + fit_info + '\n' )
+    O.write('# analysis: '+ mode + '\n')
+
+    for param in parameters:
+        O.write(str(param) + '\n')
+    O.close()
+    return 
