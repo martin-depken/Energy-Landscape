@@ -7,7 +7,8 @@ sys.path.append('../code_Boyle/')
 import read_model_ID
 reload(read_model_ID)
 
-from CRISPR_dCas9_binding_curve_Boyle import get_energies
+import CRISPR_dCas9_binding_curve_Boyle as dCas9
+reload(dCas9)
 
 
 
@@ -80,7 +81,7 @@ def translate_binding_to_cleaving(parameters, model_ID, rate_to_cleave, mismatch
     # 1) Use result from fit to binding data:
     epsilon, forward_rates = read_model_ID.unpack_parameters(parameters,model_ID,guide_length)
 
-    energies = get_energies(epsilon,mismatch_positions, guide_length)
+    energies = dCas9.get_energies(epsilon,mismatch_positions, guide_length)
 
 
     # 2) Use detailed balance to get the backward rates:
@@ -105,4 +106,59 @@ def Pclv(Delta):
     return 1.0 / (1.0 + exp_of_T)
 
 
+def calc_Time(parameters,model_ID,mismatch_positions,rate_to_cleave,
+              guide_length=20,
+              rel_conc=1.0):
+    '''
+
+    :param parameters:
+    :param model_ID:
+    :param mismatch_positions:
+    :param rate_to_cleave:
+    :param guide_length:
+    :param rel_conc: Concentration in units of 10nM
+    :return:
+    '''
+    # 1) Use result from fit to binding data:
+    epsilon, forward_rates = read_model_ID.unpack_parameters(parameters,model_ID,guide_length)
+
+
+    # 2) Use detailed balance to get the backward rates:
+    energies = dCas9.get_energies(epsilon, mismatch_positions, guide_length)
+    backward_rates = dCas9.get_backward_rates(energies, forward_rates)
+
+    # 3) Adjust final rate to be equal to intrinsic catalytic rate:
+    forward_rates[-1] = rate_to_cleave
+
+    #4) Adjust binding rate from solution with the concentration (rel_conc=1.0 corresponds to 10nM):
+    forward_rates[0] *= rel_conc
+
+    #5) construct matrix of Master Equation:
+    rate_matrix = dCas9.build_rate_matrix(forward_rates, backward_rates)
+
+    #6) Calculate MFPT from solution at post-cleavage state:
+    TimeCLV = MeanFirstPassageTime(rate_matrix,guide_length)
+    return TimeCLV
+
+
+
+def MeanFirstPassageTime(matrix_R ,guide_length=20):
+    '''
+    From master equation we could immediatly derive how the evolution equation should
+    directly give us the first passage time.
+
+    First we construct the matrix M, the evolution equation for the system without the absorbing state
+    From there:
+    MFPT = sum_{n \neq a} <n| M^{-1} | starting_state>
+
+    :param matrix_R: evolution matrix original system (including the absorbing state)
+    :param parameters:
+    :return: MFPT. Mean First Passage time at the absorber, given this parameter set.
+    '''
+    M = -1 * matrix_R
+    Minv = np.linalg.inv(M)
+    vec = np.ones(len(Minv))
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    MFPT = vec.dot(Minv.dot(everything_unbound))  # <vec| M^{-1} | P0>
+    return MFPT
 
