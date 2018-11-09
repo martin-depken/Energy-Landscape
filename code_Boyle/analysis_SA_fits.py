@@ -33,12 +33,6 @@ sys.path.append('../code_Pclv/')
 import CRISPR_Kinetic_model as Pclv
 reload(Pclv);
 
-
-
-
-
-
-
 ########################
 
 def P(kon,koff,t):
@@ -252,7 +246,6 @@ def test_forward_rate(kf, kOT, energy_landscape, epsilon_I,
     # kSP should be irrelevant once equil. between P and S is reached
 
     new_parameters.append(np.log10(10 ** 3))
-    # new_parameters.append(np.log10(3.888293))
     new_parameters.append(np.log10(kPR))
     new_parameters.append(np.log10(kf))
     new_parameters = np.array(new_parameters)
@@ -279,7 +272,6 @@ def optimize_forward_rate(simset, forward_rates, mode='mean'):
         landscape_avg, epsI_avg, kOT = median_solution(simset)
 
     # kOT = calc_on_rate()
-    # kOT = 0.3/1000.0
 
     _, lower_bnd_kf = calc_rate_PAM_to_Rloop(kf=1.0, kOT=kOT, energy_landscape=landscape_avg)
 
@@ -301,7 +293,6 @@ def optimize_forward_rate(simset, forward_rates, mode='mean'):
 
     # Now find the optimum:
     kf_opt = kf_vals[np.argmin(V)]
-    # kf_opt = 808.418035
     V_opt, parameters_opt = test_forward_rate(kf=kf_opt,
                                       kOT=kOT,
                                       energy_landscape=landscape_avg,
