@@ -245,7 +245,8 @@ def test_forward_rate(kf, kOT, energy_landscape, epsilon_I,
     new_parameters = list(Epsilon) + list(epsilon_I)
     # kSP should be irrelevant once equil. between P and S is reached
 
-    new_parameters.append(np.log10(10 ** 3))
+    # new_parameters.append(np.log10(10 ** 3))
+    new_parameters.append(np.log10(0.25))
     new_parameters.append(np.log10(kPR))
     new_parameters.append(np.log10(kf))
     new_parameters = np.array(new_parameters)
