@@ -245,8 +245,8 @@ def test_forward_rate(kf, kOT, energy_landscape, epsilon_I,
     new_parameters = list(Epsilon) + list(epsilon_I)
     # kSP should be irrelevant once equil. between P and S is reached
 
-    # new_parameters.append(np.log10(10 ** 3))
-    new_parameters.append(np.log10(0.25))
+    new_parameters.append(np.log10(10 ** 3))
+    # new_parameters.append(np.log10(0.25))
     new_parameters.append(np.log10(kPR))
     new_parameters.append(np.log10(kf))
     new_parameters = np.array(new_parameters)
@@ -319,3 +319,50 @@ def write_parameters(parameters, model_id, filename,
         O.write(str(param) + '\n')
     O.close()
     return
+
+
+def select_relative(Chi2, simset, percentage=0.05):
+    '''
+    Select those solutions that whose chi-squared differs no more than x% from
+    the lowest chi-squared value in the set of simulations.
+    '''
+    # ---- find minimum value of Chi-squared amongst replicates ---
+    best_solution = min(Chi2)
+
+    # ---- select those simulations with a chi2 that differs no more than x% from the best solution ---
+    selected_solutions = Chi2[Chi2 <= ((1 + percentage) * best_solution)]
+
+    # ----- select the simulations files ----
+    simset = np.array(simset)
+    selected_sims = simset[Chi2 <= ((1 + percentage) * best_solution)]
+    return selected_solutions, selected_sims, (1 + percentage) * best_solution
+
+
+
+
+def Tukey_outlier_test(data, simset, k=1.5):
+    '''
+    Use 'Tukey outlier test' to filter outliers from dataset
+
+    protocol:
+    1. Assume the data to be Gaussian distributed (null-hypothesis)
+    2. A datapoint is NOT an outlier if it lies within the 25% and 75% percentiles
+    3. p-value is the probability of obtaining a datapoint outside this interval. Prob. to reject the null-hypothsis.
+    '''
+
+    # ---- Tukey's test says: x in [Q1-1.5*IQR, Q3+1.5*IQR], with IQR=Q3-Q1 ----
+    Q1 = np.percentile(data, 25)
+    Q3 = np.percentile(data, 75)
+    IQR = Q3 - Q1
+    low = Q1 - k * IQR
+    high = Q3 + k * IQR
+
+    # ---- Choose the datapoints ---
+    Tukey_data = data[(data <= high) & (data >= low)]
+
+    # ---- select corresponding simulations -----
+    simset = np.array(simset)
+    Tukey_sims = simset[(data <= high) & (data >= low)]
+    return Tukey_data, Tukey_sims, low, high
+
+
