@@ -139,8 +139,8 @@ def process_SA_fits(simset,Nparams=44, model_id='init_limit_general_energies_v2'
         kPR = fwd_rates[1] * P
         kSP = 0.1 * fwd_rates[0]
         kPS = kSP * np.exp(epsilon[0] + np.log(10.0))
-        k_init = kPR * kSP / (kPR + kSP + kPS)
-        kinetic = k_init * 1000
+        k_OT = kPR * kSP / (kPR + kSP + kPS)
+        kinetic = k_OT * 1000
         thermodynamic = kPR / (1.0 + np.exp(+epsilon[0] + np.log(10.0))) * 1000
 
         fast_Rloop_data = {}
@@ -185,6 +185,7 @@ def average_solution(simset):
 
     # 3) get average on-target binding rate:
     kOT_avg = float(fast_Rloop.mean()['kinetic'])
+
     return landscape_avg, epsI_avg, kOT_avg/1000.0
 
 
@@ -209,44 +210,60 @@ def median_solution(simset):
     # 3) get average on-target binding rate:
     kOT_avg = float(fast_Rloop.median()['kinetic'])
     # kOT_avg = float(fast_Rloop.median()['thermodynamic'])
+
     return landscape_avg, epsI_avg, kOT_avg/1000.0
 
 
 
 
-def calc_rate_PAM_to_Rloop(kf, kOT, energy_landscape):
+def calc_rate_PAM_to_Rloop(energy_landscape, kf, kOT, kSP=1000.0):
+    '''
+    Get kPR from kOT and the two other fitted forward rates.
+
+    Adjusted to use exact equation involving both kf and kSP
+    :param energy_landscape:
+    :param kf:
+    :param kOT:
+    :param kSP:
+    :return:
+    '''
+
+
     Epsilon = np.diff(energy_landscape)
     Delta = -np.diff(energy_landscape)
     Delta[0] *= -1
 
-    Kd = np.exp(+Epsilon[0] + np.log(10.0))
+    E_SP = Epsilon[0]
+    # ---- associaton rate data is taken at 1nM, we report the parameter values at 10nM ----
+    kSP *= 0.1
+    Kd = np.exp(+E_SP + np.log(10.0))
 
     P2 = Pclv.Pclv(Delta[2:])
-    c = kOT * (1 + Kd)
-    E1 = Epsilon[1]
-    alpha = 1.0 /(kf * P2) * np.exp(+E1) * c
+    c = kOT * (1 + Kd)  /(1 - kOT/kSP)
+    E_RP = Epsilon[1]
+    alpha = 1.0 /(kf * P2) * np.exp(+E_RP) * c
     kPR = c * (1 - alpha) ** (-1)
     return kPR , alpha
 
-def test_forward_rate(kf, kOT, energy_landscape, epsilon_I,
-                     xdata, ydata, yerr, model_id='init_limit_general_energies_v2'):
+
+def test_rates(kf, kOT, energy_landscape, epsilon_I,
+               xdata, ydata, yerr, model_id='init_limit_general_energies_v2',
+               kSP=1000.0):
     '''
     calculate the chi-squared value based on the single-mismatch association rate data
-    for a particular value of the internal forward rate
+    for a set of particular values of the internal forward rate and the rate from solution to PAM
     '''
 
-    # 1) Use kOT, the energy landscape and kf to determine kPR:
-    kPR ,_= calc_rate_PAM_to_Rloop(kf, kOT, energy_landscape)
+    # 1) Use kOT, the energy landscape, kf and kSP to determine kPR:
+    kPR, _ = calc_rate_PAM_to_Rloop(energy_landscape, kf, kOT, kSP)
 
     # 2) Calculate chi-squared with single mismatch off-targets:
     Epsilon = np.diff(energy_landscape)
     Epsilon[1:] *= -1
 
     new_parameters = list(Epsilon) + list(epsilon_I)
-    # kSP should be irrelevant once equil. between P and S is reached
 
-    new_parameters.append(np.log10(10 ** 3))
-    # new_parameters.append(np.log10(0.25))
+    new_parameters.append(np.log10(kSP))
     new_parameters.append(np.log10(kPR))
     new_parameters.append(np.log10(kf))
     new_parameters = np.array(new_parameters)
@@ -256,12 +273,12 @@ def test_forward_rate(kf, kOT, energy_landscape, epsilon_I,
     V = 0
     for i in range(len(xdata)):
         V += dCas9.calc_Chi_square(new_parameters, xdata[i], ydata[i], yerr[i], ONtarget_occupancy,
-                              model_id=model_id)
+                                   model_id=model_id)
 
     return V, new_parameters
 
 
-def optimize_forward_rate(simset, forward_rates, mode='mean'):
+def optimize_internal_forward_rate(simset, forward_rates, mode='mean',kSP=1000.0):
     xdata, ydata, yerr = Bdata.prepare_multiprocessing(use_single_mm_only=True,
                                                        use_on_rate=True,
                                                        use_off_rate=False,
@@ -273,16 +290,14 @@ def optimize_forward_rate(simset, forward_rates, mode='mean'):
         landscape_avg, epsI_avg, kOT = median_solution(simset)
 
     # kOT = calc_on_rate()
-
-    _, lower_bnd_kf = calc_rate_PAM_to_Rloop(kf=1.0, kOT=kOT, energy_landscape=landscape_avg)
-
+    _, lower_bnd_kf = calc_rate_PAM_to_Rloop(kSP=kSP, kf=1.0, kOT=kOT, energy_landscape=landscape_avg)
     V = []
     kf_vals = []
     for kf in forward_rates:
         if kf < lower_bnd_kf:
             continue
         kf_vals.append(kf)
-        v, _ = test_forward_rate(kf=kf,
+        v, _ = test_rates(kf=kf, kSP=kSP,
                                  kOT=kOT,
                                  energy_landscape=landscape_avg,
                                  epsilon_I=epsI_avg,
@@ -294,7 +309,8 @@ def optimize_forward_rate(simset, forward_rates, mode='mean'):
 
     # Now find the optimum:
     kf_opt = kf_vals[np.argmin(V)]
-    V_opt, parameters_opt = test_forward_rate(kf=kf_opt,
+    V_opt, parameters_opt = test_rates(kf=kf_opt,
+                                       kSP=kSP,
                                       kOT=kOT,
                                       energy_landscape=landscape_avg,
                                       epsilon_I=epsI_avg,
@@ -304,6 +320,53 @@ def optimize_forward_rate(simset, forward_rates, mode='mean'):
 
     return V, kf_vals, kf_opt, parameters_opt, V_opt
 
+
+def grid_search_forward_rates(simset, int_forward_rates, sol_to_PAM_rates,
+                              save_to_file = True,
+                              mode='median',
+                              today='30/11/2018'):
+    '''
+    2D grid search to find both internal forward rate and rate from solution to PAM based on the average landscape
+    '''
+
+    # --- for every value of kSP, perform a 1D grid search along kf ----
+
+    grid_V = np.nan * np.ones((len(int_forward_rates), len(sol_to_PAM_rates)))
+    grid_kfvals = np.nan * np.ones((len(int_forward_rates), len(sol_to_PAM_rates)))
+
+    # partial optimum along kf:
+    grid_kfopt = []
+    grid_Vopt = []
+    grid_parameters = []
+    for i, kSP in enumerate(sol_to_PAM_rates):
+        V, kf_vals, kf_opt, parameters_opt, V_opt = optimize_internal_forward_rate(simset, int_forward_rates, mode,
+                                                                                   kSP=kSP)
+
+        grid_V[-len(V):, i] = V
+        grid_kfvals[-len(kf_vals):, i] = kf_vals
+        grid_kfopt.append(kf_opt)
+        grid_Vopt.append(V_opt)
+        grid_parameters.append(parameters_opt)
+
+    # --- find optimum on grid -----
+    Vopt = np.min(grid_Vopt)
+    kf_opt = grid_kfopt[np.argmin(grid_Vopt)]
+    kSP_opt = sol_to_PAM_rates[np.argmin(grid_Vopt)]
+    parameters_opt = grid_parameters[np.argmin(grid_Vopt)]
+
+    if save_to_file:
+        #---- store parameters into text file ----
+        fit_info = str(len(simset)) + ' in total ,  folder 25_10_2018/sims: 1 - 150 & 19_10_2018'
+        model_id = 'init_limit_general_energies_v2'
+        file_params = '../data/25_10_2018/' + mode + '_landscape_Boyle_2Dgrid.txt'
+        write_parameters(parameters_opt, model_id, file_params, today, fit_info, mode)
+
+        # ---- store grid points into Excel file ------
+        filename = '../data/25_10_2018/grid_search_' + mode +  today.replace('/','_') +'.xlsx'
+        write_grid(grid_V, grid_kfvals, Vopt, kf_opt, kSP_opt, int_forward_rates, sol_to_PAM_rates, filename)
+
+
+    return grid_V, grid_kfvals, Vopt, kf_opt, kSP_opt, parameters_opt
 
 
 def write_parameters(parameters, model_id, filename,
@@ -321,7 +384,128 @@ def write_parameters(parameters, model_id, filename,
     return
 
 
-def select_relative(Chi2, simset, percentage=0.05):
+def write_grid(V, kf_vals, Vopt, kf_opt, kSP_opt, forward_rates,binding_rates, filename):
+    # ------ calculated chi-squared values on grid points ------------
+    df = pd.DataFrame(V)
+    convert_col_names = {}
+    for i in range(len(binding_rates)):
+        convert_col_names[i] = binding_rates[i]
+
+    convert_row_names = {}
+    for j in range(len(forward_rates)):
+        convert_row_names[j] = forward_rates[j]
+    df.rename(index=convert_row_names, columns=convert_col_names, inplace=True)
+
+    # --- accepted forward rates -------
+    df2 = pd.DataFrame(kf_vals)
+    df2.rename(index=convert_row_names, columns=convert_col_names, inplace=True)
+
+    # ----- optimal set of kf and kSP on the grid ------
+    df3 = pd.DataFrame()
+    df3['kf'] = [kf_opt]
+    df3['kSP'] = [kSP_opt]
+    df3['V'] = [Vopt]
+
+    # ----- save it all into an excel file -----
+    ExcelFile = pd.ExcelWriter(path=filename)
+    df.to_excel(ExcelFile, sheet_name='chi_squared')
+    df2.to_excel(ExcelFile, sheet_name='forward_rates')
+    df3.to_excel(ExcelFile, sheet_name='optimum')
+    ExcelFile.save()
+    ExcelFile.close()
+    return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###############################################################
+def replace_lower_triangle(M):
+    '''
+    sets the values in the lower triangle of matrix M equal to 1.
+    The model predictions contain both mismatch config (i,j) and (j,i).
+    Setting half of the association rates equal to 1.0 will prevent those duplicates
+    from contributing to the selection done below
+    :param M:
+    :return:
+    '''
+    K = M
+    for i in range(len(M)):
+        for j in range(len(M)):
+            if i > j:
+                K[i, j] = 1
+    return K
+
+
+
+
+def select_on_prediction(simset, chi_squared, percentage,
+                         Nparams=44,
+                         model_id='init_limit_general_energies_v2',
+                         precalculated=False, score=None,
+                         save_scores=True, filename='select_with_predcitions.txt'
+                         ):
+    '''
+    Select those solutions that whose model prediction on the training data differs no more than x% from
+    the prediction belonging to the solution with the lowest chi-squared value in the set of simulations.
+    '''
+    if not precalculated:
+        # ----- Start selection: Retrieve the best fit first --------
+        chi_squared = np.array(chi_squared)
+        best_fit = simset[np.argmin(chi_squared)]
+        parameters = plt_B.load_simm_anneal(best_fit, Nparams)
+        _, model_best, _ = plt_B.calc_predictions(parameters=parameters, model_id=model_id)
+        model_best = replace_lower_triangle(model_best)
+
+        # ----- Compare difference in model prediction to this best fit ---
+        score = []
+
+        N = len(model_best)
+        total_nmbr_of_points = N * (N+1)*0.5
+        for sim in simset:
+            parameters = plt_B.load_simm_anneal(sim, Nparams)
+            _, model, _ = plt_B.calc_predictions(parameters=parameters, model_id=model_id)
+            model = replace_lower_triangle(model)
+
+            sum_difference = np.sum(np.abs(model - model_best) / (model_best))
+            score.append(  sum_difference/total_nmbr_of_points  )
+        score = np.array(score)
+
+    # ----- select simulations whose difference in predicted values differs less then x% from the best fit ----
+    selected_scores = score[score <= percentage]
+
+    simset = np.array(simset)
+    selected_sims = simset[score <= percentage]
+
+    # ---- return selected_sims and selected_scores ------
+    if save_scores:
+        np.savetxt(filename, score)
+
+    return selected_sims, selected_scores, score
+
+
+
+
+
+
+
+
+
+
+
+
+def select_on_chi2(Chi2, simset, percentage=0.05):
     '''
     Select those solutions that whose chi-squared differs no more than x% from
     the lowest chi-squared value in the set of simulations.
@@ -336,9 +520,6 @@ def select_relative(Chi2, simset, percentage=0.05):
     simset = np.array(simset)
     selected_sims = simset[Chi2 <= ((1 + percentage) * best_solution)]
     return selected_solutions, selected_sims, (1 + percentage) * best_solution
-
-
-
 
 def Tukey_outlier_test(data, simset, k=1.5):
     '''
