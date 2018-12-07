@@ -26,6 +26,31 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
 
+    if model_id == 'Boyle_median_landscape_fit_rates':
+
+        # ---- fix the energies
+        # (copied from parameter file: '../data/25_10_2018/median_landscape_Boyle_2Dgrid.txt' on 04/12/2018) ----
+        epsilon = np.array([ 1.37168412, -4.15848621, -1.9680678 , -0.88508854, -0.70265355,
+        2.00690677,  0.44846725, -0.98458337,  0.69054452,  1.39284825,
+        3.99499433,  1.64210983,  0.01835355, -3.80696161,  2.1347165 ,
+       -0.80030528,  1.97963966,  3.08286715, -0.99001786,  2.70016623,
+        3.62856361,  7.15113618,  3.43168686,  8.05355657,  7.47981321,
+        5.62454054,  3.95761041,  6.69713956,  5.23678395,  7.46232812,
+        6.10345114,  6.1114001 ,  4.97393321,  5.29781208,  6.10472344,
+        5.43762448,  5.02455717,  4.3662047 ,  3.43647645,  7.07048864,
+        5.22717571])
+
+        # --- fit the timescales ----
+        rate_sol_to_PAM = 10**parameters[0]
+        rate_PAM_to_R1  = 10**parameters[1]
+        rate_internal = 10**parameters[2]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+
+
     if model_id == 'general_energies_rates':
         epsilon = parameters[:(2*guide_length+1)]
         forward_rates = np.ones(guide_length + 2)
@@ -227,5 +252,8 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[0] = k_PAM
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
+
+
+
 
     return epsilon, forward_rates

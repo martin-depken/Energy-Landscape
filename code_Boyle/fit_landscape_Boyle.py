@@ -25,7 +25,6 @@ def main(argv):
     #################
     # /* Settings *\#
     #################
-
     # Loading the data
     use_cluster = bool(int(argv[6]))
     if use_cluster:
@@ -36,9 +35,8 @@ def main(argv):
         path_to_Boyle_data = '../' + '/Data_Boyle/'
         nmbr_cores = 1
 
-    replica_ID = argv[1]
-
     # Simmulated Annealing
+    replica_ID = argv[1]
     model_ID =  argv[2]
     monitor_file = argv[3]
     fit_result_file = argv[4]
@@ -48,9 +46,9 @@ def main(argv):
     Weights_Datasets = np.array([1.0,1.0,1.0])
 
 
-    upper_bnd = [10.0] + [10.0]*20  + [10.0]*20 + [3.0] *3
-    lower_bnd = [0.0]  + [-10.0]*20 + [0.0]*20  + [-7.0] *3
-    initial_guess = [5.0] + [0.0]*20 + [5.0]*20 + [0.0] *3
+    upper_bnd =  [3.0] *3
+    lower_bnd = [-7.0] *3
+    initial_guess =  [0.0] *3
 
     ###########################
     # /* Objective function *\#
@@ -70,7 +68,8 @@ def main(argv):
                                                                        use_occupancy=False,
                                                                        use_on_rate=True,
                                                                        use_off_rate=False,
-                                                                       use_blocks_only=False)
+                                                                       use_blocks_only=False,
+                                                                       use_single_mm_only=False)
     # print ydata
 
     # print "test ... " + ' \n'

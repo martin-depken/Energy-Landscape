@@ -59,7 +59,7 @@ def calc_predictions(parameters,model_id):
     return Pbound_predict, on_rate_predict, off_rate_predict
 
 
-def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/',axis=None,cbar=True):
+def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/',show_plot=True,axis=None,cbar=True):
     '''
     Plot heatmap for double mismatches with Boyle's data in below diagonal and model above the diagonal
     :param model: matrix with double-mismatch values
@@ -95,40 +95,41 @@ def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenD
     if kind == 'Occupancy':
         val_max = 1
 
-
-    if axis is None:
-        ax = plt.gca()
-    else:
-        ax = axis
+    if show_plot:
+        if axis is None:
+            ax = plt.gca()
+        else:
+            ax = axis
 
     # 3) plot the data:
     mask_exp = np.zeros(shape=experiment.shape)
     for i in range(len(experiment)):
         for j in range(i - 1, len(experiment)):
             mask_exp[i, j] = 1
-    sns.heatmap(experiment, cmap=colormap, mask=mask_exp, cbar=cbar, vmin=0, vmax=val_max,ax=ax);
+    if show_plot:
+        sns.heatmap(experiment, cmap=colormap, mask=mask_exp, cbar=cbar, vmin=0, vmax=val_max,ax=ax);
 
     # 4) Plot the model prediction alongside
     mask = np.ones(shape=model.shape)
     for i in range(len(model)):
         for j in range(i + 1, len(model)):
             mask[i, j] = 0
-    sns.heatmap(model, cmap=colormap, mask=mask, cbar=cbar, vmin=val_min, vmax=val_max,ax=ax);
+    if show_plot:
+        sns.heatmap(model, cmap=colormap, mask=mask, cbar=cbar, vmin=val_min, vmax=val_max,ax=ax);
 
-    # 5) Adjust ticks and labels to get correct nucleotide positions
 
+        # 5) Adjust ticks and labels to get correct nucleotide positions
+        ax.set_xticklabels(map(lambda x: str(int(Ng-x)), ax.get_xticks() - 0.5));
+        #ax.set_yticklabels(map(lambda x: str(int(Ng-x)), ax.get_yticks() - 0.5));
+        ax.set_yticklabels(map(lambda x: str(int(x+1)), ax.get_yticks() - 0.5));
 
-    ax.set_xticklabels(map(lambda x: str(int(Ng-x)), ax.get_xticks() - 0.5));
-    #ax.set_yticklabels(map(lambda x: str(int(Ng-x)), ax.get_yticks() - 0.5));
-    ax.set_yticklabels(map(lambda x: str(int(x+1)), ax.get_yticks() - 0.5));
+        # 6) Further window dressing
+        ax.set_xlabel('mismatch 1', fontsize=15)
+        ax.set_ylabel('mismatch 2', fontsize=15)
+        ax.set_title(title, fontsize=15);
+    return model, experiment
 
-    # 6) Further window dressing
-    ax.set_xlabel('mismatch 1', fontsize=15)
-    ax.set_ylabel('mismatch 2', fontsize=15)
-    ax.set_title(title, fontsize=15);
-    return
-
-def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/',axis=None):
+def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/',show_plot=True, axis=None):
     # 1) settings based on physical quantity you want to plot
     if kind == 'Occupancy':
         color = 'green'
@@ -156,27 +157,28 @@ def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_B
     val_min = -(0.03) * val_max
 
     #4) plot
-    positions = 20 - np.arange(0,20)
-    if axis is None:
-        plt.plot(positions, experiment, linestyle='dashed', marker='s', color=color,label='Data')
-        plt.plot(positions, model, linestyle='solid', marker='^', color=color, label='Model')
-        ax=plt.gca()
-    else:
-        ax = axis
-        ax.plot(positions, experiment, linestyle='dashed', marker='s', color=color, label='Data')
-        ax.plot(positions, model, linestyle='solid', marker='^', color=color, label='Model')
+    if show_plot:
+        positions = 20 - np.arange(0,20)
+        if axis is None:
+            plt.plot(positions, experiment, linestyle='dashed', marker='s', color=color,label='Data')
+            plt.plot(positions, model, linestyle='solid', marker='^', color=color, label='Model')
+            ax=plt.gca()
+        else:
+            ax = axis
+            ax.plot(positions, experiment, linestyle='dashed', marker='s', color=color, label='Data')
+            ax.plot(positions, model, linestyle='solid', marker='^', color=color, label='Model')
 
 
-    #5) aesthetic and window dressing
-    ax.set_ylim(val_min,val_max )
-    ax.set_xlim(1, 21)
-    ax.set_xlabel('mismatch position', fontsize=15)
-    ax.set_ylabel(ylabel, fontsize=15)
-    ax.set_xticks([i + 0.5 for i in range(20)])
-    ax.set_xticklabels([1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20],
-                       rotation=0,
-                       fontsize=15);
-    ax.set_yticklabels(ax.get_yticks(),fontsize=15)
-    ax.legend(loc='best', fontsize=12, frameon=True)
-    sns.despine(ax=ax)
-    return
+        #5) aesthetic and window dressing
+        ax.set_ylim(val_min,val_max )
+        ax.set_xlim(1, 21)
+        ax.set_xlabel('mismatch position', fontsize=15)
+        ax.set_ylabel(ylabel, fontsize=15)
+        ax.set_xticks([i + 0.5 for i in range(20)])
+        ax.set_xticklabels([1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20],
+                           rotation=0,
+                           fontsize=15);
+        ax.set_yticklabels(ax.get_yticks(),fontsize=15)
+        ax.legend(loc='best', fontsize=12, frameon=True)
+        sns.despine(ax=ax)
+    return model, experiment
