@@ -25,6 +25,58 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
 
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
+    if model_id == 'general_energies_no_kPR':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+
+        # General position dependency
+        epsilon = parameters[:-2]
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+
+
+    if model_id == 'landscape_lowest_chi_squared_fit_rates':
+        # ---- fix the energies---
+        # (copied from parameter file: '../data/25_10_2018/fit_25_10_2018_sim_22.txt') ----
+        epsilon = np.array([  1.43364597e+00,  -2.51895658e+00,  -8.38107740e-01,
+        -1.00837871e+00,  -3.89888343e+00,   4.98565931e+00,
+        -2.24062010e+00,   1.75709991e+00,   1.48346110e+00,
+        -2.56251518e+00,   4.76022290e+00,   1.66832631e+00,
+        -4.41487326e-04,  -3.01917678e+00,   1.70186470e+00,
+        -2.69692160e+00,   4.63508021e+00,   3.43845249e+00,
+        -3.53360655e+00,   3.90785543e+00,   3.95624011e+00,
+         8.41041112e+00,   3.52511767e+00,   6.47092824e+00,
+         6.29617812e+00,   5.87466899e+00,   4.02069468e+00,
+         6.97289538e+00,   5.39037459e+00,   6.53991724e+00,
+         6.04624779e+00,   6.11140010e+00,   4.95893203e+00,
+         5.40442705e+00,   5.69985755e+00,   5.12293027e+00,
+         5.62074797e+00,   4.81777124e+00,   7.94515945e+00,
+         9.77311952e+00,   6.84175107e+00])
+
+       #  epsilon = np.array([ 1.31882561, -6.5880103 ,  1.59239502,  0.46021068, -2.49593644,
+       #  0.09580053,  4.54430596, -3.37045113,  0.37192334,  1.02581499,
+       #  4.12556609,  1.64960851, -0.03692466, -4.49653651,  4.39600456,
+       # -3.57616013,  3.90152848,  3.48127153, -4.66585257,  1.77729046,
+       #  8.90727104,  7.95522837,  4.24585854,  8.89394253,  8.89430408,
+       #  5.15323997,  4.0149383 ,  6.61232836,  5.12389258,  7.22642299,
+       #  6.06820965,  5.94807726,  4.90830081,  4.99741095,  6.38253949,
+       #  5.87159526,  6.62698767,  5.87749165,  5.58373498,  9.01010833,
+       #  4.79058499])
+
+        # --- fit the timescales ----
+        rate_sol_to_PAM = 10**parameters[0]
+        rate_PAM_to_R1  = 10**parameters[1]
+        rate_internal = 10**parameters[2]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
 
     if model_id == 'Boyle_median_landscape_fit_rates':
 
