@@ -141,12 +141,24 @@ def process_SA_fits(simset,Nparams=44, model_id='init_limit_general_energies_v2'
         kPS = kSP * np.exp(epsilon[0] + np.log(10.0))
         k_OT = kPR * kSP / (kPR + kSP + kPS)
         kinetic = k_OT * 1000
-        thermodynamic = kPR / (1.0 + np.exp(+epsilon[0] + np.log(10.0))) * 1000
+
+        # Assume PAM and solution equillibrates: Initiating the R-loop is limmiting
+        thermodynamicPAM = kPR / (1.0 + np.exp(+epsilon[0] + np.log(10.0))) * 1000
+
+        # Assume that PAM and (first) R-loop state equillibrate: Binding from solution is limmiting
+
+
+        P2 = Pclv.Pclv(Delta[2:])
+        kf = fwd_rates[2]
+        E1 = epsilon[1]
+        k_OT =  (kSP * kf*P2/np.exp(E1))/(kSP + kPS + kf*P2/np.exp(E1))
+        thermodynamicR  =  k_OT*1000
 
         fast_Rloop_data = {}
         fast_Rloop_data['sim'] = filename
         fast_Rloop_data['kinetic'] = kinetic
-        fast_Rloop_data['thermodynamic'] = thermodynamic
+        fast_Rloop_data['eq_PAM'] = thermodynamicPAM
+        fast_Rloop_data['eq_PR'] = thermodynamicR
         fast_Rloop_rows.append(fast_Rloop_data)
 
     matches = pd.DataFrame(match_rows, columns=column_names)
@@ -154,7 +166,7 @@ def process_SA_fits(simset,Nparams=44, model_id='init_limit_general_energies_v2'
     rates = pd.DataFrame(rates_rows, columns=['sim', 'sol_to_PAM', 'PAM_to_sol', 'PAM_to_R1', 'R1_to_PAM', 'internal'])
     landscape = pd.DataFrame(landscape_rows, columns=['sim', 'sol'] + column_names[1:])
     free_energy = pd.DataFrame(FreeEnergy_rows, columns=column_names)
-    fast_Rloop = pd.DataFrame(fast_Rloop_rows, columns=['sim', 'kinetic', 'thermodynamic'])
+    fast_Rloop = pd.DataFrame(fast_Rloop_rows, columns=['sim', 'kinetic', 'eq_PAM','eq_PR'])
 
     matches.set_index('sim', inplace=True)
     mismatches.set_index('sim', inplace=True)
@@ -449,6 +461,22 @@ def replace_lower_triangle(M):
 
 
 
+def difference_model_predictions(model, reference):
+    '''
+    Calculate average distance between two model predictions per datapoint
+    :param model:
+    :param reference:
+    :return:
+    '''
+    reference = replace_lower_triangle(reference)
+    model = replace_lower_triangle(model)
+    N = len(reference)
+    total_nmbr_of_points = N * (N + 1) * 0.5
+    sum_difference = np.sum(np.abs(model - reference) / (reference))
+    diff = sum_difference/total_nmbr_of_points
+    return diff
+
+
 
 def select_on_prediction(simset, chi_squared, percentage,
                          Nparams=44,
@@ -466,20 +494,15 @@ def select_on_prediction(simset, chi_squared, percentage,
         best_fit = simset[np.argmin(chi_squared)]
         parameters = plt_B.load_simm_anneal(best_fit, Nparams)
         _, model_best, _ = plt_B.calc_predictions(parameters=parameters, model_id=model_id)
-        model_best = replace_lower_triangle(model_best)
+        # model_best = replace_lower_triangle(model_best)
 
         # ----- Compare difference in model prediction to this best fit ---
         score = []
-
-        N = len(model_best)
-        total_nmbr_of_points = N * (N+1)*0.5
         for sim in simset:
             parameters = plt_B.load_simm_anneal(sim, Nparams)
             _, model, _ = plt_B.calc_predictions(parameters=parameters, model_id=model_id)
-            model = replace_lower_triangle(model)
-
-            sum_difference = np.sum(np.abs(model - model_best) / (model_best))
-            score.append(  sum_difference/total_nmbr_of_points  )
+            diff = difference_model_predictions(model, model_best)
+            score.append(  diff )
         score = np.array(score)
 
     # ----- select simulations whose difference in predicted values differs less then x% from the best fit ----
