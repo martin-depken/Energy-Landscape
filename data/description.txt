@@ -1,0 +1,327 @@
+15/01/2019 (fldr:15_1_2019, simulations: 1-50):
+=====================================
+* Make rate from PAM into Rloop equal to internal rate 
+* This should be vallid limmit when binding to PAM is limmiting at 10nM 
+* 'no_kPR'
+* Fit all the energies: [-10,10]
+* 10-log of rates: [-7,3]
+
+18/12/2018 (fldr:18_12_2018, simulations 1-50):
+=====================================
+* By accident used the wrong fit. 
+* Repeat previous with the correct landscape belonging to the best fit (sim_22! not file sim_42!)
+* same setting as 12_12_2018, simulations:1-50
+* ADJUSTED MODEL ID TO USE THE CORRECT ENERGY LANDSCAPE 
+
+
+12/12/2018 (fldr: 12_12_2018, simulations:1-50)
+======================================
+* Fix the energies and use the landscape belonging to the best fit op previous set.
+* Goal: Show that even for a fixed set of energies (matches+mismatches) there is still some ambiguity with regards to the rates.
+* To what extent can we determine the rate parameters from the data? 
+* All ready did similar fits using the median landscape
+* 'Boyle_median_landscape_fit_rates'
+* Only fit association rate
+* 10-Log of rates between [-7,3] (may get  numerical errors)
+
+
+
+04/12/2018 (fldr: 4_12_2018, simulations: 101-150)
+=======================================
+* Fix the energies, such to the median of the previous set of fits. 
+* Now still have some ambiguity in the timescales (any particular
+ landscape requires a precise value of the rates to make it work, so we could not just also take the median on this side as well)
+* 'Boyle_median_landscape_fit_rates'
+* Only fit association rate
+* 10-Log of rates between [-7,3] (may get  numerical errors)
+
+06/11/2018 (fldr: 25_10_2018, simulations:101-150)
+===============================
+* Everything seems to be working
+* Get another 50 simulations to maybe get an smoother landscape for the median / mean 
+* init_limit_general_energies_v2
+* Only fit association rate
+* All energies set free: [-10,10] (except the PAM and mismatch energies: [0,10])
+* 10-Log of rates between [-7,3] (should be no numerical errors)
+
+
+01/11/2018 (fldr: 25_10_2018, simulations: 51-100)
+========================================
+* Get more copies with the wider boundaries for the rates.
+* init_limit_general_energies_v2
+* Only fit association rate
+* All energies set free: [-10,10] (except the PAM and mismatch energies: [0,10])
+* 10-Log of rates between [-7,7] (may get  numerical errors) 
+
+25/10/2018 (fldr:25_10_2018, simulations: 1-50) 
+=====================
+* Unfortunately we really must supply more than just the consecutive mismatches. 
+* Plan is to get the averaged energy landscape from many fits 
+* Bounds on the rates will then be given based on this averaged landscape
+* Small tests using 'Robustness analysis....' notebook all ready show that this approach will (probabiliy) work well 
+* 100 cores availbale: Should take between 10 and 14 days. (Closer to 10)
+
+
+
+
+24/10/2018 (fldr:19_10_2018, simulations: 24,25,26)
+==========================
+* Can we get a good fit if we only supply datapoints belonging to : single mismatches + on-target + two consecutive mismatches? 
+* init_limit_general_energies_v2
+* Only fit association rate
+* All energies set free: [-10,10] (except the PAM and mismatch energies: [0,10])
+* 10-Log of rates between [-7,3] (should be no numerical errors)
+
+22/10/2018 (fldr:19_10_2018, simulations: 21, 22, 23 )
+===============================================
+* Do we actually need "init_limit" --> different rate from PAM to R1 than R1 to R2?
+* perform 3 fits using "general_energies" and only fit 2 rates, in stead of 3 
+* All energies set free: [-10,10] (except the PAM and mismatch energies: [0,10])
+* 10-Log of rates between [-7,3] (should be no numerical errors)
+* model_id added: "general_energies_v2" to allow for '10-log movement of rates'
+
+
+19/10/2018 (fldr:19_10_2018, simulations:11,12,...,20):
+========================
+* Investigate the robustness of	the parameters that result from	the fitting procedure. 
+* Repeat simulations 13_9_2018:V,W,X another 10 times to gather some more statistics
+* init_limit_general_energies_v2
+* Only fit association rate 
+* All energies set free: [-10,10] (except the PAM and mismatch energies: [0,10])
+* 10-Log of rates between [-7,3] (should be no numerical errors)
+* Use this to see if there is a correlation between the absolute values of the rates and that of the energies
+* compare to the 10 copies generated with simulations 1-10.  
+
+
+
+
+19/10/2018 (fldr:19_10_2018, simulations: 1,2,....,10):
+=========================
+* Investigate the robustness of the parameters that result from the fitting procedure. 
+* Repeat simulations 13_9_2018:M,N,O another 10 times to gather some more statistics 
+* init_limit_general_energies_v2
+* Only fit association rate 
+* All energies set free: [-10,10] (except the PAM and mismatch energies: [0,10])
+* 10-Log of rates between [-7,7] (allow for numerical errors)
+* Despite possible numerical errors: Use this to see if there is a correlation between the absolute values of the rates and that of the energies 
+
+ 
+
+10/10/2018 (fldr:13_9_2018, simulations: Y,Z)
+============================
+* Same conditions as below
+* Fit dissociation rate only
+* Goal: Control to see if this indeed pushes the fit towards the eps_I = 1.5 kT scenario 
+(That is, multiple mismatches can be placed before R-loop is made unstable)
+
+
+10/10/2018 (fldr:13_9_2018, simulations: V, W, X)
+============================
+* S,T,U showed that we must limit absolute values of rates to prevent numerical errors in matrix exponential calulations. 
+* Repeat: "init_limit_general_energies_v2" with 
+* log of the rates bound between: [-7,3] as done in S,T,U 
+* All energies are set free [-10,10]
+* Fit to association data 
+* Simply a control to see if such high rates are really needed to obtain a nice fit to association data. 
+
+
+10/10/2018
+================================
+* Previous results showed: Cannot get consistent fit to both single and double mismatch association data. 
+* Seems like the valey in the on-target landscape close to the PAM, somewhere within the seed, that fits M,N,O,P,Q, and R returned might 
+actually be needed? --> will do some test by hand perhaps.  
+ 
+
+
+09/008/2018 (fldr: 13_9_2018, simulations: S,T,U)
+==========================
+* Seems like large rates give us numerical errors when exponentiating matrix (especially for later time points as needed for occupancy)
+* Repeat of M,N,O (kept them running!) with rates between: [10^{-7}, 10^{3}] 
+
+
+
+
+09/10/2018 (fldr: 13_9_2018, simulations: P,Q,R):
+==================================
+* M, N, O worked. 
+* Indeed, we must constrain the parameters somewhat in order to get a good fit. 
+* Previous worked: Able to fit association data. 
+* As predicted with our analysis of toy model: No quantitative agreement between association and dissociation (and occupation to a lesser extend) possible.
+* Good news: Single mismatch association data is quatitatively consistent with the multiple mismatch association data. 
+* New fit: Enforce that the landscape can only go down after position 7. This mimics the kind of two-state system we were having in mind. 
+
+
+08/10/2018 (fldr: 13_9_2018, simulations: M,N,O):
+============================
+* Again completely failed. 
+* Try again with restricting the energies between -10 and 10 kT 
+* Fits: G, H, I J, K and L are done using [-20,20] for all energies
+* Test to see if this is causing the problems. 
+* Left the rates to go between [10**-7, 10**7] ('log-moves' fit the exponent) 
+ 
+
+
+
+05/10/2018 (fldr: 13_9_2018, simulations: J,K,L)
+===========================
+* Completely failed. As is the case for G,H,I --> final solution seems still pretty random. 
+* Try these simulations again with a much lower guess of the initial temperature. 
+
+
+
+
+03/10/2018 (fldr:13_9_2018, simulations: J,K,L):
+============================
+* Unfortunately previous fits drastically failed to find anything near a good fit. 
+* Probably too many degrees of freedom (could not see any obvious error)
+* model ID: 'init_limit_general_energies_v2' 
+* Will fit all energies + 3 rates: sol-->PAM , PAM-->R1, all other forward rates are equal
+* include yerr 
+* Only fit the on-rate data.
+* Our plan: Can such a initiation limited landscape ('two state system') result in good fit to on-rate? Especially, the single mismatches & two consequetive mismatches
+* Our inuitition is that, to a certain degree, the on-rate should still be proportional to Pclv --> meaning that internal dynamics are faster than initiating the R-loop. 
+* Also, it is this dataset that has changed since we have found out that it was taken at a different concentration. 
+* So is the initiation limited indeed the regime of lowest Chi-squared? (In principle it the fit is allowed to choose the exact opposite) 
+* 
+
+
+
+26/09/2018 (fldr:13_9_2018, simulations:G,I, H)
+================================
+* allow for all forward rates to be position independent. 
+* model ID: 'general_energies_rates' 
+* include yerr 
+* Also fit the off-rate data (fitted all three data types)
+
+
+
+13/09/2018 (fldr:13_9_2018, simulations: D,E,F)
+=========================
+* adjusted code to allow for not fitting all three types of datasets 
+* Comparrisson of sinlge-mismatch on-rate to two consequetive mismatches shows that the measured on-rate is mismacht number dependent even when they are placed quite deep into the gRNA-DNA hybrid. 
+This indicates that the association experiments are actually able to detect the difference in return probability, meaning they are detecting dCas9 'bouncing back' from both (!) mismatches. 
+* To reconcile this observation with our model we allow for a much larger internal forward rate.
+* To facilitate this we adjusted the model definition for these parameters: we provide the 10-log, so even when using liniear steps within SA we are effectively taking logarithmic steps for just those parameters. 
+* model ID: "init_limit_general_energies" 
+* Only fit Occupancy and Association rate data 
+
+13/09/2018 (fldr:13_9_2018, simulations: A,B,C)
+============================
+* yerr is added to data processing and provided into Chi-sqaured 
+* Otherwise uniform weights between maps 
+* model_ID: "init_limit_general_energies" 
+* Have all energies free 
+* Have the rate from solution to PAM, and from PAM to solution be different from all other rates
+
+
+30/08/2018 (fldr:26_8_2018, simulations: X,Y,Z)
+=========================
+* After playing around with some toy models we think we have found a working scenario: Two energetic drops are incorporated at position 10 and 18. 
+* Remainder of eps_C should be small (slopes are near zero)
+* constant epsilon I 
+* initiation of R-loop is limiting : Forward rate from PAM to R1 is different from the others 
+* Moved "unpack parameters" to a new module that contains general codes for both Boyle's data and Finkelstein's data
+* simulations X,Y,Z 
+
+23/08/2018 (fldr: 26_8_2018, simulations: U,V,W):
+==========================
+* Most epsilon_C should be positive (downwards). It is a harder assumption to say an addition of a correct bp can destabilise the complex. 
+* constant epsilon I (positive). 
+* 20 epsilon_C, but keep positive. Hopefully this will enfore the fit to give us a more smooth landscape. 
+* simulations U,V,W 
+* NOTE OVERWRITTEN SIMULATION  'V' as it did not work any ways. 
+
+
+20/08/2018 (fldr: 26_8_2018, simulations: Q,R,S,T,V)
+==============================
+* Previious set worked OK. Gaved consistent results and all converged to a good fit 
+* Constraint epsilon_I to be constant (position independent):
+	model_ID == "constant_eps_I"
+* Changed boundaries: 10kT maximum (in stead of 5 kT)
+* Initial temp guess increased based on previous fits 
+* 5 replicates (each on 20 cores) 
+
+
+17/08/2018 (fldr: 26_8_2018, simulations: L,M,N,O,P)
+====================
+* Fits that did not work well ended up with some epsilon_I (mismatch penalties) being negative (turning into a gain instead). 
+* constraint them to zero 
+* 5 replicates (each on 20 cores).
+
+
+12/08/2018 (fldr_26_7_2018, simulations: G,H,I,J,K)
+=====================
+* Started an additional 5 runs (will be gone this week anyways)
+
+
+
+
+09/08/2018 (fldr_26_7_2018)
+===========
+* By accident started simulation C again. 
+**** Renamed file to:               *** (to prevent it from being overwritten) 
+
+* Started simulations D,E and F 
+
+
+08/08/2018 (fldr:26_7_2018 simulation:D, E and F)
+=========================
+* Repeat simulation C  (Simulation worked, very good fit, not conclusivein terms of structure of energy landscape)  
+* 3 additional replicates 
+
+
+07/08/2018 (fldr:26_7_2018 simulation:C)
+===========================
+* found bug in previous run: Rates were allowed to be negative. 
+* retry with only positive rates. 
+* Had discussions with cluster maintainance guys. Apparently node-to-node communication was not actually working. 
+* restarted simulation with 20 cores in total (19 + 1) 
+
+
+31/07/2018 (fldr:26_7_2018 simulation:C)
+========================
+* simulation B: Better result (by eye) than simulation A
+* Retry without using log-moves in Metropolis
+* Use upper/lower bound of energies of ±5kT (not 10kT as previous)
+ 
+
+
+
+
+30/07/2018 (fldr:26_7_2018  simulation:B)
+=====================
+* checked results simulation A. Fit seemed to have worked
+* Repeat with stricter tolerance: 1E-3 --> 1E-5 
+* other settings the same 
+* Adjusted code fit_landscape.py --> returns the time taken for the simulation
+* !!! RENAME THE FILES BEFORE TRANSFERING TO OWN COMPUTER !!  (filename accidentally reused) 
+
+
+
+26/07/2018 (simulation A)
+==========================
+* Made codes for preprocessing Boyle Data and adjusted Simmulated Annealing accordingly 
+* Fit landscape without having equillibrium assumption for occupancy
+* Relative steps 
+* weights: Average values in each dataset (same as Koen) 
+* cooling rate: 0.99
+* Tstart: 0.1 
+* initial condition: [5.0] + [5.0]*20 +[5.0]*20 +      [1.0] +    [100.]
+* upper bound: [10.0] + [10.0]*20 + [10.0]*20 +    [100.]+    [1000.]
+* lower bound: [0.0001]  + [0.0001]*20 + [0.0001]*20 + [0.0001] + [0.0001]
+* model: 'general_energies' 
+* 199x + 1x = 200x
+
+27/07/2018 (simulation B):
+====================
+* Run on my laptop using 4 cores at least managed to produce the monitor & fit_result files. 
+* Initial temperature: 169.28927393268415
+* Another try without cross-node comunication: 20x (19 + 1) 
+* set initial temperature close to 160.0 
+
+
+26/07/2018 (retry simulation A):
+=====================
+* Apparently 'np.matmul()' is not recognised on cluster. Exchanged it for for np.dot()
+
+
