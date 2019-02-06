@@ -139,7 +139,6 @@ def Allign(S, on_target, Cas='Cas9'):
         a = (t, s, MM_num, 0, len(t))
         if a not in A:
             A.append(a)
-
     return A
 
 
@@ -160,7 +159,7 @@ def Clean_allignment(x):
         if len(A) > 1:
             A.sort(key=id_for_sort, reverse=True)
             del A[1:]
-        return (A)
+        return A
 
     if Length_diff < 0:
         function_to_filter = lambda a: not (('-' in a[0]) or (a[1].count('-') != np.abs(Length_diff)))
