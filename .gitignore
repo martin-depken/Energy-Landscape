@@ -3,3 +3,6 @@
 
 #Ipython checkpoints:
 .ipynb_checkpoints/
+ 
+# loaded Python modules:
+*.pyc 
