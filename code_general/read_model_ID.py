@@ -25,6 +25,22 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
 
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
+    
+    if model_id == 'Clv_init_limit_general_energies_v2':
+        # General position dependency
+        epsilon = parameters[:-4]
+
+        rate_sol_to_PAM = 10**parameters[-4]
+        rate_PAM_to_R1  = 10**parameters[-3]
+        rate_internal = 10**parameters[-2]
+        rate_clv = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv  # dCas9 does not cleave
+
+    
     if model_id == 'general_energies_no_kPR':
         # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
 
