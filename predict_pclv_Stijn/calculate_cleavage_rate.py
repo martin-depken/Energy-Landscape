@@ -17,7 +17,9 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,times,
     
     k_model = calc_clv_rate(parameters, model_id, mismatch_positions, times,
                             guide_length)
-    
+    ydata = np.array(ydata)
+    yerr = np.array(yerr)
+
     chi_sqrd = np.sum(((ydata-k_model)/yerr)**2)
     
     return chi_sqrd

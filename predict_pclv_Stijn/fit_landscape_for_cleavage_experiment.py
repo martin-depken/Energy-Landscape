@@ -4,9 +4,9 @@ import sys
 
 PATH_HPC05 = '/home/svandersmagt/Energy_Landscape_dCas9/'
 sys.path.append(PATH_HPC05)
-#import Boyle_data_processing
+import Nucleaseq_data_processing as processing
 import calculate_cleavage_rate as CRISPR
-#import SimulatedAnnealing_Boyle_parallel as SA
+import SimulatedAnnealing_Nucleaseq_parallel as SA
 
 from time import time
 '''
@@ -28,23 +28,23 @@ def main(argv):
     # Loading the data
     use_cluster = bool(int(argv[6]))
     if use_cluster:
-        path_to_Boyle_data= PATH_HPC05+'/Data_Boyle/'
+        path_to_data= PATH_HPC05+'/data_nucleaseq_Finkelsteinlab/targetD/'
         nmbr_cores = 19
     else:
         # On my laptop use this line in stead:
-        path_to_Boyle_data = '../' + '/Data_Boyle/'
+        path_to_data = '../' + '/data_nucleaseq_Finkelsteinlab/targetD/'
         nmbr_cores = 1
 
     # Simmulated Annealing
-    replica_ID = argv[1]
+    filename = argv[1]
     model_ID =  argv[2]
     monitor_file = argv[3]
     fit_result_file = argv[4]
     init_monitor_file = argv[5]
     
     gRNA_length = 20
-    times = [0,10,100,1000,1e4,1e5]
-
+    times = [0,12,60,180,600,1800,6000,18000,60000]
+##### This should change according to the model.
     upper_bnd =  [10.0] + [10.0]*40 +  [3.0] *2
     lower_bnd = [0.0] + [-10.0]*40 + [-7.0] *2
     initial_guess =  [5.0] + [0.0]*40 + [0.0] *2
@@ -61,12 +61,7 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata, ydata, yerr = Boyle_data_processing.prepare_multiprocessing(replica_ID,path_to_Boyle_data,
-                                                                       use_occupancy=False,
-                                                                       use_on_rate=True,
-                                                                       use_off_rate=False,
-                                                                       use_blocks_only=False,
-                                                                       use_single_mm_only=False)
+    xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq(filename,path_to_data)
     # print ydata
 
     # print "test ... " + ' \n'
@@ -89,7 +84,6 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                on_target_function=OnTarget,
                                 Tstart=100.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=1.0,
