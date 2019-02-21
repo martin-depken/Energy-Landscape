@@ -54,7 +54,7 @@ def main(argv):
     # /* Objective function *\#
     ###########################
     KineticModel = functools.partial(Chi.calc_Chi_square,
-                        guide_length=gRNA_length,
+                        #guide_length=gRNA_length,
                         model_id=model_ID)
     # THIS ONE I NEEDED TO MAKE!
     

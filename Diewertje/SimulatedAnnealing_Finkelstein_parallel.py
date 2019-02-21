@@ -9,6 +9,7 @@
 #############################################################
 import numpy as np
 import multiprocessing as mp
+import Chisq_Finkelstein as Chi
 #import CRISPR_dCas9_binding_curve_Boyle as dCas9Boyle
 '''
 Main function
@@ -208,7 +209,7 @@ def V(SA, xdata,ydata,yerr,params):
 
     # No multiprocessing
     else:
-        objective_sum = np.sum(SA.objective_function(params,xdata,ydata,yerr,guide_length,SA.model))
+        objective_sum = np.sum(SA.objective_function(params,xdata,ydata,yerr,guide_length=20,SA.model))
     return objective_sum
 
 
@@ -292,7 +293,8 @@ class SimAnneal():
                 self.objective_function = RelativeError
             if objective_function == 'Maximum Likelihood':
                 self.objective_function = LogLikeLihood
-
+            if objective_function == 'KineticModel':
+                self.objective_function = Chi.calc_Chi_square
 
         # To properly calculate the on-target's values using different parameterizations.
         self.on_target_function = on_target_function
