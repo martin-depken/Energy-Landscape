@@ -25,7 +25,11 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
 
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
-    
+
+    #if model_id == 'Clv_init_limit_Saturated_general_energies_v2':
+    #epsilon_PAM = -100.0
+    #rate_sol_to_PAM = 1000.0
+
     if model_id == 'Clv_init_limit_general_energies_v2':
         # General position dependency
         epsilon = parameters[:-4]
