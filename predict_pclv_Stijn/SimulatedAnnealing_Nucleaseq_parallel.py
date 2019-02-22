@@ -67,10 +67,10 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    objective_function=objective_function)
 
     # Adjust initial temperature
-    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
-    print('Initial temp:  ', SA.T)
+#    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
+#    print('Initial temp:  ', SA.T)
     # store initial Temperature
-    SA.initial_temperature = SA.T
+#    SA.initial_temperature = SA.T
 
 
     # Open File for intermediate fit results:

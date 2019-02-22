@@ -44,10 +44,11 @@ def main(argv):
     
     gRNA_length = 20
     times = [0,12,60,180,600,1800,6000,18000,60000]
-##### This should change according to the model.
-    upper_bnd =  [10.0] + [10.0]*40 +  [3.0] *2
-    lower_bnd = [0.0] + [-10.0]*40 + [-7.0] *2
-    initial_guess =  [5.0] + [0.0]*40 + [0.0] *2
+    
+    
+    upper_bnd = [10.0]*40 +  [3.0] *3
+    lower_bnd = [-10.0]*40 + [-7.0] *3
+    initial_guess =  [0.0]*40 + [0.0] *3
 
     ###########################
     # /* Objective function *\#
