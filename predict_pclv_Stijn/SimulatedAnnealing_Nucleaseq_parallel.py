@@ -48,7 +48,6 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     '''
 
 
-
     # presets
     X = Xstart
     SA = SimAnneal(model=model,
@@ -67,11 +66,11 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    objective_function=objective_function)
 
     # Adjust initial temperature
-#    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
-#    print('Initial temp:  ', SA.T)
+    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
+    print('Initial temp:  ', SA.T)
     # store initial Temperature
-#    SA.initial_temperature = SA.T
-
+    SA.initial_temperature = SA.T
+    
 
     # Open File for intermediate fit results:
     OutputFitResults = open(output_file_results,'w',1)  #third argument will force the I/O to write into the file every line
@@ -82,10 +81,11 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     OutputFitResults.write('\n')
 
 
-
     # Set initial trial:
     X = Xstart
     SA.potential = V(SA, xdata,ydata,yerr,X)
+    
+    print 'V'
     # Main loop:
     steps = 0
     Eavg = 0
@@ -100,7 +100,6 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
             # during the cycle of SA.interval steps that has just passed.
             Eavg += V(SA, xdata, ydata, yerr, X)
         if (steps % SA.interval == 0):
-
             # update the intermediate results:
             write_parameters(X, SA,OutputFitResults)
 
@@ -192,12 +191,12 @@ def V(SA, xdata,ydata,yerr,params):
     '''
     # Multiprocessing
     if SA.MP:
+        print 'here'
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
             InputJob = [params, xdata[i],ydata[i],yerr[i]]
             SA.inQ.put(InputJob)
-
         # Retreive the results from the results Que and add together to construct Chi-squared
         objective_sum = 0.0
         for i in range(len(xdata)):
@@ -248,6 +247,7 @@ class SimAnneal():
 
     def __init__(self, model, Tstart, delta, tol, Tfinal,adjust_factor, cooling_rate, N_int,
                  AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function):
+        mp.freeze_support
         self.model = model
         self.T = Tstart
         self.step_size = delta
@@ -274,8 +274,10 @@ class SimAnneal():
             # In this case you provide the objective function and not the model function (so you return ChiSqrd)
             self.objective_function = objective_function
             self.processes = [mp.Process(target=multiprocessing_main_worker,args=(self.inQ,self.outQ,self.objective_function)) for i in range(self.nprocs)]
+            print self.processes
             for w in self.processes:
                 w.start()
+                
             # print self.processes
         else:
             self.nprocs = None
@@ -466,10 +468,13 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
     :param calc_objective_function: Function that returns a single term of the Chi-squared
     :return:
     '''
+    
+    
     while True:
         try:
             # Check if there is a new job loaded to the Que (first core that picks it up will do the trick)
             job = InQ.get()
+            print len(job)
             if job is None:
                 break
             # Unpack the job into the correct input arguments
@@ -477,13 +482,13 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
             xdata = job[1]
             ydata = job[2]
             yerr  = job[3]
+            
 
-
-            if len(job)>3:
+            if len(job)>4:
                 addidtional_argument = job[4]
                 output = calc_objective_function(parameter_values, xdata, ydata, yerr, addidtional_argument)
             else:
-                output = calc_objective_function(parameter_values, xdata, ydata)
+                output = calc_objective_function(parameter_values, xdata, ydata, yerr)
             # Perform the job:
             OutQ.put(output)
         except Exception, e:

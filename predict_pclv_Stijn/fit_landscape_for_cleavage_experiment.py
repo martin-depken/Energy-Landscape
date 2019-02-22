@@ -1,6 +1,7 @@
 import numpy as np
 import functools
 import sys
+import multiprocessing as mp
 
 PATH_HPC05 = '/home/svandersmagt/Energy_Landscape_dCas9/'
 sys.path.append(PATH_HPC05)
@@ -28,12 +29,12 @@ def main(argv):
     # Loading the data
     use_cluster = bool(int(argv[6]))
     if use_cluster:
-        path_to_data= PATH_HPC05+'/data_nucleaseq_Finkelsteinlab/targetD/'
+        path_to_data= PATH_HPC05+'/data_nucleaseq_Finkelsteinlab/targetE/'
         nmbr_cores = 19
     else:
         # On my laptop use this line in stead:
-        path_to_data = '../' + '/data_nucleaseq_Finkelsteinlab/targetD/'
-        nmbr_cores = 1
+        path_to_data = '../' + '/data_nucleaseq_Finkelsteinlab/targetE/'
+        nmbr_cores = 2
 
     # Simmulated Annealing
     filename = argv[1]
@@ -68,7 +69,10 @@ def main(argv):
     # print "test ... " + ' \n'
     # KineticModel(np.array(initial_guess),xdata,ydata,np.array([]),1.0)
 
-
+    xdata = [xdata[0]]
+    ydata = [ydata[0]]
+    yerr = [yerr[0]]
+    
     ##############################################
     # /*   Call the Simulated Annealing code   *\#
     ##############################################
@@ -89,10 +93,10 @@ def main(argv):
                                 use_relative_steps=False,
                                 delta=1.0,
                                 tol=1E-5,
-                                Tfinal=0.0,
+                                Tfinal=0,
                                 adjust_factor=1.1,
                                 cooling_rate=0.99,
-                                N_int=1000,
+                                N_int=10,
                                 AR_low=40,
                                 AR_high=60,
                                 use_multiprocessing=True,
@@ -114,5 +118,10 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv)
+    main(['fit_landscape_for_cleavage_experiment.py',
+          'ECas9_cleavage_rate_and_y0_Canonical_OT-r_0-2.csv',
+          'Clv_init_limit_Saturated_general_energies_v2',
+          'monitor.txt',
+          'result.txt',
+          'init.txt','0'])
 
