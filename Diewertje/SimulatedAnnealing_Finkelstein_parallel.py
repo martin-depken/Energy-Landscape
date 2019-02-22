@@ -49,7 +49,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     '''
 
 
-
+    print('program started') 
     # presets
     X = Xstart
     SA = SimAnneal(model=model,
@@ -69,12 +69,12 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    on_target_function= on_target_function)
 
     # Adjust initial temperature
-    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
-    print('Initial temp:  ', SA.T)
+    #InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
+    #print('Initial temp:  ', SA.T)
     # store initial Temperature
-    SA.initial_temperature = SA.T
+    #SA.initial_temperature = SA.T
 
-
+    print('Class is made')
     # Open File for intermediate fit results:
     OutputFitResults = open(output_file_results,'w',1)  #third argument will force the I/O to write into the file every line
     for k in range(len(X)):
@@ -84,15 +84,17 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     OutputFitResults.write('\n')
 
 
-
+    print('outputfiles are opened')
     # Set initial trial:
     X = Xstart
     SA.potential = V(SA, xdata,ydata,yerr,X)
     # Main loop:
     steps = 0
     Eavg = 0
+    print('goes into the loop now')
     while True:
         steps += 1
+        print(steps)
         # if(steps % 1E3 == 0):
         #     print steps
 
@@ -138,7 +140,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
         # Input: parameters X, output: updates values of parameters X if accepted
         X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
 
-
+    print('done with the loop')
     # Close worker processes
     if SA.MP:
         print('Close workers..')
@@ -195,21 +197,25 @@ def V(SA, xdata,ydata,yerr,params):
 
     # Multiprocessing
     if SA.MP:
+        print('SA.MP is true')
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
             InputJob = [params, xdata[i],ydata[i],yerr[i]]
+            print('input job done')
             SA.inQ.put(InputJob)
-
         # Retreive the results from the results Que and add together to construct Chi-squared
         objective_sum = 0.0
-        for i in range(len(xdata)):
-            objective_sum += SA.outQ.get()
+        #for i in range(len(xdata)):
+         #   objective_sum += SA.outQ.get()
+        SA.outQ.get()
+        print('the get worked')    
 
 
     # No multiprocessing
     else:
-        objective_sum = np.sum(SA.objective_function(params,xdata,ydata,yerr,guide_length=20,SA.model))
+        print('SA.MP is false')
+        objective_sum = np.sum(SA.objective_function(params,xdata,ydata,yerr,guide_length,SA.model))
     return objective_sum
 
 
@@ -280,21 +286,6 @@ class SimAnneal():
             for w in self.processes:
                 w.start()
             # print self.processes
-        else:
-            self.nprocs = None
-            self.inQ=None
-            self.outQ=None
-            self.processes = None
-
-            # Objective function is used differently in this case:
-            if objective_function == 'chi_squared':
-                self.objective_function = chi_squared
-            if objective_function == 'relative error':
-                self.objective_function = RelativeError
-            if objective_function == 'Maximum Likelihood':
-                self.objective_function = LogLikeLihood
-            if objective_function == 'KineticModel':
-                self.objective_function = Chi.calc_Chi_square
 
         # To properly calculate the on-target's values using different parameterizations.
         self.on_target_function = on_target_function
@@ -486,17 +477,17 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
             xdata = job[1]
             ydata = job[2]
             yerr  = job[3]
+            
 
-
-            if len(job)>3:
-                addidtional_argument = job[4]
-                output = calc_objective_function(parameter_values, xdata, ydata, yerr, addidtional_argument)
-            else:
-                output = calc_objective_function(parameter_values, xdata, ydata)
+            #if len(job)>3:
+              #  addidtional_argument = job[4]
+             #   output = calc_objective_function(parameter_values, xdata, ydata, yerr, addidtional_argument)
+            #else:
+            output = calc_objective_function(parameter_values, xdata, ydata,yerr)
             # Perform the job:
             OutQ.put(output)
         except (Exception) as e:
-            print("error!", e.message)
+            print("error!", e)
             break
 
 
