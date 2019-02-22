@@ -1,0 +1,8 @@
+(last recorded) Temperature:50.0
+(last recorded) stepsize:1.0
+(last recorded) chi-squared:0.0
+succes:False
+iterations:20
+reached final temperature:False
+tolerance low enough:False
+(last recorded) relative change average energy:nan
