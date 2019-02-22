@@ -12,12 +12,14 @@ from read_model_ID import unpack_parameters
 Main functions
 '''
 
-def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,times,
-                    guide_length=20, model_id='Clv_init_limit_general_energies_v2'):
+def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,times=[0,12,60,180,600,1800,6000,18000,60000],
+                    guide_length=20, model_id='Clv_init_limit_Saturated_general_energies_v2'):
     
     k_model = calc_clv_rate(parameters, model_id, mismatch_positions, times,
                             guide_length)
-    
+    ydata = np.array(ydata)
+    yerr = np.array(yerr)
+
     chi_sqrd = np.sum(((ydata-k_model)/yerr)**2)
     
     return chi_sqrd
