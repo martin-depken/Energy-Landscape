@@ -26,9 +26,7 @@ import Prepare_data as Pre
 
 import Chisq_Finkelstein as Chi
 import SimulatedAnnealing_Finkelstein_parallel as SA
-import sys
-sys.path.append('../code_ABA_Finkelsteinlab/')
-import Calculate_ABA_Finkelsteinlab as ABA
+import Calculate_ABA_Finkelsteinlab_Diewertje as ABA
 
 import functools
 
@@ -41,18 +39,20 @@ def main():
     monitor_file = 'monitor.txt'
     init_monitor_file='init_monitor.txt'
     
-    gRNA_length = 20
-    model_ID = 'general_energies'
-    parameters =  np.array([5.0] + [1.0]*40 + [0.5] *2)
+    model_ID = 'init_limit_general_energies_v2' #'general_energies'
     concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) # in nanoMolair
     reference=1 # in nanomolair
     
-    upper_bnd =  [10.0] + [10.0]*40 +  [3.0] *2
-    lower_bnd = [0.0] + [-10.0]*40 + [-7.0] *2
-    initial_guess =  [5.0] + [0.0]*40 + [0.0] *2
+    upper_bnd =  [10.0] + [10.0]*40 +  [3.0] *3 #*2
+    lower_bnd = [0.0] + [-10.0]*40 + [-7.0] *3 #*2
+    initial_guess = np.loadtxt('parameters.txt') #[5.0] + [1.0]*40 + [0.5] *2
     
     KineticModel = functools.partial(Chi.calc_Chi_square,model_id=model_ID, guide_length=20,
                                      concentrations=concentrations,reference=reference)
+    
+    ONtarget=functools.partial(ABA.calc_ABA,concentrations=concentrations,reference=reference, 
+                               mismatch_positions=[],model_id=model_ID, guide_length = 20, T=10*60)
+    
     print('now starts with the sim_anneal funciton')
     fit_result = SA.sim_anneal_fit(xdata=xdata[:2],
                                     ydata=ydata[:2],
@@ -62,7 +62,7 @@ def main():
                                     upbnd= np.array(upper_bnd),
                                     model='I_am_using_multi_processing_in_stead',
                                     objective_function=KineticModel,
-                                    on_target_function=ABA.calc_ABA,
+                                    on_target_function=ONtarget,
                                     Tstart=100.,             # infered from run on my computer/other runs on cluster
                                     use_relative_steps=False,
                                     delta=1.0,

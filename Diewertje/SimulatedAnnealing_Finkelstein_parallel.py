@@ -10,6 +10,7 @@
 import numpy as np
 import multiprocessing as mp
 import Chisq_Finkelstein as Chi
+import Calculate_ABA_Finkelsteinlab_Diewertje as ABA
 #import CRISPR_dCas9_binding_curve_Boyle as dCas9Boyle
 '''
 Main function
@@ -194,6 +195,8 @@ def V(SA, xdata,ydata,yerr,params):
     :param params: parameters of model to fit
     :return: Chi^2 value, LogLikeLihood value... the value of the objective function to be minimized
     '''
+    # calculate on_target here, since then you do not have to calculate it for all the data entries
+    ontarget_ABA=SA.on_target_function(params)
 
     # Multiprocessing
     if SA.MP:
@@ -201,21 +204,21 @@ def V(SA, xdata,ydata,yerr,params):
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
-            InputJob = [params, xdata[i],ydata[i],yerr[i]]
-            print('input job done')
+            InputJob = [params, xdata[i],ydata[i],yerr[i],ontarget_ABA]
+            #print(InputJob)
             SA.inQ.put(InputJob)
         # Retreive the results from the results Que and add together to construct Chi-squared
         objective_sum = 0.0
-        #for i in range(len(xdata)):
-         #   objective_sum += SA.outQ.get()
-        SA.outQ.get()
+        for i in range(len(xdata)):
+           objective_sum += SA.outQ.get()
+        #SA.outQ.get()
         print('the get worked')    
 
 
     # No multiprocessing
     else:
         print('SA.MP is false')
-        objective_sum = np.sum(SA.objective_function(params,xdata,ydata,yerr,guide_length,SA.model))
+        objective_sum = np.sum(SA.objective_function(params,xdata,ydata,yerr,ontarget_ABA,guide_length,SA.model))
     return objective_sum
 
 
@@ -477,13 +480,14 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
             xdata = job[1]
             ydata = job[2]
             yerr  = job[3]
+            ontarget_ABA = job[4]
             
 
             #if len(job)>3:
               #  addidtional_argument = job[4]
              #   output = calc_objective_function(parameter_values, xdata, ydata, yerr, addidtional_argument)
             #else:
-            output = calc_objective_function(parameter_values, xdata, ydata,yerr)
+            output = calc_objective_function(parameter_values, xdata, ydata,yerr,ontarget_ABA=ontarget_ABA)
             # Perform the job:
             OutQ.put(output)
         except (Exception) as e:
