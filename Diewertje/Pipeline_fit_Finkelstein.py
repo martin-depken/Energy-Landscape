@@ -6,7 +6,7 @@ PATH_HPC05 = '/home/mklein1/Energy_Landscape_dCas9/' #### Adjust this! Also in o
 sys.path.append(PATH_HPC05)
 import Prepare_data
 import Chisq_Finkelstein as Chi
-import Calculate_ABA_Finkelsteinlap as ABA
+import Calculate_ABA_Finkelsteinlap_Diewertje as ABA
 import SimulatedAnnealing_Finkelstein_parallel as SA
 
 
