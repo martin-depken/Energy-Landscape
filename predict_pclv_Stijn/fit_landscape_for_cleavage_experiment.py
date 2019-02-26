@@ -29,7 +29,7 @@ def main(argv):
     # Loading the data
     use_cluster = bool(int(argv[6]))
     if use_cluster:
-        path_to_data= PATH_HPC05+'/data_nucleaseq_Finkelsteinlab/targetE/'
+        path_to_data= PATH_HPC05+'data_nucleaseq_Finkelsteinlab/targetE/'
         nmbr_cores = 19
     else:
         # On my laptop use this line in stead:
@@ -44,7 +44,8 @@ def main(argv):
     init_monitor_file = argv[5]
     
     gRNA_length = 20
-    times = [0,12,60,180,600,1800,6000,18000,60000]
+    times = [0.0,12.0,60.0,180.0,600.0,1800.0,6000.0,18000.0,60000.0]
+    times = np.array(times)
     
     
     upper_bnd = [10.0]*40 +  [3.0] *3
@@ -65,14 +66,10 @@ def main(argv):
     ##############################################
     xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq(filename,path_to_data)
     # print ydata
-
     # print "test ... " + ' \n'
     # KineticModel(np.array(initial_guess),xdata,ydata,np.array([]),1.0)
 
-    xdata = [xdata[0]]
-    ydata = [ydata[0]]
-    yerr = [yerr[0]]
-    
+        
     ##############################################
     # /*   Call the Simulated Annealing code   *\#
     ##############################################
@@ -80,7 +77,6 @@ def main(argv):
 
 
     t1 = time()
-
     fit_result = SA.sim_anneal_fit(xdata=xdata,
                                    ydata=ydata,
                                    yerr = yerr,
@@ -93,10 +89,10 @@ def main(argv):
                                 use_relative_steps=False,
                                 delta=1.0,
                                 tol=1E-5,
-                                Tfinal=0,
+                                Tfinal=0.0,
                                 adjust_factor=1.1,
                                 cooling_rate=0.99,
-                                N_int=10,
+                                N_int=1000,
                                 AR_low=40,
                                 AR_high=60,
                                 use_multiprocessing=True,
@@ -118,10 +114,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(['fit_landscape_for_cleavage_experiment.py',
-          'ECas9_cleavage_rate_and_y0_Canonical_OT-r_0-2.csv',
-          'Clv_init_limit_Saturated_general_energies_v2',
-          'monitor.txt',
-          'result.txt',
-          'init.txt','0'])
+    main(sys.argv)
 
