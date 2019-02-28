@@ -85,7 +85,6 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     X = Xstart
     SA.potential = V(SA, xdata,ydata,yerr,X)
     
-    print 'V'
     # Main loop:
     steps = 0
     Eavg = 0
@@ -191,7 +190,6 @@ def V(SA, xdata,ydata,yerr,params):
     '''
     # Multiprocessing
     if SA.MP:
-        print 'here'
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
@@ -274,7 +272,6 @@ class SimAnneal():
             # In this case you provide the objective function and not the model function (so you return ChiSqrd)
             self.objective_function = objective_function
             self.processes = [mp.Process(target=multiprocessing_main_worker,args=(self.inQ,self.outQ,self.objective_function)) for i in range(self.nprocs)]
-            print self.processes
             for w in self.processes:
                 w.start()
                 
@@ -351,7 +348,7 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     Vnew = V(SA, xdata, ydata, yerr, Xtrial)
     Vold = SA.potential
 
-    if (np.random.uniform() < np.exp(-(Vnew - Vold) / T)):
+    if (np.log(np.random.uniform()) < (-(Vnew - Vold) / T)):
         X = Xtrial
         SA.accept += 1
         SA.potential = Vnew
@@ -474,7 +471,6 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
         try:
             # Check if there is a new job loaded to the Que (first core that picks it up will do the trick)
             job = InQ.get()
-            print len(job)
             if job is None:
                 break
             # Unpack the job into the correct input arguments
@@ -482,7 +478,6 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
             xdata = job[1]
             ydata = job[2]
             yerr  = job[3]
-            
 
             if len(job)>4:
                 addidtional_argument = job[4]

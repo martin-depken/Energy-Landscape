@@ -1,8 +1,8 @@
 import numpy as np
-import matplotlib.pylab as plt
 from scipy import linalg
 from scipy.optimize import curve_fit
 import sys 
+sys.path.append('/home/svandersmagt/Energy_Landscape_dCas9/code_general/')
 sys.path.append('../code_general/')
 from read_model_ID import unpack_parameters
 
@@ -12,11 +12,12 @@ from read_model_ID import unpack_parameters
 Main functions
 '''
 
-def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,times=[0,12,60,180,600,1800,6000,18000,60000],
+def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,times,
                     guide_length=20, model_id='Clv_init_limit_Saturated_general_energies_v2'):
-    
+        
     k_model = calc_clv_rate(parameters, model_id, mismatch_positions, times,
                             guide_length)
+        
     ydata = np.array(ydata)
     yerr = np.array(yerr)
 
@@ -37,12 +38,21 @@ def calc_clv_rate(parameters, model_id, mismatch_positions, times, guide_length=
     :param guide_length:
     :return: cleavage_rate
     '''
+    
+    
+    '''
+    Linear fit-function used by calc_clv_rate
+    '''
+    def f(x,k):
+        return -k*x
+    
+    
     #calculate master equation
     mat = get_master_equation(parameters=parameters, 
                               mismatch_positions=mismatch_positions, 
                               model_id=model_id, 
                               guide_length=guide_length)
-    
+        
     #calculate probabilities in time
     initial_prob = np.zeros(guide_length+2)
     initial_prob[0] = 1
@@ -53,7 +63,6 @@ def calc_clv_rate(parameters, model_id, mismatch_positions, times, guide_length=
         matrix_exponent = linalg.expm(+mat*times[i])
         prob_temp = matrix_exponent.dot(initial_prob)
         prob_uncleaved[i] = np.sum(prob_temp)
-    
     
     #take the logarithm of the probabilities (zero values should not be considered)
     end = len(times)
@@ -67,17 +76,13 @@ def calc_clv_rate(parameters, model_id, mismatch_positions, times, guide_length=
     prob_uncleaved = prob_uncleaved[0:end]
     
     prob_log = np.log(prob_uncleaved)
-    
+   
     #fit the log of the probability to a linear function, 
     #yielding the cleavage rate
     k, error = curve_fit(f,times,prob_log)
     return k[0]
 
-'''
-Linear fit-function used by calc_clv_rate
-'''
-def f(x,k):
-    return -k*x
+
 
 
 
