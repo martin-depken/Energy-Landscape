@@ -23,11 +23,9 @@ import copy
 import matplotlib.pylab as plt 
 
 import Prepare_data as Pre
-
 import Chisq_Finkelstein as Chi
 import SimulatedAnnealing_Finkelstein_parallel as SA
 import Calculate_ABA_Finkelsteinlab_Diewertje as ABA
-
 import functools
 
 def main():
@@ -39,13 +37,13 @@ def main():
     monitor_file = 'monitor.txt'
     init_monitor_file='init_monitor.txt'
     
-    model_ID = 'init_limit_general_energies_v2' #'general_energies'
+    model_ID =  'init_limit_general_energies_v2' #'general_energies' FOR GENERAL ENERGIES MAG LAATSTE LOWERBOUND NIET NEGATIEF ZIJN, DUS ZET OP 0
     concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) # in nanoMolair
     reference=1 # in nanomolair
     
-    upper_bnd =  [10.0] + [10.0]*40 +  [3.0] *3 #*2
-    lower_bnd = [0.0] + [-10.0]*40 + [-7.0] *3 #*2
-    initial_guess = np.loadtxt('parameters.txt') #[5.0] + [1.0]*40 + [0.5] *2
+    upper_bnd =  [10.0] + [10.0]*40 +  [300.0] *3 #*2
+    lower_bnd = [0.0] + [-10.0]*40 + [-7.0] *3 #*2 
+    initial_guess = [5.0] + [1.0]*40 + [0.5] *3 #np.loadtxt('parameters.txt')
     
     KineticModel = functools.partial(Chi.calc_Chi_square,model_id=model_ID, guide_length=20,
                                      concentrations=concentrations,reference=reference)
@@ -69,10 +67,10 @@ def main():
                                     tol=1E-5,
                                     Tfinal=50,
                                     adjust_factor=1.1,
-                                    cooling_rate=0.5,
-                                    N_int=10,
-                                    AR_low=0,
-                                    AR_high=100,
+                                    cooling_rate=0.6,
+                                    N_int=100,
+                                    AR_low=40,
+                                    AR_high=60,
                                     use_multiprocessing=True,
                                     nprocs=1,
                                     output_file_results = fit_result_file,
