@@ -3,7 +3,8 @@ from scipy import linalg
 from scipy.optimize import curve_fit
 
 import sys
-PATH_HPC05 = '/home/dddekker/BEP' 
+# PATH_HPC05 = '/home/dddekker/BEP'
+PATH_HPC05 = '/home/mklein1/Diewertje'
 sys.path.append(PATH_HPC05)
 from read_model_ID import unpack_parameters
 

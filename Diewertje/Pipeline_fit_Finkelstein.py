@@ -2,7 +2,8 @@ import numpy as np
 import functools
 import sys
 
-PATH_HPC05 = '/home/dddekker/BEP' #### Adjust this! Also in other files!
+# PATH_HPC05 = '/home/dddekker/BEP' #### Adjust this! Also in other files!
+PATH_HPC05 = '/home/mklein1/Diewertje'
 sys.path.append(PATH_HPC05)
 import Prepare_data as Pre
 import Chisq_Finkelstein as Chi

@@ -1,5 +1,6 @@
 import sys
-PATH_HPC05 = '/home/dddekker/BEP' 
+# PATH_HPC05 = '/home/dddekker/BEP'
+PATH_HPC05 = '/home/mklein1/Diewertje'
 sys.path.append(PATH_HPC05)
 
 import numpy as np
