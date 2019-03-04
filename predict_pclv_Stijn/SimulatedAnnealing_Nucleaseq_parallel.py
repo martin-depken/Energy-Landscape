@@ -47,7 +47,6 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
 
     '''
 
-
     # presets
     X = Xstart
     SA = SimAnneal(model=model,
@@ -66,10 +65,10 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    objective_function=objective_function)
 
     # Adjust initial temperature
-    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
-    print('Initial temp:  ', SA.T)
+  #  InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
+ #   print('Initial temp:  ', SA.T)
     # store initial Temperature
-    SA.initial_temperature = SA.T
+  #  SA.initial_temperature = SA.T
     
 
     # Open File for intermediate fit results:
@@ -188,6 +187,7 @@ def V(SA, xdata,ydata,yerr,params):
     :param params: parameters of model to fit
     :return: Chi^2 value, LogLikeLihood value... the value of the objective function to be minimized
     '''
+    
     # Multiprocessing
     if SA.MP:
         # split by xdata. Send each entry to an available core
@@ -200,6 +200,7 @@ def V(SA, xdata,ydata,yerr,params):
         for i in range(len(xdata)):
             objective_sum += SA.outQ.get()
 
+    
 
     # No multiprocessing
     else:
@@ -348,7 +349,7 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     Vnew = V(SA, xdata, ydata, yerr, Xtrial)
     Vold = SA.potential
 
-    if (np.log(np.random.uniform()) < (-(Vnew - Vold) / T)):
+    if (np.random.uniform() < np.exp(-(Vnew - Vold) / T)):
         X = Xtrial
         SA.accept += 1
         SA.potential = Vnew
@@ -488,6 +489,7 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
             OutQ.put(output)
         except Exception, e:
             print("error!", e.message)
+            print parameter_values
             break
 
 

@@ -8,6 +8,7 @@ sys.path.append(PATH_HPC05)
 import Nucleaseq_data_processing as processing
 import calculate_cleavage_rate as CRISPR
 import SimulatedAnnealing_Nucleaseq_parallel as SA
+import create_fake_data as cr
 
 from time import time
 '''
@@ -44,19 +45,27 @@ def main(argv):
     init_monitor_file = argv[5]
     
     gRNA_length = 20
-    times = [0.0,12.0,60.0,180.0,600.0,1800.0,6000.0,18000.0,60000.0]
-    times = np.array(times)
-    
+        
     
     upper_bnd = [10.0]*40 +  [3.0] *3
-    lower_bnd = [-10.0]*40 + [-7.0] *3
-    initial_guess =  [0.0]*40 + [0.0] *3
+    lower_bnd = [-10.0]*20 + [0.0]*20 + [-5.0] *3
+    initial_guess =  [0.0]*20 + [5.0]*20 + [0.0] *3
+    
+# =============================================================================
+#     initial_guess = np.array([-0.91105443,  1.65099349, -6.28982814,  6.34251357,  0.24131213,  5.26027237,
+#   1.05829753, -7.28159225, -2.86582133,  7.22669828,  6.12385666, -3.10445699,
+#   8.8801378,  -3.97414648,  6.06113597, -8.51377994,  9.19863279,  6.59524463,
+#   0.72173675, -8.47143605,  1.97290734,  6.28375984,  5.98784653,  4.02852934,
+#   6.1261268,   0.55975488,  3.26946316,  4.09596255,  5.73483408,  0.37742956,
+#   3.62945,     3.87178546,  3.87498714,  2.07444235,  1.45314807,  4.91403281,
+#   2.8929454,   7.93602245,  1.64840129,  9.36968467, -2.03892706,  1.81355167,
+#  -4.9])
+# =============================================================================
 
     ###########################
     # /* Objective function *\#
     ###########################
     KineticModel = functools.partial(CRISPR.calc_chi_squared,
-                        times = times,
                         guide_length=gRNA_length,
                         model_id=model_ID)
 
@@ -65,11 +74,13 @@ def main(argv):
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
     xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq(filename,path_to_data)
+    #xdata, ydata, yerr = cr.create_fake_data()
+    #print xdata, ydata, yerr
+   
     # print ydata
     # print "test ... " + ' \n'
     # KineticModel(np.array(initial_guess),xdata,ydata,np.array([]),1.0)
-
-        
+    
     ##############################################
     # /*   Call the Simulated Annealing code   *\#
     ##############################################
