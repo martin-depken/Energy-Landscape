@@ -1,11 +1,10 @@
-import numpy as np
-from scipy import linalg
 import sys
-import Calculate_ABA_Finkelsteinlab_Diewertje as ABA
-PATH_HPC05 = '/home/mklein1/Energy_Landscape_dCas9/'
+# PATH_HPC05 = '/home/dddekker/BEP'
+PATH_HPC05 = '/home/mklein1/Diewertje'
 sys.path.append(PATH_HPC05)
-sys.path.append('../code_general/')
-import read_model_ID
+
+import numpy as np
+import Calculate_ABA_Finkelsteinlab_Diewertje as ABA
 
 
 '''' 

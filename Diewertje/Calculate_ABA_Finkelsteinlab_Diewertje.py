@@ -1,8 +1,11 @@
 import numpy as np
 from scipy import linalg
 from scipy.optimize import curve_fit
+
 import sys
-sys.path.append('../code_general/')
+# PATH_HPC05 = '/home/dddekker/BEP'
+PATH_HPC05 = '/home/mklein1/Diewertje'
+sys.path.append(PATH_HPC05)
 from read_model_ID import unpack_parameters
 
 def calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):

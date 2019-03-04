@@ -7,6 +7,10 @@
 #
 #
 #############################################################
+import sys
+PATH_HPC05 = '/home/dddekker/BEP' 
+sys.path.append(PATH_HPC05)
+
 import numpy as np
 import multiprocessing as mp
 import Chisq_Finkelstein as Chi
@@ -50,7 +54,6 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     '''
 
 
-    print('program started') 
     # presets
     X = Xstart
     SA = SimAnneal(model=model,
@@ -70,12 +73,11 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    on_target_function= on_target_function)
 
     # Adjust initial temperature
-    #InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
+    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
     #print('Initial temp:  ', SA.T)
-    # store initial Temperature
-    #SA.initial_temperature = SA.T
+    #store initial Temperature
+    SA.initial_temperature = SA.T
 
-    print('Class is made')
     # Open File for intermediate fit results:
     OutputFitResults = open(output_file_results,'w',1)  #third argument will force the I/O to write into the file every line
     for k in range(len(X)):
@@ -84,20 +86,15 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     OutputFitResults.write('Equilibruim')
     OutputFitResults.write('\n')
 
-
-    print('outputfiles are opened')
     # Set initial trial:
     X = Xstart
     SA.potential = V(SA, xdata,ydata,yerr,X)
     # Main loop:
     steps = 0
     Eavg = 0
-    print('goes into the loop now')
     while True:
         steps += 1
-        print(steps)
         # if(steps % 1E3 == 0):
-        #     print steps
 
         # I am starting to check If I switch temperature or if I stop simulation
         if SA.EQ:
@@ -141,10 +138,8 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
         # Input: parameters X, output: updates values of parameters X if accepted
         X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
 
-    print('done with the loop')
     # Close worker processes
     if SA.MP:
-        print('Close workers..')
         for i in range(SA.nprocs):
             SA.inQ.put(None)
         for w in SA.processes:
@@ -200,7 +195,6 @@ def V(SA, xdata,ydata,yerr,params):
 
     # Multiprocessing
     if SA.MP:
-        print('SA.MP is true')
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
@@ -211,14 +205,12 @@ def V(SA, xdata,ydata,yerr,params):
         objective_sum = 0.0
         for i in range(len(xdata)):
            objective_sum += SA.outQ.get()
-        #SA.outQ.get()
-        print('the get worked')    
+        #SA.outQ.get()   
 
 
     # No multiprocessing
     else:
-        print('SA.MP is false')
-        objective_sum = np.sum(SA.objective_function(params,xdata,ydata,yerr,ontarget_ABA,guide_length,SA.model))
+        objective_sum = np.sum(SA.objective_function(params, xdata, ydata,yerr,ontarget_ABA=ontarget_ABA))
     return objective_sum
 
 
