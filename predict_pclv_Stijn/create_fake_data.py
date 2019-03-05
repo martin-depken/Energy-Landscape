@@ -2,6 +2,7 @@ import numpy as np
 import calculate_cleavage_rate as chi
 
 def create_fake_data():
+    #parameters = np.loadtxt('/home/svandersmagt/example-params-2.txt')
     parameters = np.loadtxt('example-params-2.txt')
     guide = 20
     model_ID = 'Clv_init_limit_Saturated_general_energies_v2'

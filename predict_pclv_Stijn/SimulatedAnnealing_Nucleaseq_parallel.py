@@ -10,6 +10,7 @@
 import numpy as np
 import multiprocessing as mp
 import calculate_cleavage_rate as CRISPR
+import sys
 '''
 Main function
 '''
@@ -65,10 +66,11 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    objective_function=objective_function)
 
     # Adjust initial temperature
-  #  InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
- #   print('Initial temp:  ', SA.T)
+    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
+    print('Initial temp:  ', SA.T)
+    sys.stdout.flush()
     # store initial Temperature
-  #  SA.initial_temperature = SA.T
+    SA.initial_temperature = SA.T
     
 
     # Open File for intermediate fit results:
@@ -298,22 +300,26 @@ class SimAnneal():
 
 
 
-def TakeStep(SA,X):
+def TakeStep(SA,X,lwrbnd,upbnd):
     '''
     This function produces a trial configuration for the continuous variables(slopes)
     :param SA:
     :param X: current solution
     :return: trial solution
     '''
-
     delta = SA.step_size
+    Xtrial = np.zeros(len(X))
+    
     if SA.RelativeSteps:
         X = np.log(X)
-        Xtrial = X + np.random.uniform(-delta, delta, size=len(X))
-        Xtrial = np.exp(Xtrial)
-        X = np.exp(X)
+        for i in range(len(X)):
+            Xtrial[i] = np.random.uniform(np.max([X[i]-delta,np.log(lwrbnd[i])]),
+                                          np.min([X[i]+delta,np.log(upbnd[i])]))
     else:
-        Xtrial = X + np.random.uniform(-delta, delta, size=len(X))
+        for i in range(len(X)):
+            Xtrial[i] =  np.random.uniform(np.max([X[i]-delta,lwrbnd[i]]),
+                                          np.min([X[i]+delta,upbnd[i]]))
+   
     return Xtrial
 
 
@@ -334,14 +340,20 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     :param upbnd: user defined upper bound for parameter values
     :return: current solution (rejected Xtrial) or updated solution (accepted Xtrial)
     '''
-    Xtrial = TakeStep(SA, X)
+    Xtrial = TakeStep(SA, X, lwrbnd, upbnd)
 
     # print Xtrial
     # print X
 
-    while (Xtrial < lwrbnd).any() or (Xtrial > upbnd).any():
-        # print 'oops, solution not within bounds! Trying again...'
-        Xtrial = TakeStep(SA,X)
+# =============================================================================
+#     while (Xtrial < lwrbnd).any() or (Xtrial > upbnd).any():
+#         #print 'oops, solution not within bounds! Trying again...'
+#         #print X
+#         #sys.stdout.flush()
+#         #SA.step_size *= SA.alpha
+#         Xtrial = TakeStep(SA,X)
+# =============================================================================
+        
 
     # Let V({dataset}|{parameterset}) be your residual function.
     # Metropolis:
@@ -469,28 +481,23 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
     
     
     while True:
-        try:
-            # Check if there is a new job loaded to the Que (first core that picks it up will do the trick)
-            job = InQ.get()
-            if job is None:
-                break
-            # Unpack the job into the correct input arguments
-            parameter_values  = job[0]
-            xdata = job[1]
-            ydata = job[2]
-            yerr  = job[3]
-
-            if len(job)>4:
-                addidtional_argument = job[4]
-                output = calc_objective_function(parameter_values, xdata, ydata, yerr, addidtional_argument)
-            else:
-                output = calc_objective_function(parameter_values, xdata, ydata, yerr)
-            # Perform the job:
-            OutQ.put(output)
-        except Exception, e:
-            print("error!", e.message)
-            print parameter_values
+        # Check if there is a new job loaded to the Que (first core that picks it up will do the trick)
+        job = InQ.get()
+        if job is None:
             break
+        # Unpack the job into the correct input arguments
+        parameter_values  = job[0]
+        xdata = job[1]
+        ydata = job[2]
+        yerr  = job[3]
+
+        if len(job)>4:
+            addidtional_argument = job[4]
+            output = calc_objective_function(parameter_values, xdata, ydata, yerr, addidtional_argument)
+        else:
+            output = calc_objective_function(parameter_values, xdata, ydata, yerr)
+        # Perform the job:
+        OutQ.put(output)
 
 
 
