@@ -12,10 +12,9 @@ from read_model_ID import unpack_parameters
 Main functions
 '''
 
-def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,times,
+def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,
                     guide_length=20, model_id='Clv_init_limit_Saturated_general_energies_v2'):
-        
-    k_model = calc_clv_rate(parameters, model_id, mismatch_positions, times,
+    k_model = calc_clv_rate_fast(parameters, model_id, mismatch_positions,
                             guide_length)
         
     ydata = np.array(ydata)
@@ -26,66 +25,84 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,times,
     return chi_sqrd
 
 
-def calc_clv_rate(parameters, model_id, mismatch_positions, times, guide_length=20):
-    '''
-    Calculates the cleavage rate, given the model_id, model parameters, 
-    guide length and mismatch positions, at the given times.
+
+def calc_clv_rate(parameters, model_id, mismatch_positions, guide_length=20):
+     '''
+     Calculates the cleavage rate, given the model_id, model parameters, 
+     guide length and mismatch positions, at the given times.
+     
+     :param parameters:
+     :param model_id:
+     :param mismatch_positions:
+     :param times:
+     :param guide_length:
+     :return: cleavage_rate
+     '''
+     times = [0.0,12.0,60.0,180.0,600.0,1800.0,6000.0,18000.0,60000.0]
+     
+     '''
+     Linear fit-function used by calc_clv_rate
+     '''
+     def f(x,k):
+         return -k*x
+     
+     
+     #calculate master equation
+     mat = get_master_equation(parameters=parameters, 
+                       mismatch_positions=mismatch_positions, 
+                       model_id=model_id, 
+                       guide_length=guide_length)
+     
+     #calculate probabilities in time
+     initial_prob = np.zeros(guide_length+2)
+     initial_prob[0] = 1
+     initial_prob.T
+     
+     prob_uncleaved = np.zeros(len(times))
+     for i in range(len(times)):
+         matrix_exponent = linalg.expm(+mat*times[i])
+         prob_temp = matrix_exponent.dot(initial_prob)
+         prob_uncleaved[i] = np.sum(prob_temp)
+     
+     #take the logarithm of the probabilities (zero values should not be considered)
+     end = len(times)
     
-    :param parameters:
-    :param model_id:
-    :param mismatch_positions:
-    :param times:
-    :param guide_length:
-    :return: cleavage_rate
-    '''
+     for i in range(len(times)):
+         if prob_uncleaved[i]==0:
+             end = i
+             break
+     
+     times = times[0:end]
+     prob_uncleaved = prob_uncleaved[0:end]
+     
+     prob_log = np.log(prob_uncleaved)
     
-    
-    '''
-    Linear fit-function used by calc_clv_rate
-    '''
-    def f(x,k):
-        return -k*x
-    
-    
+     #fit the log of the probability to a linear function, 
+     #yielding the cleavage rate
+     k, error = curve_fit(f,times,prob_log)
+     return k[0]
+
+
+
+def calc_clv_rate_fast(parameters, model_id, mismatch_positions, guide_length=20):
     #calculate master equation
     mat = get_master_equation(parameters=parameters, 
                               mismatch_positions=mismatch_positions, 
                               model_id=model_id, 
                               guide_length=guide_length)
-        
-    #calculate probabilities in time
-    initial_prob = np.zeros(guide_length+2)
-    initial_prob[0] = 1
-    initial_prob.T
     
-    prob_uncleaved = np.zeros(len(times))
-    for i in range(len(times)):
-        matrix_exponent = linalg.expm(+mat*times[i])
-        prob_temp = matrix_exponent.dot(initial_prob)
-        prob_uncleaved[i] = np.sum(prob_temp)
-    
-    #take the logarithm of the probabilities (zero values should not be considered)
-    end = len(times)
-           
-    for i in range(len(times)):
-        if prob_uncleaved[i]==0:
-            end = i
-            break
-    
-    times = times[0:end]
-    prob_uncleaved = prob_uncleaved[0:end]
-    
-    prob_log = np.log(prob_uncleaved)
+    M = -1 * mat
+    try:
+        Minv = np.linalg.inv(M)
+    except:
+        print 'inverting failed, using different method'
+        return calc_clv_rate(parameters, model_id, mismatch_positions)
+    vec = np.ones(len(Minv))
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    MFPT = vec.dot(Minv.dot(everything_unbound))
+    k = 1/MFPT
    
-    #fit the log of the probability to a linear function, 
-    #yielding the cleavage rate
-    k, error = curve_fit(f,times,prob_log)
-    return k[0]
-
-
-
-
-
+    return k
 
 '''
 Helper functions 

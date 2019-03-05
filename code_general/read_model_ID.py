@@ -33,7 +33,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
         epsilon[1:] = parameters[:-3]
         
-        rate_sol_to_PAM = 10000.0 #predefined at saturation
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
         rate_PAM_to_R1 = 10**parameters[-3]
         rate_internal = 10**parameters[-2]
         rate_clv = 10**parameters[-1]
