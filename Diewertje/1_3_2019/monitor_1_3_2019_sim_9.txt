@@ -1,0 +1,8 @@
+succes:False
+(last recorded) chi-squared:157699.713425
+reached final temperature:False
+iterations:691000
+(last recorded) stepsize:0.0391425130122
+(last recorded) Temperature:1516.37301401
+(last recorded) relative change average energy:0.00904092412672
+tolerance low enough:False
