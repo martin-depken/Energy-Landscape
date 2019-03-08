@@ -13,7 +13,7 @@ Main functions
 '''
 
 def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,
-                    guide_length=20, model_id='Clv_init_limit_Saturated_general_energies_v2'):
+                    guide_length=20, model_id='Clv_Saturated_general_energies_v2'):
     k_model = calc_clv_rate_fast(parameters, model_id, mismatch_positions,
                             guide_length)
         
@@ -38,7 +38,7 @@ def calc_clv_rate(parameters, model_id, mismatch_positions, guide_length=20):
      :param guide_length:
      :return: cleavage_rate
      '''
-     times = [0.0,12.0,60.0,180.0,600.0,1800.0,6000.0,18000.0,60000.0]
+     times = np.array([0.0,12.0,60.0,180.0,600.0,1800.0,6000.0,18000.0,60000.0])
      
      '''
      Linear fit-function used by calc_clv_rate
@@ -56,7 +56,6 @@ def calc_clv_rate(parameters, model_id, mismatch_positions, guide_length=20):
      #calculate probabilities in time
      initial_prob = np.zeros(guide_length+2)
      initial_prob[0] = 1
-     initial_prob.T
      
      prob_uncleaved = np.zeros(len(times))
      for i in range(len(times)):
@@ -95,7 +94,8 @@ def calc_clv_rate_fast(parameters, model_id, mismatch_positions, guide_length=20
     try:
         Minv = np.linalg.inv(M)
     except:
-        print 'inverting failed, using different method'
+        print 'INVERTING MATRIX FAILED, USE SLOWER METHOD'
+        sys.stdout.flush()
         return calc_clv_rate(parameters, model_id, mismatch_positions)
     vec = np.ones(len(Minv))
     everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))

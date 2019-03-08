@@ -47,20 +47,19 @@ def main(argv):
     gRNA_length = 20
         
     
-    upper_bnd = [10.0]*40 +  [3.0] *3
-    lower_bnd = [-10.0]*20 + [0.0]*20 + [-5.0] *3
-    initial_guess =  [0.0]*20 + [5.0]*20 + [0.0] *3
+    upper_bnd = [15.0]*40 +  [3.0] *2
+    lower_bnd = [-10.0]*20 + [0.0]*20 + [-5.0] *2
+    initial_guess =  [0.0]*20 + [5.0]*20 + [0.0] *2
     
-# =============================================================================
-#     initial_guess = np.array([-0.91105443,  1.65099349, -6.28982814,  6.34251357,  0.24131213,  5.26027237,
+
+#    initial_guess = np.array([-0.91105443,  1.65099349, -6.28982814,  6.34251357,  0.24131213,  5.26027237,
 #   1.05829753, -7.28159225, -2.86582133,  7.22669828,  6.12385666, -3.10445699,
 #   8.8801378,  -3.97414648,  6.06113597, -8.51377994,  9.19863279,  6.59524463,
 #   0.72173675, -8.47143605,  1.97290734,  6.28375984,  5.98784653,  4.02852934,
 #   6.1261268,   0.55975488,  3.26946316,  4.09596255,  5.73483408,  0.37742956,
 #   3.62945,     3.87178546,  3.87498714,  2.07444235,  1.45314807,  4.91403281,
 #   2.8929454,   7.93602245,  1.64840129,  9.36968467, -2.03892706,  1.81355167,
-#  -4.9])
-# =============================================================================
+#  -7.9])
 
     ###########################
     # /* Objective function *\#
@@ -96,14 +95,14 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=100.,             # infered from run on my computer/other runs on cluster
+                                Tstart=1000.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=1.0,
                                 tol=1E-5,
-                                Tfinal=0.0,
+                                Tfinal=990.0,
                                 adjust_factor=1.1,
                                 cooling_rate=0.99,
-                                N_int=1000,
+                                N_int=10,
                                 AR_low=40,
                                 AR_high=60,
                                 use_multiprocessing=True,
@@ -111,7 +110,7 @@ def main(argv):
                                 output_file_results = fit_result_file,
                                 output_file_monitor = monitor_file,
                                 output_file_init_monitor=init_monitor_file
-                                   )
+                                )
 
     t2 = time()
 
