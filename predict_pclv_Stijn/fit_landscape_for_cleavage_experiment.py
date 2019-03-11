@@ -47,9 +47,9 @@ def main(argv):
     gRNA_length = 20
         
     
-    upper_bnd = [15.0]*40 +  [7.0] *3
-    lower_bnd = [-10.0]*20 + [0.0]*20 + [-5.0] *3
-    initial_guess =  [0.0]*20 + [5.0]*20 + [0.0] *3
+    upper_bnd = [15.0]*40 +  [3.0] *2
+    lower_bnd = [-10.0]*20 + [0.0]*20 + [-5.0] *2
+    initial_guess =  [0.0]*20 + [5.0]*20 + [0.0] *2
     
 
 #    initial_guess = np.array([-0.91105443,  1.65099349, -6.28982814,  6.34251357,  0.24131213,  5.26027237,
@@ -97,7 +97,7 @@ def main(argv):
                                 objective_function=KineticModel,
                                 Tstart=1000.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
-                                delta=0.1,
+                                delta=1.0,
                                 tol=1E-5,
                                 Tfinal=0.0,
                                 adjust_factor=1.1,
