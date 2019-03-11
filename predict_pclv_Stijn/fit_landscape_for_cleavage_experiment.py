@@ -45,9 +45,9 @@ def main(argv):
     init_monitor_file = argv[5]
     
     gRNA_length = 20
-        
+    fit_to_median = True    
     
-    upper_bnd = [15.0]*40 +  [3.0] *2
+    upper_bnd = [15.0]*40 +  [6.0] *2
     lower_bnd = [-10.0]*20 + [0.0]*20 + [-5.0] *2
     initial_guess =  [0.0]*20 + [5.0]*20 + [0.0] *2
     
@@ -72,7 +72,7 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq(filename,path_to_data)
+    xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq(filename,path_to_data,fit_to_median)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
    
