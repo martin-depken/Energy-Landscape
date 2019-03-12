@@ -168,6 +168,7 @@ from Bio import SeqIO # for reading FASTA files
 from Bio.Seq import Seq # reading DNA sequences
 import h5py # handling HDF5 formats
 import os
+from kinetic_model import *
 
 def readout_genome(name,mainpath,begin,end):
 	"""
@@ -217,3 +218,47 @@ def store_tclv(position,startpos,tclv,filename,dsname="ChrY"):
 			dataindex = hdf[dsname].shape[0]
 			hdf[dsname].resize((dataindex+1),axis=0)
 			hdf[dsname][dataindex] = position+startpos,tclv
+
+def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,includeNs=False):
+	"""
+	
+	"""
+	guidelength = len(guide)
+
+	if endpos<startpos+3+guidelength:
+		print("The end position is ill-defined.")
+		
+	sequence = readout_genome(file,mainpath,startpos,endpos)
+	if endpos>len(sequence):
+		endpos = len(sequence)
+	endpos = len(sequence)
+
+	for position in range(endpos-startpos-guidelength-2):
+		PAM = sequence[position+20:position+23]
+		target = sequence[position: position+20]
+		if (not 'N' in PAM+target) or includeNs:
+			#target = "CCCACCCCCCTCAAACGAGG"
+			
+			#calculate energies and forward rates
+			pamenergy,pamrate,solrate = lut_pam[PAM]
+			energy,forwardrates = single_target(target,guide,lut_tar)
+			
+			#concatenate and calculate backward rates
+			energy = np.insert(energy,0,pamenergy)
+			forwardrates = np.insert(forwardrates,0,[solrate,pamrate])
+			backwardrates = get_backward_rates(energy, forwardrates)
+			backwardrates = np.insert(backwardrates,0,[0])
+			
+			# build rate matrix and calculate tclv			
+			try:
+				M = build_rate_matrix(forwardrates,backwardrates)
+				tclv = mean_first_passage_time(M)
+				print(position+startpos,PAM+"|"+target,tclv,position)
+			except:
+				M = build_rate_matrix(forwardrates,backwardrates)
+				print("At position",position,"something went wrong with the matrix.\n",M)
+				continue
+			
+			store_tclv(position,startpos,tclv,mainpath+"dataset001.hdf5")
+			
+	return

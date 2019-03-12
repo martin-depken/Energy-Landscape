@@ -13,7 +13,7 @@ __status__ = "Production"
 import sys
 #sys.path.append("/home/sfdejong/")
 from functions import *
-from partition import *
+#from partition import *
 import numpy as np
 from Bio import Seq
 from time import time
