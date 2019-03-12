@@ -18,7 +18,7 @@ mainpath = open("mainpath.txt","r").readline()
 if mainpath[-1] != "\\" :
 	mainpath += '\\'
 	
-with open(mainpath+"example-params-2.txt",'r') as fl:
+with open(mainpath+"parameters.txt",'r') as fl:
 	for line in fl.readlines():
 		parameters.append(float(line))
 parameters = (parameters)

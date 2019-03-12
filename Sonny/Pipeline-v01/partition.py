@@ -26,9 +26,10 @@ def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,includeNs=Fals
 	if endpos>len(sequence):
 		endpos = len(sequence)
 	endpos = len(sequence)
+
 	for position in range(endpos-startpos-guidelength-2):
 		PAM = sequence[position+20:position+23]
-		target = sequence[position+3: position+3+20]
+		target = sequence[position: position+20]
 		if (not 'N' in PAM+target) or includeNs:
 			#target = "CCCACCCCCCTCAAACGAGG"
 			
