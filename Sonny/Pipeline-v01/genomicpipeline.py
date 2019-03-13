@@ -13,14 +13,30 @@ __status__ = "Production"
 import sys
 #sys.path.append("/home/sfdejong/")
 from functions import *
-#from partition import *
 import numpy as np
 from Bio import Seq
 from time import time
 
+class CRISPR:
+	def __init__(self, name):
+		self.name = name
+		if name in {'Cas9'}:
+			self.guidelength = 20
+			self._5primeseed_wrt_target = False
+			self.PAM = True
+			self.pamlength = 3
+			self._5primePAM_wrt_target = False
+		elif name in {'Cas12','Cas12a','Cpf1'}:
+			self.guidelength = 20
+			self._5primeseed_wrt_target = True
+			self.PAM = True
+			self.pamlength = 4
+			self._5primePAM_wrt_target = True
 
 def main(argv):
 	file = argv[1]
+	Cas = CRISPR(argv[2])
+
 	mainpath = open("mainpath.txt","r").readline()
 	if mainpath[-1] != "\\" :
 		mainpath += '\\'
@@ -31,7 +47,7 @@ def main(argv):
 	startpos = 0 # PAM position at ChrY where it starts
 	endpos = startpos+240
 	guide = "GGGUGGGGGGAGUUUGCUCC" #pVC297 VEGF Site#1 from 5' to 3'
-	partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,includeNs=False)
+	partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,includeNs=False)
 	t2 = time()
 	print("Elapsed time equals",t2-t1)
 	return

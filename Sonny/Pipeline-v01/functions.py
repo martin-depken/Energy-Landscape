@@ -37,7 +37,7 @@ def read_dict(name):
 	else:
 		return pickle.load( open(name+".p","rb"))
 		
-def convert_param(parameters,model_id,guide,target):
+def convert_param(parameters,model_id,guide,target,Cas):
 	"""
 	Uses the function unpack_parameters() to read a long list epsilons and forward rates. Next, it calculates the right epsilons for matching / mismatching nucleotides at each position and puts them in the following nested tuple:
 	
@@ -90,6 +90,7 @@ def generalise_dict(
 def make_PAM_dict(
 	parameters,
 	model_id,
+	Cas,
 	equivalent=  [('A','a','N'),('C','c'),('G','g'),('U','u','T','t')]):
 	"""
 	Creates the PAM lookup dictionary using unpack_parameters().
@@ -189,14 +190,14 @@ def readout_genome(name,mainpath,begin,end):
 			gen += records[j+1].seq
 	return gen[begin:end]
 
-def single_target(target,guide,lut):
+def single_target(target,guide,lut,Cas):
 	"""
 	Finds the energies and forward rates associated to a target sequence, guide sequence and lookup table.
 	"""
-	energy = np.zeros([20])
-	rates = np.zeros([20])
-	for index in range(20):
-		energy[index],rates[index] = lut[ guide[index] ][ target[index] ][ 19-index ]
+	energy = np.zeros([Cas.guidelength])
+	rates = np.zeros([Cas.guidelength])
+	for index in range(Cas.guidelength-1):
+		energy[index],rates[index] = lut[ guide[index] ][ target[index] ][ index ]
 	return energy,rates
 	
 def store_tclv(position,startpos,tclv,filename,dsname="ChrY"):
@@ -219,12 +220,14 @@ def store_tclv(position,startpos,tclv,filename,dsname="ChrY"):
 			hdf[dsname].resize((dataindex+1),axis=0)
 			hdf[dsname][dataindex] = position+startpos,tclv
 
-def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,includeNs=False):
+def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,includeNs=False):
 	"""
 	
 	"""
 	guidelength = len(guide)
-
+	guidelength = Cas.guidelength
+	pamlength   = Cas.pamlength
+	
 	if endpos<startpos+3+guidelength:
 		print("The end position is ill-defined.")
 		
@@ -233,27 +236,37 @@ def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,includeNs=Fals
 		endpos = len(sequence)
 	endpos = len(sequence)
 
-	for position in range(endpos-startpos-guidelength-2):
-		PAM = sequence[position+20:position+23]
-		target = sequence[position: position+20]
+	for position in range(endpos-startpos-guidelength-pamlength+1):
+
+		#_5prsd = Cas._5primeseed_wrt_target
+		_5prsd = True
+		PAM = sequence[
+			position + (not _5prsd)*(guidelength+pamlength - 1) :
+			position + _5prsd*pamlength + (not _5prsd)*(guidelength-1):
+			2*_5prsd-1]
+		target = sequence[
+			position + _5prsd*pamlength + (not _5prsd)*(guidelength - 1) :
+			(position + _5prsd*(guidelength+pamlength) - (not _5prsd)*0) or None :
+			2*_5prsd-1]
+
 		if (not 'N' in PAM+target) or includeNs:
 			#target = "CCCACCCCCCTCAAACGAGG"
 			
 			#calculate energies and forward rates
 			pamenergy,pamrate,solrate = lut_pam[PAM]
-			energy,forwardrates = single_target(target,guide,lut_tar)
+			energy,forwardrates = single_target(target,guide,lut_tar,Cas)
 			
 			#concatenate and calculate backward rates
 			energy = np.insert(energy,0,pamenergy)
 			forwardrates = np.insert(forwardrates,0,[solrate,pamrate])
-			backwardrates = get_backward_rates(energy, forwardrates)
+			backwardrates = get_backward_rates(energy, forwardrates,Cas)
 			backwardrates = np.insert(backwardrates,0,[0])
 			
 			# build rate matrix and calculate tclv			
 			try:
 				M = build_rate_matrix(forwardrates,backwardrates)
 				tclv = mean_first_passage_time(M)
-				print(position+startpos,PAM+"|"+target,tclv,position)
+				print(position+startpos,"5'-"+target+"|"+PAM+"-3'",tclv,position)
 			except:
 				M = build_rate_matrix(forwardrates,backwardrates)
 				print("At position",position,"something went wrong with the matrix.\n",M)
