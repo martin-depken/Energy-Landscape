@@ -1,0 +1,6 @@
+Test run with fake data
+Run1 used a value for error of 1e-5 for all datapoints
+Run2 will use relative values
+Run3 was aborted
+Run4 uses relative errors, and runs 50 times. An effort was made to prevent freezing
+ but failed
