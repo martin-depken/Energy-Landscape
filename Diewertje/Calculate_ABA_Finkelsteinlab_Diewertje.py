@@ -6,6 +6,7 @@ import sys
 # PATH_HPC05 = '/home/dddekker/BEP'
 PATH_HPC05 = '/home/mklein1/Diewertje'
 sys.path.append(PATH_HPC05)
+sys.path.append('../code_general/') # added this after we run it on the cluster
 from read_model_ID import unpack_parameters
 
 def calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):
@@ -51,7 +52,7 @@ def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     :return:
     '''
     epsilon, forward_rates = unpack_parameters(parameters, model_id, guide_length)
-    #print(forward_rates)
+    print(len(epsilon))
     energies = get_energies(epsilon,mismatch_positions, guide_length)
     backward_rates = get_backward_rates(energies, forward_rates,guide_length )
     rate_matrix = build_rate_matrix(forward_rates, backward_rates)
@@ -73,8 +74,9 @@ def get_energies(epsilon,mismatch_positions, guide_length=20):
         mismatch_positions = np.array(mismatch_positions)
     new_epsilon = epsilon.copy()
     epsI = new_epsilon[(guide_length+1):]
-    energies = -1*new_epsilon[0:(guide_length+1)] # convention: epsC>0 means downward slope
+    energies = -1*np.array(new_epsilon[0:(guide_length+1)]) # convention: epsC>0 means downward slope
     energies[0] = new_epsilon[0]                 # convention: epsPAM>0 means upward slope
+    energies=np.ndarray.tolist(energies)
     if len(mismatch_positions)>0:
         energies[mismatch_positions.astype(int)] += epsI[(mismatch_positions.astype(int)-1)]
     return energies
