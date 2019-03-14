@@ -6,7 +6,7 @@ sns.set_style('ticks')
 current_colors = sns.color_palette()
 import importlib as imp
 
-import Calculate_ABA_Finkelsteinlab as CalcABA
+import Calculate_ABA_Finkelsteinlab_Diewertje as CalcABA
 imp.reload(CalcABA);
 
 def plot_single_mut_ABA(data, Mut_type, data_name='Finkelstein Data', Canonical=True, Plot=True):
@@ -271,8 +271,8 @@ def predict_1D_mmblocks(parameters, model_id, T=60 * 10, guide_length=20, show_p
 
 def predict_single_mm(parameters, model_id, T=60 * 10, guide_length=20, show_plot=True, show_data=True,
                       data_file='../Data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/cas9-target-e-replicate-1-delta-abas-processed.csv'):
-    concentrations = 2 ** np.array(range(0, 11)) * 0.5
-    reference_conc = 10
+    concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) #2 ** np.array(range(0, 11)) * 0.5
+    reference_conc = 1 #10
     ontarget_ABA = CalcABA.calc_ABA(parameters, concentrations, reference_conc,
                                     mismatch_positions=[],
                                     model_id=model_id,
