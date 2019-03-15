@@ -1,0 +1,20 @@
+14-3-2019
+
+Force the internal rate to stay between 100 and 1000
+
+fit_landscape_for_cleavage_experiment.py
+20 fits on NucleaSeq data: TargetE/ECas9_cleavage_rate_and_y0_Canonical_OT-r_0-2.csv
+
+Used model is 'Clv_Saturated_general_energies_v2' 
+with predefined ePAM = -100, rate_sol_to_PAM = 1000
+
+Tstart=1000.,
+use_relative_steps=False,
+delta=1.0,
+tol=1E-5,
+Tfinal=0.0,
+adjust_factor=1.1,
+cooling_rate=0.99,
+N_int=1000,
+AR_low=40,
+AR_high=60,

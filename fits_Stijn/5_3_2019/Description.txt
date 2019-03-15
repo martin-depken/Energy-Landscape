@@ -1,0 +1,21 @@
+5-3-2019
+
+Second fit on the data, now with faster calculations, higher upper boundaries, and Xtrial is calculated in a different way to prevent stalling at the boundary. Initial step size is 0.1.
+
+fit_landscape_for_cleavage_experiment.py
+10 fits on NucleaSeq data: TargetE/ECas9_cleavage_rate_and_y0_Canonical_OT-r_0-2.csv
+
+Used model is 'Clv_init_limit_Saturated_general_energies_v2' 
+with predefined ePAM = -100, rate_sol_to_PAM = 1000
+
+Tstart=1000.,
+use_relative_steps=False,
+delta=0.1,
+tol=1E-5,
+Tfinal=0.0,
+adjust_factor=1.1,
+cooling_rate=0.99,
+N_int=1000,
+AR_low=40,
+AR_high=60,
+                                	

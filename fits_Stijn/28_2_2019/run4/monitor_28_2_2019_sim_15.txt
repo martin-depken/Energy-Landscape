@@ -1,0 +1,5 @@
+(last recorded) chi-squared:84399.96981
+succes:False
+(last recorded) stepsize:7.40024994426
+(last recorded) Temperature:2554.76698619
+iterations:22000

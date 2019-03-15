@@ -1,0 +1,22 @@
+4-3-2019
+Test run on fake data to make sure that all runs will finish without freezing
+Run1 was tried without exception statement, this does not solve the problem
+Run2 implemented a print statement when Xtrial was not good because it is not within the boundaries. This seems to be the problem, slow or freezed processes have very large terminal files because of the repeated print statements. And end up with very large stepsizes, making it very difficult to create Xtrials that are within the boundaries.
+Run3 will reduce the stepsize when the boundary is encountered and start with a smaller initial stepsize. That runs into infinity errors, maybe the stepsize is reduced to zero?
+Run4 will only use a smaller initial stepsize, does not work as well
+Run5 has implemented a new Takestep, which makes it impossible to take steps outside the boundary. It also start with initial stepsize 0.1, and has increased upper boundaries. The last three fits of run5 were by accident fitted to experimental data, instead of fake date. That is why they took longer to complete and finished with a higher chi_squared. For convenience I moved them to the 5-3-2019 folder and renamed them.
+fit_landscape_for_cleavage_experiment.py
+
+Used model is 'Clv_init_limit_Saturated_general_energies_v2' 
+with predefined ePAM = -100, rate_sal_to_PAM = 1000
+
+Tstart=100.,
+use_relative_steps=False,
+delta=1.0,
+tol=1E-5,
+Tfinal=0.0,
+adjust_factor=1.1,
+cooling_rate=0.99,
+N_int=1000,
+AR_low=40,
+AR_high=60,

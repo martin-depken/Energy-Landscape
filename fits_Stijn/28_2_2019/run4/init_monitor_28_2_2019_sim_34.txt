@@ -1,0 +1,4 @@
+(last recorded) stepsize:1.0
+(last recorded) Temperature:2810.24368481
+iterations:35000
+(last recorded) Acceptance Ratio:6.0
