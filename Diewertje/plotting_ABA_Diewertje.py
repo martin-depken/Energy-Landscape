@@ -158,8 +158,8 @@ def plot_mut_PAM_ABA(data, data_name='Finkelstein Data', Plot=True):
 
 def predict_block_mismatches(parameters, model_id, T=60 * 10, guide_length=20, show_plot=True, show_data=True,
                              data_file = '../Data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/cas9-target-e-replicate-1-delta-abas-processed.csv'):
-    concentrations = 2 ** np.array(range(0, 11)) * 0.5
-    reference_conc = 10
+    concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) #2 ** np.array(range(0, 11)) * 0.5
+    reference_conc = 1 #10
     ontarget_ABA = CalcABA.calc_ABA(parameters, concentrations, reference_conc,
                                     mismatch_positions=[],
                                     model_id=model_id,
@@ -171,7 +171,7 @@ def predict_block_mismatches(parameters, model_id, T=60 * 10, guide_length=20, s
 
     for start_of_block in range(1, guide_length + 1):
         for end_of_block in range(start_of_block + 2, guide_length + 1):
-            mm_block = range(start_of_block, end_of_block)
+            mm_block = list(range(start_of_block, end_of_block)) # Python 3! for python 2, remove the list around it!
             delta_ABA_mat[start_of_block - 1, end_of_block - 1] = CalcABA.calc_delta_ABA(parameters, concentrations,
                                                                                          reference_conc,
                                                                                          mismatch_positions=mm_block,
@@ -190,7 +190,7 @@ def predict_block_mismatches(parameters, model_id, T=60 * 10, guide_length=20, s
 
         if show_data:
             plt.figure()
-            IlyaData = pd.read_csv( data_file )
+            IlyaData = data_file #pd.read_csv( data_file )
             _, Blocks_heatmap, _ = plot_block_mm_ABA(IlyaData,
                                                             Plot=False,
                                                             SaveFigures=False,
@@ -207,8 +207,8 @@ def predict_block_mismatches(parameters, model_id, T=60 * 10, guide_length=20, s
 
 def predict_1D_mmblocks(parameters, model_id, T=60 * 10, guide_length=20, show_plot=True, show_data=True,
                         data_file='../Data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/cas9-target-e-replicate-1-delta-abas-processed.csv'):
-    concentrations = 2 ** np.array(range(0, 11)) * 0.5
-    reference_conc = 10
+    concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) #2 ** np.array(range(0, 11)) * 0.5
+    reference_conc = 1 #10
     ontarget_ABA = CalcABA.calc_ABA(parameters, concentrations, reference_conc,
                                     mismatch_positions=[],
                                     model_id=model_id,
@@ -220,7 +220,7 @@ def predict_1D_mmblocks(parameters, model_id, T=60 * 10, guide_length=20, show_p
         avg_delta_ABA = 0
         count = 0
         for end_of_block in range(start_of_block + 2, guide_length + 1):
-            mm_block = range(start_of_block, end_of_block)
+            mm_block = list(range(start_of_block, end_of_block))
             avg_delta_ABA += CalcABA.calc_delta_ABA(parameters, concentrations, reference_conc,
                                                     mismatch_positions=mm_block,
                                                     model_id=model_id,
@@ -248,7 +248,7 @@ def predict_1D_mmblocks(parameters, model_id, T=60 * 10, guide_length=20, show_p
         plt.ylabel(r'$\Delta \rm{ABA} \ (k_BT)$', fontsize=15)
 
         if show_data:
-            IlyaData = pd.read_csv(data_file)
+            IlyaData = data_file #pd.read_csv(data_file)
             _, _, ABA_first_mm_pos = plot_block_mm_ABA(IlyaData,
                                                               Plot=False,
                                                               SaveFigures=False,
@@ -305,7 +305,7 @@ def predict_single_mm(parameters, model_id, T=60 * 10, guide_length=20, show_plo
         plt.ylabel(r'$\Delta \rm{ABA} \ (k_BT)$', fontsize=15)
 
         if show_data:
-            IlyaData = pd.read_csv(data_file)
+            IlyaData = data_file #pd.read_csv(data_file)
             single_mut_data_mean = plot_single_mut_ABA(data=IlyaData, Mut_type='r', Plot=False)
 
             plt.errorbar(x=single_mut_data_mean['Position'],
@@ -323,8 +323,8 @@ def predict_single_mm(parameters, model_id, T=60 * 10, guide_length=20, show_plo
 
 def predict_double_mm(parameters, model_id, T=60 * 10, guide_length=20, show_plot=True, show_data=True,
                       data_file='../Data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/cas9-target-e-replicate-1-delta-abas-processed.csv'):
-    concentrations = 2 ** np.array(range(0, 11)) * 0.5
-    reference_conc = 10
+    concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) #2 ** np.array(range(0, 11)) * 0.5
+    reference_conc = 1 #10
     ontarget_ABA = CalcABA.calc_ABA(parameters, concentrations, reference_conc,
                                     mismatch_positions=[],
                                     model_id=model_id,
@@ -352,7 +352,7 @@ def predict_double_mm(parameters, model_id, T=60 * 10, guide_length=20, show_plo
         str_title = 'Prediction (top)'
 
         if show_data:
-            IlyaData = pd.read_csv(data_file)
+            IlyaData = data_file #pd.read_csv(data_file)
             _, double_mut_map = plot_double_mut_ABA(data=IlyaData, Mut_type='r', Plot=False)
             sns.heatmap(double_mut_map, cmap='coolwarm', ax=axHeatmap, vmin=0, vmax=2.5)
             str_title += ' / Data (bottom)'
