@@ -5,7 +5,7 @@ Can get the distributions/boxplots of different parameters amongst the different
 
 Also built-in a sweep to find the bounds for the internal forward rate based on the averaged (free-)energy landscape
 '''
-
+import importlib as imp
 import matplotlib.pylab as plt
 import numpy as np
 import pandas as pd
@@ -17,22 +17,22 @@ import sys
 sys.path.append('../code_general/')
 from read_model_ID import unpack_parameters
 import CRISPR_free_energy_landscape as FreeEnergy
-#reload(FreeEnergy);
+imp.reload(FreeEnergy);
 sys.path.append('../code_Boyle/')
 #import plotting_Boyle as plt_B
 #reload(plt_B)
 import CRISPR_dCas9_binding_curve_Boyle as dCas9
-#reload(dCas9);
+imp.reload(dCas9);
 
 from scipy import optimize
 import Boyle_data_processing as Bdata
-#reload(Bdata);
+imp.reload(Bdata);
 
 #import CRISPR_dCas9_binding_curve_Boyle as dCas9
 #reload(dCas9);
 sys.path.append('../code_Pclv/')
-#import CRISPR_Kinetic_model as Pclv
-#reload(Pclv);
+import CRISPR_Kinetic_model as Pclv
+imp.reload(Pclv);
 
 import get_parameters_fit_Diewertje as gpf
 
@@ -103,6 +103,7 @@ def process_SA_fits(simset,Nparams=44, model_id='init_limit_general_energies_v2'
         epsilon, fwd_rates = unpack_parameters(parameters, model_id)
         Energy_landscape, FreeEnergy_landscape = FreeEnergy.plot_free_energy_landscape(parameters, model_id,
                                                                                        show_plot=False);
+        print(Energy_landscape) 
 
         match_data = {}
         match_data['sim'] = filename
