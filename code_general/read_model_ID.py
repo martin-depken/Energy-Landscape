@@ -26,6 +26,23 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
     
+    if model_id == 'Clv_Saturated_fixed_kf_general_energies_v2':
+        if len(parameters)!=41:
+            return
+        
+        epsilon[0] = -100.0 #predefined epsilon PAM at saturation
+        epsilon[1:] = parameters[:-1]
+        
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
+        rate_PAM_to_R1 = 200.0
+        rate_internal = 200.0
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+    
     if model_id == 'Clv_Saturated_general_energies_v2':
         if len(parameters)!=42:
             return

@@ -13,7 +13,7 @@ Main functions
 '''
 
 def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,
-                    guide_length=20, model_id='Clv_Saturated_general_energies_v2'):
+                    guide_length=20, model_id='Clv_Saturated_fixed_kf_general_energies_v2'):
     k_model = calc_clv_rate_fast(parameters, model_id, mismatch_positions,
                             guide_length)
         
