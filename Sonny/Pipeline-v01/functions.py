@@ -37,7 +37,7 @@ def read_dict(name):
 	else:
 		return pickle.load( open(name+".p","rb"))
 		
-def convert_param(parameters,model_id,guide,target,Cas):
+def convert_param(parameters,model_id,guide,target):
 	"""
 	Uses the function unpack_parameters() to read a long list epsilons and forward rates. Next, it calculates the right epsilons for matching / mismatching nucleotides at each position and puts them in the following nested tuple:
 	
@@ -53,7 +53,7 @@ def convert_param(parameters,model_id,guide,target,Cas):
 	tuple in the form ( (e_1,kf_1) , (e_2,kf_2) , ... , (e_20,kf_20) )
 	"""
 	epsilon,forwardrates = unpack_parameters(parameters,model_id)
-	matches = {'AA','CC','GG','UT'}
+	matches = {'AT','CG','GC','UA'}
 	if guide+target in matches:
 		epsilons = -np.array(epsilon[1:21]) # epsilon_c (negative by contention)
 	else:
@@ -165,11 +165,13 @@ def make_target_dict(parameters,model_id):
 # things below this line are not required for startup.py
 #============================================
 
+import Bio
 from Bio import SeqIO # for reading FASTA files
 from Bio.Seq import Seq # reading DNA sequences
 import h5py # handling HDF5 formats
 import os
 from kinetic_model import *
+import hpc05notification
 
 def readout_genome(name,mainpath,begin,end):
 	"""
@@ -196,7 +198,7 @@ def single_target(target,guide,lut,Cas):
 	"""
 	energy = np.zeros([Cas.guidelength])
 	rates = np.zeros([Cas.guidelength])
-	for index in range(Cas.guidelength-1):
+	for index in range(Cas.guidelength):
 		energy[index],rates[index] = lut[ guide[index] ][ target[index] ][ index ]
 	return energy,rates
 	
@@ -235,22 +237,30 @@ def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,includeNs=
 	if endpos>len(sequence):
 		endpos = len(sequence)
 	endpos = len(sequence)
-
-	for position in range(endpos-startpos-guidelength-pamlength+1):
-
-		#_5prsd = Cas._5primeseed_wrt_target
-		_5prsd = True
+	
+	for position in range(1,endpos-startpos-guidelength-pamlength):
+		if position%1000 == 0:
+			stop = open(mainpath+"stop.txt","r").readline()
+			if stop == "1":
+				print("Stop!")
+				break
+		if position%6597072 == 0:
+			try:
+				hpc05notification.hpc05notification(position,"milestone","comp")
+			except:
+				print("Notification failed.")
+			
+		_5prsd = Cas._5primeseed_wrt_target
 		PAM = sequence[
 			position + (not _5prsd)*(guidelength+pamlength - 1) :
 			position + _5prsd*pamlength + (not _5prsd)*(guidelength-1):
 			2*_5prsd-1]
 		target = sequence[
-			position + _5prsd*pamlength + (not _5prsd)*(guidelength - 1) :
-			(position + _5prsd*(guidelength+pamlength) - (not _5prsd)*0) or None :
+			position + _5prsd*(pamlength) + (not _5prsd)*(guidelength - 1) :
+			(position + _5prsd*(guidelength+pamlength) -1*(not _5prsd) ) :
 			2*_5prsd-1]
 
 		if (not 'N' in PAM+target) or includeNs:
-			#target = "CCCACCCCCCTCAAACGAGG"
 			
 			#calculate energies and forward rates
 			pamenergy,pamrate,solrate = lut_pam[PAM]
@@ -266,7 +276,7 @@ def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,includeNs=
 			try:
 				M = build_rate_matrix(forwardrates,backwardrates)
 				tclv = mean_first_passage_time(M)
-				print(position+startpos,"5'-"+target+"|"+PAM+"-3'",tclv,position)
+				#print(position+startpos,"5'-"+target+"|"+PAM+"-3'",tclv,position)
 			except:
 				M = build_rate_matrix(forwardrates,backwardrates)
 				print("At position",position,"something went wrong with the matrix.\n",M)
