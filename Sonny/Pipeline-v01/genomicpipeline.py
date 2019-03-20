@@ -12,6 +12,7 @@ __status__ = "Production"
 
 import sys
 #sys.path.append("/home/sfdejong/")
+import hpc05notification
 from functions import *
 import numpy as np
 from Bio.Seq import Seq
@@ -62,6 +63,10 @@ def main(argv):
 	partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,includeNs=False)
 	t2 = time()
 	print("Elapsed time equals",t2-t1)
+	try:
+		hpc05notification.hpc05notification(t2-t1)
+	except:
+		print("Notification failed.")
 	return
  
 if __name__ == "__main__":
