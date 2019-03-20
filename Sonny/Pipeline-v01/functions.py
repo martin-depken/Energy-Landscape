@@ -171,6 +171,7 @@ from Bio.Seq import Seq # reading DNA sequences
 import h5py # handling HDF5 formats
 import os
 from kinetic_model import *
+import hpc05notification
 
 def readout_genome(name,mainpath,begin,end):
 	"""
@@ -237,22 +238,18 @@ def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,includeNs=
 		endpos = len(sequence)
 	endpos = len(sequence)
 	
-#	for position in range(1,endpos-startpos-guidelength-pamlength):
-#
-#		_5prsd = Cas._5primeseed_wrt_target
-#		print(
-#		position + _5prsd*(pamlength) + (not _5prsd)*(guidelength - 1),
-#		(position + _5prsd*(guidelength+pamlength) -1*(not _5prsd) +0*(not position )) ,
-#		2*_5prsd-1)
-	
-	
 	for position in range(1,endpos-startpos-guidelength-pamlength):
 		if position%1000 == 0:
 			stop = open(mainpath+"stop.txt","r").readline()
 			if stop == "1":
 				print("Stop!")
 				break
-				
+		if position%6597072 == 0:
+			try:
+				hpc05notification.hpc05notification(position,"milestone","comp")
+			except:
+				print("Notification failed.")
+			
 		_5prsd = Cas._5primeseed_wrt_target
 		PAM = sequence[
 			position + (not _5prsd)*(guidelength+pamlength - 1) :
@@ -262,13 +259,8 @@ def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,includeNs=
 			position + _5prsd*(pamlength) + (not _5prsd)*(guidelength - 1) :
 			(position + _5prsd*(guidelength+pamlength) -1*(not _5prsd) ) :
 			2*_5prsd-1]
-		#print(target,position + _5prsd*(pamlength) + (not _5prsd)*(guidelength - 1),
-		#	((position + _5prsd*(guidelength+pamlength) -1*(not _5prsd)-1*(not position) ) or None), 2*_5prsd-1)
+
 		if (not 'N' in PAM+target) or includeNs:
-			#target += "C"
-			#print(target)
-			#target = "TGGGGGGGGGGGGGGGGGGG"
-			#print(target)
 			
 			#calculate energies and forward rates
 			pamenergy,pamrate,solrate = lut_pam[PAM]
