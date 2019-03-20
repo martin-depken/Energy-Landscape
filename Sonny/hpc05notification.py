@@ -1,4 +1,9 @@
-""" This file contains a function that sends a notification from the HPC05 cluster."""
+""" This file contains a function that sends a notification from the HPC05 cluster.
+	1. Add the desired email addresses in the variable _to. It can be multiple or one.
+	2. Import the only function of this file into Python, for instance by the command:
+	   from hpc05notification_simple import hpc05notification
+	3. Execute hpc05notification() in your code.
+"""
 
 #============================================
 __author__ = "Sonny Floyd de Jong"
