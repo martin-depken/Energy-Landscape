@@ -353,7 +353,7 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     :param upbnd: user defined upper bound for parameter values
     :return: current solution (rejected Xtrial) or updated solution (accepted Xtrial)
     '''
-    Xtrial = TakeStep(SA, X)
+    Xtrial = TakeStep(SA, X,lwrbnd, upbnd)
 
     # print Xtrial
     # print X
