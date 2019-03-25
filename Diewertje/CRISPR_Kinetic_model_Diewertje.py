@@ -8,7 +8,7 @@ sys.path.append('../code_Boyle/')
 import read_model_ID
 imp.reload(read_model_ID)
 
-import calculate_ABA_Finkelsteinlab_Diewertje as calcABA
+import Calculate_ABA_Finkelsteinlab_Diewertje as calcABA
 imp.reload(calcABA)
 
 
