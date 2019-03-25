@@ -16,7 +16,7 @@ current_colors = sns.color_palette()
 import sys
 sys.path.append('../code_general/')
 from read_model_ID import unpack_parameters
-import CRISPR_free_energy_landscape as FreeEnergy
+import CRISPR_free_energy_landscape_Diewertje as FreeEnergy
 imp.reload(FreeEnergy);
 sys.path.append('../code_Boyle/')
 #import plotting_Boyle as plt_B
@@ -31,7 +31,7 @@ imp.reload(Bdata);
 #import CRISPR_dCas9_binding_curve_Boyle as dCas9
 #reload(dCas9);
 sys.path.append('../code_Pclv/')
-import CRISPR_Kinetic_model as Pclv
+import CRISPR_Kinetic_model_Diewertje as Pclv
 imp.reload(Pclv);
 
 import get_parameters_fit_Diewertje as gpf
@@ -100,10 +100,10 @@ def process_SA_fits(simset,Nparams=44, model_id='init_limit_general_energies_v2'
 
     for filename in simset:
         parameters = gpf.load_simm_anneal(filename, Nparams)
+        parameters[0]=3.5 # If we want to fix epsilon PAM
         epsilon, fwd_rates = unpack_parameters(parameters, model_id)
         Energy_landscape, FreeEnergy_landscape = FreeEnergy.plot_free_energy_landscape(parameters, model_id,
                                                                                        show_plot=False);
-        print(Energy_landscape) 
 
         match_data = {}
         match_data['sim'] = filename
