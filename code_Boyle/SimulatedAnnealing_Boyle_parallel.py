@@ -10,6 +10,8 @@
 import numpy as np
 import multiprocessing as mp
 import CRISPR_dCas9_binding_curve_Boyle as dCas9Boyle
+
+from time import time
 '''
 Main function
 '''
@@ -48,7 +50,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     '''
 
 
-
+    start_time = time()
     # presets
     X = Xstart
     SA = SimAnneal(model=model,
@@ -68,7 +70,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    on_target_function= on_target_function)
 
     # Adjust initial temperature
-    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
+    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor,start_time)
     print('Initial temp:  ', SA.T)
     # store initial Temperature
     SA.initial_temperature = SA.T
@@ -114,7 +116,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                 Temperature_Cycle(SA, Eavg)
 
                 # update monitor file:
-                write_monitor(SA, output_file_monitor,steps)
+                write_monitor(SA, output_file_monitor,steps,start_time)
 
                 # Reset the cummalative sum/ average Energy:
                 Eavg = 0
@@ -430,7 +432,7 @@ def update_temperature(SA):
 '''
 Initial Temperature 
 '''
-def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
+def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file, start_time):
     '''
     Finds starting temperature for SA optimisation by performing some initial iterations until acceptance ratio
     is within acceptable bounds.
@@ -457,7 +459,7 @@ def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
             else:
                 SA.accept = 0
                 break
-            write_initial_monitor(AR,SA,initial_monitor_file,steps)
+            write_initial_monitor(AR,SA,initial_monitor_file,steps,start_time)
         X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
     return
 
@@ -510,7 +512,7 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
 '''
 Output Files
 '''
-def write_monitor(SA, output_file_name,steps):
+def write_monitor(SA, output_file_name,steps,start_time):
     '''
     makes a file with following information:
     --------------------------------------
@@ -529,6 +531,7 @@ def write_monitor(SA, output_file_name,steps):
     SA.Monitor['(last recorded) chi-squared'] = SA.potential
     SA.Monitor['succes'] = SA.StopCondition
     SA.Monitor['iterations'] = steps
+    SA.Monitor['elapsed time']= (time() - start_time)/3600.
 
     for key in SA.Monitor:
         output_file.write(str(key) + ':' + str(SA.Monitor[key]) + '\n' )
@@ -561,7 +564,7 @@ def write_parameters(X, SA, output_file):
 
 
 
-def write_initial_monitor(AR, SA,output_file_name,steps):
+def write_initial_monitor(AR, SA,output_file_name,steps,start_time):
     '''
     Additional monitor file while Initial loop is running
 
@@ -582,7 +585,7 @@ def write_initial_monitor(AR, SA,output_file_name,steps):
     SA.InitialMonitor['(last recorded) Acceptance Ratio'] = AR
     SA.InitialMonitor['(last recorded) stepsize'] = SA.step_size
     SA.InitialMonitor['iterations']=steps
-
+    SA.InitialMonitor['elapsed time']=  (time() - start_time)/3600.
     for key in SA.InitialMonitor:
         output_file.write(str(key) + ':' + str(SA.InitialMonitor[key]) + '\n' )
 
