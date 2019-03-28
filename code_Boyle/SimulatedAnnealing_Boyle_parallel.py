@@ -125,7 +125,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                 if SA.StopCondition:
                     break
             else:
-                write_monitor(SA, output_file_monitor,steps)  # might want to ommit this call and only write if SA.EQ == True (see call below)
+                write_monitor(SA, output_file_monitor,steps,start_time)  # might want to ommit this call and only write if SA.EQ == True (see call below)
 
             # updates stepsize based on Acceptance ratio and checks if you will update
             #  Temperature next time around (updates value "SimAnneal.EQ" to "TRUE")
