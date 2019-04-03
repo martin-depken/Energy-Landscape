@@ -38,7 +38,7 @@ def prepare_multiprocessing_nucleaseq(filename, path, fit_to_median=False):
 
 
 def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv):
-    xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq(filename_clv,path_clv,False)
+    xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq_log(filename_clv,path_clv)
     xdata_on, ydata_on, yerr_on = processing.prepare_multiprocessing(rep_on,path_on,True,False,False,False,False)
     
     
@@ -79,4 +79,3 @@ def prepare_multiprocessing_nucleaseq_log(filename, path):
     ydata = grouped_data['cleavage_rate_log'].tolist()
     yerr = grouped_data['error_log'].tolist()
     return xdata, ydata, yerr
->>>>>>> 998143cdf768f18cadf0dfca27f1ced385443d27

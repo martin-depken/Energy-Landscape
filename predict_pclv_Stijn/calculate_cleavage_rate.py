@@ -22,7 +22,7 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,
             
         ydata = np.array(ydata)
         yerr = np.array(yerr)
-        chi_sqrd = np.sum(((ydata-k_model)/yerr)**2)
+        chi_sqrd = np.sum(((ydata-np.log10(k_model))/yerr)**2)
         return chi_sqrd
 
     if len(ydata)==2:
@@ -33,7 +33,7 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,
         yerr_clv = np.array(yerr[0])
         yerr_on = np.array(yerr[1])
         
-        chi_sqrd_clv = np.sum(((ydata_clv-k_model_clv)/yerr_clv)**2)
+        chi_sqrd_clv = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
         chi_sqrd_on = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
         
         chi_sqrd = chi_sqrd_clv + chi_sqrd_on
