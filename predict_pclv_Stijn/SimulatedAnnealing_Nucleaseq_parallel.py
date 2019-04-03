@@ -361,7 +361,7 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     Vnew = V(SA, xdata, ydata, yerr, Xtrial)
     Vold = SA.potential
 
-    if (np.random.uniform() < np.exp(-(Vnew - Vold) / T)):
+    if (np.log(np.random.uniform()) < (-(Vnew - Vold) / T)):
         X = Xtrial
         SA.accept += 1
         SA.potential = Vnew

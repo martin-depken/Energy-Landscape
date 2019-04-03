@@ -8,7 +8,6 @@ sys.path.append(PATH_HPC05)
 import Nucleaseq_data_processing as processing
 import calculate_cleavage_rate as CRISPR
 import SimulatedAnnealing_Nucleaseq_parallel as SA
-import create_fake_data as cr
 
 from time import time
 '''
@@ -28,7 +27,7 @@ def main(argv):
     # /* Settings *\#
     #################
     # Loading the data
-    use_cluster = bool(int(argv[6]))
+    use_cluster = bool(int(argv[7]))
     if use_cluster:
         path_to_data= PATH_HPC05+'data_nucleaseq_Finkelsteinlab/targetE/'
         nmbr_cores = 19
@@ -39,17 +38,17 @@ def main(argv):
 
     # Simmulated Annealing
     filename = argv[1]
-    model_ID =  argv[2]
-    monitor_file = argv[3]
-    fit_result_file = argv[4]
-    init_monitor_file = argv[5]
+    model_ID =  [argv[2],argv[3]]
+    monitor_file = argv[4]
+    fit_result_file = argv[5]
+    init_monitor_file = argv[6]
     
     gRNA_length = 20
-    fit_to_median = True    
+    fit_to_median = False    
     
-    upper_bnd = [15.0]*40 +  [6.0]
-    lower_bnd = [-10.0]*20 + [0.0]*20 +[3.0]
-    initial_guess =  [0.0]*20 + [5.0]*20 + [4.5]
+    upper_bnd = [10.0] + [10.0]*40 + [6.0] + [6.0] + [6.0]
+    lower_bnd = [-10.0] + [-10.0]*20 + [0.0]*20 + [-3.0] + [1.0] + [3.0]
+    initial_guess =  [0.0] + [0.0]*20 + [5.0]*20 + [1.0] + [3.0] + [4.5]
     
 
     ###########################
@@ -63,7 +62,7 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq(filename,path_to_data,fit_to_median)
+    xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,PATH_HPC05+'data_nucleaseq_Finkelsteinlab/targetE/',path_to_data)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
    

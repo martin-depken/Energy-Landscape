@@ -13,18 +13,32 @@ Main functions
 '''
 
 def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,
-                    guide_length=20, model_id='Clv_Saturated_fixed_kf_general_energies_v2'):
-    k_model = calc_clv_rate_fast(parameters, model_id, mismatch_positions,
-                            guide_length)
-        
-    ydata = np.array(ydata)
-    yerr = np.array(yerr)
-
-    chi_sqrd = np.sum(((ydata-k_model)/yerr)**2)
+                    guide_length, model_id):
     
-    return chi_sqrd
+    if len(ydata)!=2:
+        
+        k_model = calc_clv_rate_fast(parameters, model_id, mismatch_positions,
+                                guide_length)
+            
+        ydata = np.array(ydata)
+        yerr = np.array(yerr)
+        chi_sqrd = np.sum(((ydata-k_model)/yerr)**2)
+        return chi_sqrd
 
-
+    if len(ydata)==2:
+        k_model_clv, k_model_on = calc_clv_on(parameters, model_id,
+                                              mismatch_positions, guide_length)
+        ydata_clv = np.array(ydata[0])
+        ydata_on = np.array(ydata[1])
+        yerr_clv = np.array(yerr[0])
+        yerr_on = np.array(yerr[1])
+        
+        chi_sqrd_clv = np.sum(((ydata_clv-k_model_clv)/yerr_clv)**2)
+        chi_sqrd_on = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
+        
+        chi_sqrd = chi_sqrd_clv + chi_sqrd_on
+        
+        return chi_sqrd
 
 def calc_clv_rate(parameters, model_id, mismatch_positions, guide_length=20):
      '''
@@ -104,9 +118,77 @@ def calc_clv_rate_fast(parameters, model_id, mismatch_positions, guide_length=20
    
     return k
 
+
+def calc_clv_on(parameters, model_id, mismatch_positions, guide_length):
+    
+    matrix_clv, matrix_on = get_master_equation_clv_on(parameters,
+                                                       mismatch_positions,
+                                                       model_id,
+                                                       guide_length)
+    
+    ## Calculating cleavage rate
+    M_clv = -1 * matrix_clv
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    try:
+        Minv_clv = np.linalg.inv(M_clv)
+        vec_clv = np.ones(len(Minv_clv))
+        MFPT_clv = vec_clv.dot(Minv_clv.dot(everything_unbound))
+        k_clv = 1/MFPT_clv
+    except:
+        print 'INVERTING MATRIX FAILED, USE SLOWER METHOD'
+        sys.stdout.flush()
+        parameters_clv = parameters[1:42] + parameters[42:44]
+        k_clv = calc_clv_rate(parameters_clv, model_id[0], mismatch_positions, guide_length)
+    
+    
+    ## Calculating on rate
+    k_on = calc_association_rate(rate_matrix=matrix_on,timepoints=[500.,1000.,1500.],
+                                                 guide_length=guide_length)
+    
+    return k_clv, k_on
+    
 '''
 Helper functions 
 '''
+
+def get_master_equation_clv_on(parameters,mismatch_positions,model_id,guide_length):
+    
+    parameters_clv = np.zeros(42)
+    parameters_on = np.zeros(43)
+    parameters_clv[0:40] = parameters[1:41]
+    parameters_clv[-2] = parameters[-2]
+    parameters_clv[-1] = parameters[-1]
+    parameters_on[0:43] = parameters[0:43]
+    
+    model_id_clv = model_id[0]
+    model_id_on = model_id[1]
+    
+    epsilon_on, forward_rates_on = unpack_parameters(parameters_on, model_id_on, guide_length)
+    energies_on = get_energies(epsilon_on,mismatch_positions, guide_length)
+    backward_rates_on = get_backward_rates(energies_on, forward_rates_on,guide_length )
+    matrix_on = build_rate_matrix(forward_rates_on, backward_rates_on)
+    
+    epsilon_clv, forward_rates_clv = unpack_parameters(parameters_clv, model_id_clv, guide_length)
+    energies_clv = get_energies(epsilon_clv,mismatch_positions, guide_length)
+    backward_rates_clv = get_backward_rates(energies_clv,forward_rates_clv,guide_length)
+    
+    #most of the matrix entries are equal
+    matrix_clv = matrix_on.copy()
+    
+    #different rate from solution
+    matrix_clv[0][0] = -forward_rates_clv[0]
+    matrix_clv[1][0] = forward_rates_clv[0]
+    
+    #different cleavage rate
+    matrix_clv[-1][-1] = -(forward_rates_clv[-1]+backward_rates_clv[-1]) 
+    
+    #different ePAM
+    matrix_clv[0][1] = backward_rates_clv[1]
+    matrix_clv[1][1] = -(backward_rates_clv[1]+forward_rates_clv[1])
+    matrix_clv[1][2] = backward_rates_clv[2]
+    matrix_clv[2][2] = -(backward_rates_clv[2]+forward_rates_clv[2])
+    
+    return matrix_clv, matrix_on,
 
 def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     '''
@@ -189,3 +271,44 @@ def build_rate_matrix(forward_rates, backward_rates):
     #         rate_matrix = rate_matrix + np.diag(diagonal3, k=-1)
 
     return rate_matrix
+
+def calc_association_rate(rate_matrix,timepoints=[500.,1000.,1500.],guide_length=20,rel_concentration=0.1):
+    '''
+    Association experiment for the effective on-rate:
+    (repeating the protocol as used in Boyle et al.)
+    :return:
+    '''
+
+    #1) Calculate bound fraction for specified time points:
+    # Association experiment starts with all dCas9 being unbound:
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+
+    #3) Association rate is taken at 1nM the other data at 10nM --> adjust k_on appropriatly:
+    new_rate_matrix = rate_matrix.copy()
+    new_rate_matrix[0][0] *= rel_concentration  #rel_concentration=1 corresponds to 10nM
+    new_rate_matrix[1][0] *= rel_concentration
+
+    bound_fraction = []
+    for time in timepoints:
+        Probabilities = get_Probability(rate_matrix=new_rate_matrix,initial_condition=everything_unbound,T=time)
+        bound_fraction.append( np.sum(Probabilities[1:]))
+
+    #2) Use least-squares to fit straight line with origin forced through zero:
+    kon_lin_fit = least_squares_line_through_origin(x_points=np.array(timepoints),y_points=np.array(bound_fraction))
+    return kon_lin_fit
+
+def get_Probability(rate_matrix, initial_condition,T=12*3600):
+    '''
+    solves the Master Equation for a given initial condition and desired time point
+    :param rate_matrix: matrix with rates that makes up the Master Equation
+    :param initial_condition: vector with initial configuration
+    :param T: Evaluate solution at time T
+    :return:
+    '''
+    P0 = initial_condition
+    M = rate_matrix
+    matrix_exponent = linalg.expm(+M*T)
+    return matrix_exponent.dot(P0)
+
+def least_squares_line_through_origin(x_points, y_points):
+    return np.sum( x_points*y_points )/np.sum( x_points*x_points )

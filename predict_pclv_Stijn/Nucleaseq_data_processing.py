@@ -1,5 +1,9 @@
 import pandas as pd
 import numpy as np
+import sys
+sys.path.append('../code_Boyle/')
+sys.path.append('/home/svandersmagt/Energy_Landscape_dCas9/code_general/')
+import Boyle_data_processing as processing
 
 def prepare_multiprocessing_nucleaseq(filename, path, fit_to_median=False):
     data = pd.read_csv(path + filename,
@@ -31,3 +35,30 @@ def prepare_multiprocessing_nucleaseq(filename, path, fit_to_median=False):
     yerr = grouped_data['error'].tolist()
 
     return xdata, ydata, yerr
+
+def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv):
+    xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq(filename_clv,path_clv,False)
+    xdata_on, ydata_on, yerr_on = processing.prepare_multiprocessing(rep_on,path_on,True,False,False,False,False)
+    
+    
+    ydata = list()
+    yerr = list()
+    for i in range(len(xdata_clv)):
+        for j in range(len(xdata_on)):
+            if (len(xdata_clv[i])==len(xdata_on[j])):
+                if(len(xdata_clv[i])==0 and len(xdata_on[j])==0):
+                    ydata.append([ydata_clv[i],ydata_on[j][1]])
+                    yerr.append([yerr_clv[i],yerr_on[j][1]])
+                if(len(xdata_clv[i])==1 and xdata_clv[i][0]==xdata_on[j][0]):
+                    ydata.append([ydata_clv[i],ydata_on[j][1]])
+                    yerr.append([yerr_clv[i],yerr_on[j][1]])
+                if((len(xdata_clv[i])==2 and xdata_clv[i][0]==xdata_on[j][0] and xdata_clv[i][1]==xdata_on[j][1])
+                  or (len(xdata_clv[i])==2 and xdata_clv[i][0]==xdata_on[j][1] and xdata_clv[i][1]==xdata_on[j][0])):
+                    ydata.append([ydata_clv[i],ydata_on[j][1]])
+                    yerr.append([yerr_clv[i],yerr_on[j][1]]) 
+    
+    return xdata_clv, ydata, yerr
+    
+    
+    
+    
