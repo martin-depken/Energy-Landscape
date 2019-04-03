@@ -95,7 +95,8 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     
     if model_id == 'general_energies_no_kPR':
         # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
-
+        if len(parameters)!=43:
+            return
         # General position dependency
         epsilon = parameters[:-2]
 
