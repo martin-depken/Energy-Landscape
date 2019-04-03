@@ -1,0 +1,6 @@
+chr1.fa Cas9 True False
+chr1.fa Cas9 True True
+chr2.fa Cas9 True False
+chr2.fa Cas9 True True
+chrY.fa Cas9 True False
+chrY.fa Cas9 True True
