@@ -40,29 +40,29 @@ class CRISPR:
 			self.complementtarget = False
 
 def main(argv):
-	file = argv[1]
+	Chr = argv[1]
+	file = Chr+".fasta" # in the names of our filing system, this works
 	Cas = CRISPR(argv[2])
-	PAM_skip = argv[3]
+	includePAMs = argv[3]
 	reverse = (argv[4]=="True") # false for positive strand
 	guide = "GGGUGGGGGGAGUUUGCUCC" #pVC297 VEGF Site#1 from 5' to 3'
+	
 	try:
 		mainpath = open("mainpath.txt","r").readline()
 		if mainpath[-1] != "\\" :
 			mainpath += '\\'
 	except:
-		mainpath = "/home/sfdejong/03_27_2019/"
+		mainpath = "/home/sfdejong/04_01_2019/"
 
 	t1 = time()
 	lut_tar = read_dict(mainpath+"lookuptable_target")
 	lut_pam = read_dict(mainpath+"lookuptable_PAM")
 	startpos = 0 # PAM position at ChrY where it starts
-	endpos = startpos+50*1187473
-	#endpos = startpos + 25
 	
 	if Cas.complementtarget == True: guide = str( Seq(guide).transcribe() )
 	if Cas.reversetarget == True:    guide = guide[::-1]
 	
-	partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,reverse,includeNs=False)
+	partition(file,mainpath,startpos,guide,lut_pam,lut_tar,Cas,reverse,Chr,False,includePAMs)
 	t2 = time()
 	print("Elapsed time equals",t2-t1)
 	try:

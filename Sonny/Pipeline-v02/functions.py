@@ -4,7 +4,7 @@
 __author__ = "Sonny Floyd de Jong"
 __copyright__ = "Copyright 2019"
 __license__ = "CC BY-NC-SA"
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __maintainer__ = "Depken lab"
 __email__ = "s.f.dejong@student.tudelft.nl"
 __status__ = "Production"
@@ -12,7 +12,7 @@ __status__ = "Production"
 
 import pickle # for reading and saving dict
 import numpy as np
-from read_model_ID import *
+#from read_model_ID import *
 
 
 #============================================
@@ -183,6 +183,8 @@ def readout_genome(name,mainpath,begin,*end):
 			gen = SeqIO.read(mainpath+"chromosomes/"+name, "fasta").seq
 		elif name[-4:] == ".fna":
 			gen = SeqIO.read(mainpath+"chromosomes/"+name, "fasta").seq
+		elif name[-6:] == ".fasta":
+			gen = SeqIO.read(mainpath+"chromosomes/"+name, "fasta").seq
 		else:
 			print("Filename not recognised as FASTA format. Please add appropriate extension.")
 	except ValueError:
@@ -203,52 +205,43 @@ def single_target(target,guide,lut,Cas):
 		energy[index],rates[index] = lut[ guide[index] ][ target[index] ][ index ]
 	return energy,rates
 	
-def store_tclv(position,startpos,tclv,filename,dsname="ChrY"):
+def store_tclv(position,startpos,tclv,filename,dsname="chr"):
 	"""
 	This function will store tclv in an hdf5 file.
 	"""
-	if tclv < 0:
-		kclv = 0
-	else:
-		kclv = 1/tclv
 	if filename[-5:] != ".hdf5":
 		filename = filename+".hdf5"
 	if not os.path.isfile(filename):
 		print("File did not exist, so I created it.")
 		with h5py.File(filename, "w-") as hdf:
-			hdf.create_dataset(dsname, (1,2), maxshape=(None,2))
-			hdf[dsname][0] = position+startpos,kclv
+			hdf.create_dataset(dsname, (1,3), maxshape=(None,3))
+			hdf[dsname][0] = position+startpos,max(1/(tclv*10**-9),0),tclv
 	else:
 		with h5py.File(filename, "r+") as hdf:
 			if not dsname in hdf.keys():
-				print("Dataset (ChrY) did not exist, so I created it.")
-				hdf.create_dataset(dsname, (0,2), maxshape=(None,2))
+				print("Dataset (chr) did not exist, so I created it.")
+				hdf.create_dataset(dsname, (0,3), maxshape=(None,3))
 			dataindex = hdf[dsname].shape[0]
 			hdf[dsname].resize((dataindex+1),axis=0)
-			hdf[dsname][dataindex] = position+startpos,kclv
+			hdf[dsname][dataindex] = position+startpos,max(1/(tclv*10**-9),0),tclv
 
-def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,reverse,includeNs=False,includePAMs=False):
+
+def partition(file,mainpath,startpos,guide,lut_pam,lut_tar,Cas,reverse,Chr,includeNs=False,includePAMs=False):
 	"""
 	
 	"""
 	guidelength = len(guide)
 	guidelength = Cas.guidelength
 	pamlength   = Cas.pamlength
-	
-	if endpos<startpos+3+guidelength:
-		print("The end position is ill-defined.")
 		
 	sequence = readout_genome(file,mainpath,startpos)
-	print(sequence)
+	endpos = len(sequence)
+	
 	filenamepart = "+"
 	if reverse:
 		sequence = sequence.reverse_complement()
 		filenamepart = "-"
-	if endpos>len(sequence):
-		endpos = len(sequence)
-	endpos = len(sequence)
 	
-	count = 0
 	lasttime = time()
 	for position in range(1,endpos-startpos-guidelength-pamlength):
 		if position%1000 == 0:
@@ -259,7 +252,7 @@ def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,reverse,in
 		if position%(int(endpos/4)) == 0:
 			if (time()-lasttime)>1200:
 				try:
-					hpc05notification.hpc05notification(str(position)+filenamepart,"milestone","comp")
+					hpc05notification.hpc05notification(str(position)+" of "+endpos+" ("+Chr+filenamepart+")","milestone","comp")
 				except:
 					print("Notification failed.")
 			
@@ -276,9 +269,6 @@ def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,reverse,in
 		admissiblePAMS = {'GGA','GGC','GGG','GGT'}
 		
 		if ((not 'N' in PAM+target) or includeNs) and ((PAM in admissiblePAMS) or includePAMs):
-			#guide = "AAAAAAAAAAAAAAAAAAAA"
-			#guide = "TTTTTTTTTTTTTTTTTTTT"
-			#target ="AAAAATTTTTTTTTTTTTTT"
 			
 			#calculate energies and forward rates
 			pamenergy,pamrate,solrate = lut_pam[PAM]
@@ -295,13 +285,10 @@ def partition(file,mainpath,startpos,endpos,guide,lut_pam,lut_tar,Cas,reverse,in
 			try:
 				M = build_rate_matrix(forwardrates,backwardrates)
 				tclv = mean_first_passage_time(M)
-				count +=1
-				#print(position+startpos,"5'-"+target+"|"+PAM+"-3'",round(tclv*100)/100,round(100/tclv)/100,round(np.linalg.cond(M)),round(np.linalg.det(M)))
-				#print(" [] &",'{:.4e}'.format(tclv),"&",'{:.2e}'.format(1/tclv),"&",'{:.3e}'.format(np.linalg.cond(M)),"&",'{:.3e}'.format(np.linalg.det(M)),"& \\\\")
 			except:
 				M = build_rate_matrix(forwardrates,backwardrates)
 				print("At position",position,"something went wrong with the matrix.\n",M)
 				continue
-			store_tclv(position,startpos,tclv,mainpath+"chrY"+filenamepart+".hdf5")
+			store_tclv(position,startpos,tclv,mainpath+Chr+filenamepart+".hdf5",Chr+filenamepart)
 			
 	return
