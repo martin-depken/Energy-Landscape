@@ -48,11 +48,11 @@ def hpc05notification(variable,stage="final",PS=""):
 
 	if stage == "milestone":
 		msg['Subject'] = "HPC05 Milestone!"
-		_to   = ["s.f.dejong@student.tudelft.nl", "hpc05notification@gmail.com"]
+		_to   = ["hpc05notification@gmail.com"]
 		body = "Lectori salutem,\n\nThe HPC05 cluster has passed a milestone of your request at " + time.strftime("%H")+":"+time.strftime("%M")+"h. It is currently at position "+variable+".\nPlease, await the result until further instruction.\n\nYours faithfully,\nHPC05"
 	else:		
 		msg['Subject'] = "HPC05 Finished!"
-		_to   = ["s.f.dejong@student.tudelft.nl", "hpc05notification@gmail.com"]
+		_to   = ["hpc05notification@gmail.com"]
 		body = "Lectori salutem,\n\nThe HPC05 cluster has finished your request. It took "+str(variable)+" seconds.\nPlease, study the result at your earliest convenience.\n\nYours faithfully,\nHPC05"
 
 	if PS == "comp":
