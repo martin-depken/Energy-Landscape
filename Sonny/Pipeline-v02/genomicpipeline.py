@@ -67,7 +67,7 @@ def main(argv):
 	print("Elapsed time equals",t2-t1)
 	try:
 		if (t2-t1) > 100:
-			hpc05notification.hpc05notification(t2-t1,"final","comp")
+			hpc05notification.hpc05notification([t2-t1,Chr,filenamepart],"final","comp")
 	except:
 		print("Notification failed.")
 	return

@@ -252,7 +252,7 @@ def partition(file,mainpath,startpos,guide,lut_pam,lut_tar,Cas,reverse,Chr,inclu
 		if position%(int(endpos/4)) == 0:
 			if (time()-lasttime)>1200:
 				try:
-					hpc05notification.hpc05notification(str(position)+" of "+endpos+" ("+Chr+filenamepart+")","milestone","comp")
+					hpc05notification.hpc05notification([position,endpos,Chr,filenamepart],"milestone","comp")
 				except:
 					print("Notification failed.")
 			
