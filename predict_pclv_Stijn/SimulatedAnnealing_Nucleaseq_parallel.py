@@ -18,6 +18,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    objective_function='chi_squared',
                 Tstart=0.1, delta=2.0, tol=1E-3, Tfinal=0.01,adjust_factor=1.1, cooling_rate=0.85, N_int=1000,
                  AR_low=40, AR_high=60, use_multiprocessing=False, nprocs=4, use_relative_steps=True,
+                 chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0],
                    output_file_results = 'fit_results.txt',
                    output_file_monitor = 'monitor.txt',
                    output_file_init_monitor='init_monitor.txt'):
@@ -63,7 +64,8 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    use_multiprocessing=use_multiprocessing,
                    nprocs=nprocs,
                    use_relative_steps=use_relative_steps,
-                   objective_function=objective_function)
+                   objective_function=objective_function,
+                   chi_weights=chi_weights)
 
     # Adjust initial temperature
     InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
@@ -195,7 +197,7 @@ def V(SA, xdata,ydata,yerr,params):
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
-            InputJob = [params, xdata[i],ydata[i],yerr[i]]
+            InputJob = [params, xdata[i],ydata[i],yerr[i],SA.chi_weights]
             SA.inQ.put(InputJob)
         # Retreive the results from the results Que and add together to construct Chi-squared
         objective_sum = 0.0
@@ -247,7 +249,7 @@ class SimAnneal():
     '''
 
     def __init__(self, model, Tstart, delta, tol, Tfinal,adjust_factor, cooling_rate, N_int,
-                 AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function):
+                 AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, chi_weights):
         mp.freeze_support
         self.model = model
         self.T = Tstart
@@ -265,6 +267,7 @@ class SimAnneal():
         self.interval = N_int
         self.potential = np.inf
         self.average_energy = np.inf
+        self.chi_weights = chi_weights
 
         self.MP = use_multiprocessing
         # start the processes (worker function will be continuously running):
@@ -490,12 +493,13 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
         xdata = job[1]
         ydata = job[2]
         yerr  = job[3]
+        chi_weights = job[4]
 
-        if len(job)>4:
-            addidtional_argument = job[4]
-            output = calc_objective_function(parameter_values, xdata, ydata, yerr, addidtional_argument)
+        if len(job)>5:
+            addidtional_argument = job[5]
+            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights,addidtional_argument)
         else:
-            output = calc_objective_function(parameter_values, xdata, ydata, yerr)
+            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights)
         # Perform the job:
         OutQ.put(output)
 

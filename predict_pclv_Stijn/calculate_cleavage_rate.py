@@ -12,7 +12,7 @@ from read_model_ID import unpack_parameters
 Main functions
 '''
 
-def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,
+def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,
                     guide_length, model_id):
     
     if len(ydata)!=2:
@@ -33,10 +33,28 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,
         yerr_clv = np.array(yerr[0])
         yerr_on = np.array(yerr[1])
         
-        chi_sqrd_clv = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
-        chi_sqrd_on = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
+        chi_sqrd_clv_perfect = 0.0
+        chi_sqrd_clv_single = 0.0
+        chi_sqrd_clv_double = 0.0
+        chi_sqrd_on_perfect = 0.0
+        chi_sqrd_on_single = 0.0
+        chi_sqrd_on_double = 0.0
         
-        chi_sqrd = chi_sqrd_clv + chi_sqrd_on
+        if len(mismatch_positions)==0:
+            chi_sqrd_clv_perfect = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+            chi_sqrd_on_perfect = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
+        
+        elif len(mismatch_positions)==1:
+            chi_sqrd_clv_single = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+            chi_sqrd_on_single = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
+        
+        elif len(mismatch_positions)==2:
+            chi_sqrd_clv_double = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+            chi_sqrd_on_double = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
+            
+        chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] + chi_sqrd_on_perfect*chi_weights[1] +
+                    chi_sqrd_clv_single*chi_weights[2] + chi_sqrd_on_single*chi_weights[3] +
+                    chi_sqrd_clv_double*chi_weights[4] + chi_sqrd_on_double*chi_weights[5])
         
         return chi_sqrd
 
