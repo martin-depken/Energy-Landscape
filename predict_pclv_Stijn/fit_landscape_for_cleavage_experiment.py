@@ -47,8 +47,8 @@ def main(argv):
     fit_to_median = False    
     
     upper_bnd = [10.0] + [10.0]*40 + [6.0] + [6.0] + [6.0]
-    lower_bnd = [-10.0] + [-10.0]*20 + [0.0]*20 + [-3.0] + [1.0] + [3.0]
-    initial_guess =  [0.0] + [0.0]*20 + [5.0]*20 + [1.0] + [3.0] + [4.5]
+    lower_bnd = [-10.0] + [-10.0]*20 + [0.0]*20 + [-1.0] + [1.0] + [3.0]
+    initial_guess =  [0.0] + [0.0]*20 + [5.0]*20 + [3.0] + [3.0] + [4.5]
     
 
     ###########################
@@ -62,10 +62,9 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,PATH_HPC05+'data_nucleaseq_Finkelsteinlab/targetE/',path_to_data)
+    xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_data,path_to_data)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
-   
     # print ydata
     # print "test ... " + ' \n'
     # KineticModel(np.array(initial_guess),xdata,ydata,np.array([]),1.0)

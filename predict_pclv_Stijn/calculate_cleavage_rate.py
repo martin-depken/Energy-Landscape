@@ -152,7 +152,9 @@ Helper functions
 '''
 
 def get_master_equation_clv_on(parameters,mismatch_positions,model_id,guide_length):
-    
+    if len(parameters)!=44:
+            print 'Wrong number of parameters'
+            return
     parameters_clv = np.zeros(42)
     parameters_on = np.zeros(43)
     parameters_clv[0:40] = parameters[1:41]
