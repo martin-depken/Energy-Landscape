@@ -1,4 +1,15 @@
 #!/bin/bash
 #PBS -l nodes=1:ppn=20
-/home/dddekker/miniconda3/bin/python3.7  /home/dddekker/BEP/Pipeline_fit_Finkelstein.py 'init_limit_general_energies_v2' 'monitor.txt' 'fit_results.txt' 'init_monitor.txt' 1
+#PBS -m e
+#PBS -M diewertje@kpnplanet.nl
+parameters=$(sed -n -e "${PBS_ARRAYID}p" /home/dddekker/BEP/8_4_2019_conc2/jobs_8_4_2019_conc2_1_10.txt)
+parameterArray=($parameters) 
+
+ModelID=${parameterArray[0]}
+OutputMonitor=${parameterArray[1]}
+OutputResults=${parameterArray[2]}
+OutputInitMonitor=${parameterArray[3]}
+UseHPC05=${parameterArray[4]}
+python2  /home/dddekker/BEP/Pipeline_fit_Finkelstein.py $ModelID $OutputMonitor $OutputResults $OutputInitMonitor $UseHPC05
+
 
