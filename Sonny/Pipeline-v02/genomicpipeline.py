@@ -43,7 +43,7 @@ def main(argv):
 	Chr = argv[1]
 	file = Chr+".fasta" # in the names of our filing system, this works
 	Cas = CRISPR(argv[2])
-	includePAMs = argv[3]
+	includePAMs = (argv[3]=="True")
 	reverse = (argv[4]=="True") # false for positive strand
 	guide = "GGGUGGGGGGAGUUUGCUCC" #pVC297 VEGF Site#1 from 5' to 3'
 	
@@ -62,12 +62,14 @@ def main(argv):
 	if Cas.complementtarget == True: guide = str( Seq(guide).transcribe() )
 	if Cas.reversetarget == True:    guide = guide[::-1]
 	
+	print("includePAMs = ",includePAMs)
+	print("reverse = ",reverse)
 	partition(file,mainpath,startpos,guide,lut_pam,lut_tar,Cas,reverse,Chr,False,includePAMs)
 	t2 = time()
 	print("Elapsed time equals",t2-t1)
 	try:
 		if (t2-t1) > 100:
-			hpc05notification.hpc05notification([t2-t1,Chr,filenamepart],"final","comp")
+			hpc05notification.hpc05notification(t2-t1,"final","comp")
 	except:
 		print("Notification failed.")
 	return
