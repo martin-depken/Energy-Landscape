@@ -49,6 +49,16 @@ def main(argv):
 			parameters.append(float(line))
 	parameters = (parameters)
 	model_id = 'Clv_init_limit_general_energies_v2'
+	
+	with open(mainpath+"fit_22_3_2019_sim_13.txt",'r') as fl:
+		lines = fl.read().splitlines()
+		lastline = lines[-1].split("\t")
+		print(type(lastline))
+		parameters = [float(i) for i in lastline[:-3] ]
+		
+	parameters = tuple(parameters)
+	print(parameters)
+	model_id = 'general_energies_no_kPR'
 
 
 	lookuptable_target = make_target_dict(parameters,model_id)
