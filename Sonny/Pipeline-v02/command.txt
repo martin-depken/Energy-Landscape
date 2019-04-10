@@ -1,0 +1,5 @@
+qsub run.sh -t 1-1%1 -N chr-test-runs -e /home/sfdejong/04_01_2019/error.txt -o /home/sfdejong/04_01_2019/terminal.txt
+
+qsub run1.sh -t 1-22%20 -N chr01-to-11 -e /home/sfdejong/04_01_2019/reps1/error.txt -o /home/sfdejong/04_01_2019/reps1/terminal.txt
+
+qsub run2.sh -t 1-26%20 -N chr12-to-XY -e /home/sfdejong/04_01_2019/reps2/error.txt -o /home/sfdejong/04_01_2019/reps2/terminal.txt
