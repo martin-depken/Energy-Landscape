@@ -10,6 +10,7 @@ sys.path.append('../code_general/') # added this after we run it on the cluster
 from read_model_ID import unpack_parameters
 
 def calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):
+    #print('at the beginning', concentrations)
     rate_matrix = get_master_equation(parameters, mismatch_positions, model_id, guide_length)
     rel_concentration = concentrations/reference
     everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
@@ -22,8 +23,10 @@ def calc_Pbound(parameters, concentrations, reference, mismatch_positions, model
         Pbound.append(np.sum(Probability[1:]))
     Pbound = np.array(Pbound)
     concentrations = np.array(concentrations)
-    Kd, _ = curve_fit(Hill_eq, concentrations,Pbound)
+    Kd, _ = curve_fit(Hill_eq, concentrations,Pbound,maxfev=10000)
+    #print('at the end', concentrations)
     return Kd[0], Pbound, concentrations
+
 
 def calc_ABA(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):
     Kd, _,_ = calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id, guide_length, T)
@@ -32,6 +35,10 @@ def calc_ABA(parameters, concentrations, reference, mismatch_positions, model_id
 def calc_delta_ABA(parameters, concentrations, reference, mismatch_positions,ontarget_ABA, model_id = 'general_energies', guide_length = 20, T=10*60):
     ABA = calc_ABA(parameters, concentrations, reference, mismatch_positions, model_id, guide_length, T)
     return ABA-ontarget_ABA
+
+def calc_Kd(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):
+    Kd, _,_ = calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id, guide_length, T)
+    return Kd
 
 '''
 Helper functions 
@@ -51,7 +58,7 @@ def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     epsilon, forward_rates = unpack_parameters(parameters, model_id, guide_length)
     energies = get_energies(epsilon,mismatch_positions, guide_length)
     backward_rates = get_backward_rates(energies, forward_rates,guide_length )
-    rate_matrix = build_rate_matrix(forward_rates, backward_rates)
+    rate_matrix = build_rate_matrix(forward_rates, backward_rates) 
     return rate_matrix
 
 def get_energies(epsilon,mismatch_positions, guide_length=20):

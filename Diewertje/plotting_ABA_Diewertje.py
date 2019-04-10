@@ -5,6 +5,9 @@ import seaborn as sns
 sns.set_style('ticks')
 current_colors = sns.color_palette()
 import importlib as imp
+import sys
+sys.path.append('../code_general_Finkelsteinlab/')
+import plotting_Finkelsteinlab_Diewertje as pltF
 
 import Calculate_ABA_Finkelsteinlab_Diewertje as CalcABA
 imp.reload(CalcABA);
@@ -63,7 +66,7 @@ def plot_double_mut_ABA(data, Mut_type, data_name='Finkelstein Data', Canonical=
             plt.title('$\Delta$ABA - ' + data_name + ' - Noncanonical', fontsize=15)
         ax = plt.gca()
         ax.set_xticklabels(map(lambda x: str(int(x)), ax.get_xticks() + 0.5));
-        ax.set_yticklabels(map(lambda x: str(int(x)), ax.get_yticks() + 0.5));
+        ax.set_yticklabels(list(map(lambda x: str(int(x)), ax.get_yticks() + 0.5)));
 
     return double_mut_data_mean, double_mut_map
 
@@ -74,7 +77,7 @@ def make_block_ID(MM_pos_list):
     block = np.arange(bi, bf + 1)
     if (len(block) != len(MM_pos_list)) or np.any(block != np.array(MM_pos_list)):
         return ''
-    return '|'.join(map(str, [bi, bf]))
+    return '|'.join(list(map(str, [bi, bf])))
 
 
 def plot_block_mm_ABA(data, data_name='Finkelstein Data', Canonical=True, Plot=True,
@@ -85,7 +88,7 @@ def plot_block_mm_ABA(data, data_name='Finkelstein Data', Canonical=True, Plot=T
     select_multi_mm = data['Mutation Type'].apply(lambda x: np.unique(np.array(x.split('|')))[0] == 'r')
     multi_mm_data = data[(data['Canonical'] == Canonical) & (select_multi_mm) & (data['Mutation Count'] > 2)][['Mutation ID', 'Delta ABA (kBT)', 'Uncertainty']]
     multi_mm_data['MM Positions'] = multi_mm_data['Mutation ID'].apply(
-        lambda x: map(lambda y: int(y.split(':')[1]), x.split('|')))
+        lambda x: list(map(lambda y: int(y.split(':')[1]), x.split('|'))))
     multi_mm_data['Position'] = multi_mm_data['MM Positions'].apply(make_block_ID)
     multi_mm_data = multi_mm_data[(multi_mm_data['Position'] != '')]
     block_mm_data_mean = multi_mm_data[['Position', 'Delta ABA (kBT)', 'Uncertainty']].groupby('Position').mean().reset_index()
@@ -95,7 +98,7 @@ def plot_block_mm_ABA(data, data_name='Finkelstein Data', Canonical=True, Plot=T
     block_mm_map[:] = np.nan
     for n in range(len(block_mm_data_mean)):
         pos = block_mm_data_mean['Position'].iloc[n]
-        Positions = map(lambda x: int(x) - 1, pos.split('|'))
+        Positions = list(map(lambda x: int(x) - 1, pos.split('|')))
         block_mm_map[Positions[0], Positions[1]] = block_mm_data_mean['Delta ABA (kBT)'].iloc[n]
 
     if Plot:
@@ -108,8 +111,8 @@ def plot_block_mm_ABA(data, data_name='Finkelstein Data', Canonical=True, Plot=T
         if not Canonical:
             plt.title('$\Delta$ABA - ' + data_name + ' - Noncanonical', fontsize=15)
         ax = plt.gca()
-        ax.set_xticklabels(map(lambda x: str(int(x)), ax.get_xticks() + 0.5),fontsize=15);
-        ax.set_yticklabels(map(lambda x: str(int(x)), 20 -ax.get_yticks() + 0.5), fontsize=15,rotation=0);
+        ax.set_xticklabels(list(map(lambda x: str(int(x)), ax.get_xticks() + 0.5)),fontsize=15);
+        ax.set_yticklabels(list(map(lambda x: str(int(x)), 20 -ax.get_yticks() + 0.5)), fontsize=15,rotation=0);
         if SaveFigures:
             plt.savefig(figure_names[0],format='pdf',bbox_inches='tight')
 
@@ -182,8 +185,8 @@ def predict_block_mismatches(parameters, model_id, T=60 * 10, guide_length=20, s
     if show_plot:
         ax = sns.heatmap(delta_ABA_mat, cmap='coolwarm', vmin=0, vmax=2.5)
         plt.grid()
-        ax.set_xticklabels(map(lambda x: str(int(x)), ax.get_xticks() + 0.5), fontsize=15);
-        ax.set_yticklabels(map(lambda x: str(int(x)), 20 - ax.get_yticks() + 0.5), fontsize=15, rotation=0);
+        ax.set_xticklabels(list(map(lambda x: str(int(x)), ax.get_xticks() + 0.5)), fontsize=15);
+        ax.set_yticklabels(list(map(lambda x: str(int(x)), 20 - ax.get_yticks() + 0.5)), fontsize=15, rotation=0);
         plt.xlabel('Block end', fontsize=15)
         plt.ylabel('Block start', fontsize=15)
         plt.title('Prediction', fontsize=15)
@@ -325,36 +328,38 @@ def predict_double_mm(parameters, model_id, T=60 * 10, guide_length=20, show_plo
                       data_file='../Data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/cas9-target-e-replicate-1-delta-abas-processed.csv'):
     concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) #2 ** np.array(range(0, 11)) * 0.5
     reference_conc = 1 #10
-    ontarget_ABA = CalcABA.calc_ABA(parameters, concentrations, reference_conc,
-                                    mismatch_positions=[],
-                                    model_id=model_id,
-                                    guide_length=20,
-                                    T=60 * 10)
+    ontarget_ABA = 42#CalcABA.calc_ABA(parameters, concentrations, reference_conc,
+                                   # mismatch_positions=[],
+                                   # model_id=model_id,
+                                   # guide_length=20,
+                                    #T=60 * 10)
 
     delta_ABA_mat = np.zeros((guide_length, guide_length))
     for first_mm in range(1, guide_length + 1):
         for second_mm in range(1, guide_length + 1):
-            delta_ABA_mat[first_mm - 1, second_mm - 1] = CalcABA.calc_delta_ABA(parameters, concentrations,
+            delta_ABA_mat[first_mm - 1, second_mm - 1] = CalcABA.calc_ABA(parameters, concentrations,
                                                                                 reference_conc,
                                                                                 mismatch_positions=[first_mm,
                                                                                                     second_mm],
                                                                                 model_id=model_id,
                                                                                 guide_length=guide_length,
-                                                                                T=T,
-                                                                                ontarget_ABA=ontarget_ABA)
+                                                                                T=T)
+            # this should be calc_delta_ABA if we do not work wit rawABA dataset
 
     if show_plot:
-        axHeatmap = sns.heatmap(delta_ABA_mat, cmap='coolwarm', mask=np.tril(delta_ABA_mat), vmin=0, vmax=2.5)
+        axHeatmap = sns.heatmap(delta_ABA_mat, cmap='coolwarm', mask=np.tril(delta_ABA_mat),vmin=2, vmax=5)
         plt.grid()
         ax = plt.gca()
-        ax.set_xticklabels(map(lambda x: str(int(x)), ax.get_xticks() + 0.5), fontsize=15);
-        ax.set_yticklabels(map(lambda x: str(int(x)), 20 - ax.get_yticks() + 0.5), fontsize=15, rotation=0);
+        ax.set_xticklabels(list(map(lambda x: str(int(x)), ax.get_xticks() + 0.5)), fontsize=15);
+        ax.set_yticklabels(list(map(lambda x: str(int(x)), 20 - ax.get_yticks() + 0.5)), fontsize=15, rotation=0);
         str_title = 'Prediction (top)'
 
         if show_data:
             IlyaData = data_file #pd.read_csv(data_file)
-            _, double_mut_map = plot_double_mut_ABA(data=IlyaData, Mut_type='r', Plot=False)
-            sns.heatmap(double_mut_map, cmap='coolwarm', ax=axHeatmap, vmin=0, vmax=2.5)
+            _, double_mut_map = pltF.plot_double_mut_data(IlyaData, data_colname='ABA', Mut_type='r', Canonical=True, Ng=20, data_name='Data', Plot=False,logplot=False, SaveFigures=False, figure_name='./Figure.pdf')
+            # data_colname = [delta ABA (kBT)]  if we use not rawABA dataset!
+            #plot_double_mut_ABA(data=IlyaData, Mut_type='r', Plot=False)
+            sns.heatmap(double_mut_map, cmap='coolwarm', ax=axHeatmap, vmin=2, vmax=5)
             str_title += ' / Data (bottom)'
         plt.title(str_title, fontsize=15)
         plt.xlabel('Mismatch 1', fontsize=15)

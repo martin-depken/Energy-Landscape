@@ -28,6 +28,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     
     if model_id == 'Clv_Saturated_fixed_kf_general_energies_v2':
         if len(parameters)!=41:
+            print 'Wrong number of parameters'
             return
         
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
@@ -43,8 +44,9 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[1] = rate_PAM_to_R1
         forward_rates[-1] = rate_clv
     
-    if model_id == 'Clv_Saturated_general_energies_v2':
+    elif model_id == 'Clv_Saturated_general_energies_v2':
         if len(parameters)!=42:
+            print 'Wrong number of parameters'
             return
         
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
@@ -60,8 +62,9 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[1] = rate_PAM_to_R1
         forward_rates[-1] = rate_clv
 
-    if model_id == 'Clv_init_limit_Saturated_general_energies_v2':
+    elif model_id == 'Clv_init_limit_Saturated_general_energies_v2':
         if len(parameters)!=43:
+            print 'Wrong number of parameters'
             return
         
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
@@ -78,7 +81,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = rate_clv
                 
 
-    if model_id == 'Clv_init_limit_general_energies_v2':
+    elif model_id == 'Clv_init_limit_general_energies_v2':
         # General position dependency
         epsilon = parameters[:-4]
 
@@ -93,9 +96,11 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = rate_clv
 
     
-    if model_id == 'general_energies_no_kPR':
+    elif model_id == 'general_energies_no_kPR':
         # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
-
+        if len(parameters)!=43:
+            print 'Wrong number of parameters'
+            return
         # General position dependency
         epsilon = parameters[:-2]
 
@@ -108,7 +113,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
 
-    if model_id == 'landscape_lowest_chi_squared_fit_rates':
+    elif model_id == 'landscape_lowest_chi_squared_fit_rates':
         # ---- fix the energies---
         # (copied from parameter file: '../data/25_10_2018/fit_25_10_2018_sim_22.txt') ----
         epsilon = np.array([  1.43364597e+00,  -2.51895658e+00,  -8.38107740e-01,
@@ -146,7 +151,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[1] = rate_PAM_to_R1
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
-    if model_id == 'Boyle_median_landscape_fit_rates':
+    elif model_id == 'Boyle_median_landscape_fit_rates':
 
         # ---- fix the energies
         # (copied from parameter file: '../data/25_10_2018/median_landscape_Boyle_2Dgrid.txt' on 04/12/2018) ----
@@ -171,27 +176,27 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
 
-    if model_id == 'general_energies_rates':
+    elif model_id == 'general_energies_rates':
         epsilon = parameters[:(2*guide_length+1)]
         forward_rates = np.ones(guide_length + 2)
         forward_rates[:-1] = 10**np.array(parameters[(2*guide_length+1):])
         forward_rates[-1] = 0.0 # dCas9 does not cleave
 
-    if model_id == 'general_energies':
+    elif model_id == 'general_energies':
         # General position dependency + minimal amount of rates
         epsilon = parameters[:-2]
         forward_rates = np.ones(guide_length + 2) * parameters[-2] #internal rates
         forward_rates[0] = parameters[-1]  # from solution to PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
-    if model_id == 'general_energies_v2':
+    elif model_id == 'general_energies_v2':
         # General position dependency + minimal amount of rates
         epsilon = parameters[:-2]
         forward_rates = np.ones(guide_length + 2) * 10**parameters[-2] #internal rates
         forward_rates[0] = 10**parameters[-1]  # from solution to PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
-    if model_id == 'init_limit_general_energies_v0':
+    elif model_id == 'init_limit_general_energies_v0':
         # General position dependency
         epsilon = parameters[:-3]
         forward_rates = np.ones(guide_length + 2) * parameters[-2] #internal rates
@@ -201,7 +206,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[1] = np.exp(-parameters[-3])* parameters[-2]
 
 
-    if model_id == 'init_limit_general_energies':
+    elif model_id == 'init_limit_general_energies':
         # General position dependency
         epsilon = parameters[:-3]
         forward_rates = np.ones(guide_length + 2) * 10**parameters[-2] #internal rates
@@ -210,7 +215,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         # first rate from PAM into R-loop is less or equal to other internal rates
         forward_rates[1] = np.exp(-parameters[-3])* 10**parameters[-2]
 
-    if model_id == 'init_limit_general_energies_v2':
+    elif model_id == 'init_limit_general_energies_v2':
         # General position dependency
         epsilon = parameters[:-3]
 
@@ -224,7 +229,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
 
-    if model_id == 'init_limit_fast_internal_general_energies':
+    elif model_id == 'init_limit_fast_internal_general_energies':
         # General position dependency for energies
         epsilon = parameters[:-3]
 
@@ -241,7 +246,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
 
 
 
-    if model_id == 'constant_eps_I':
+    elif model_id == 'constant_eps_I':
         # General position dependency for matches, constant mismatch penalty
         epsPAM = parameters[0]
         epsilonC = parameters[1:(guide_length+1)]
@@ -255,7 +260,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[0] = parameters[-1]  # from solution to PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
-    if model_id == 'init_limit_lock_const_EpsI':
+    elif model_id == 'init_limit_lock_const_EpsI':
         e_PAM = parameters[0]
         ec_1 = parameters[1]
         ec_first = parameters[2]
@@ -279,7 +284,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
 
-    if model_id == 'init_limit_two_drops_fixed_BP':
+    elif model_id == 'init_limit_two_drops_fixed_BP':
         pos1 = 10
         pos2 = 18
 
@@ -310,7 +315,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
 
-    if model_id == 'init_limit_two_drops':
+    elif model_id == 'init_limit_two_drops':
 
         e_PAM = parameters[0]
         ec_1 = parameters[1]
@@ -341,7 +346,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
 
-    if model_id == 'init_limit_5EpsC_2EpsI':
+    elif model_id == 'init_limit_5EpsC_2EpsI':
         e_PAM = parameters[0]
         ec_1 = parameters[1]
         ec_2 = parameters[2]
@@ -372,7 +377,9 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[0] = k_PAM
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
-
+    else:
+        print 'Watch out! Non-existing model-ID..'
+        return
 
 
 

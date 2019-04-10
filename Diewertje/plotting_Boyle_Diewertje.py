@@ -12,6 +12,7 @@ imp.reload(dCas9)
 sys.path.append('../code_general/')
 import read_model_ID
 imp.reload(read_model_ID);
+import Calculate_ABA_Finkelsteinlab_Diewertje as CalcABA
 
 def load_simm_anneal(filename, Nparams, fatch_solution='final'):
     '''
@@ -47,13 +48,13 @@ def calc_predictions(parameters,model_id):
     on_rate_predict = np.zeros([20, 20])
     off_rate_predict = np.zeros([20, 20])
     Pbound_predict = np.zeros([20, 20])
-    Pbound_OT, _, _ = dCas9.calc_Boyle(True, True, True, parameters, [],model_id=model_id)
+    Pbound_OT, _, _ = calc_Boyle(True, True, True, parameters, [],model_id=model_id)
     for i in range(0, 20):
         for j in range(0, 20):
             mismatch_positions = [20 - i, 20 - j]
             if i == j:
                 mismatch_positions = [20 - i]
-            predictions = dCas9.calc_Boyle(True, True, True, parameters, mismatch_positions,model_id=model_id)
+            predictions = calc_Boyle(True, True, True, parameters, mismatch_positions,model_id=model_id)
             Pbound_predict[i, j] = predictions[0] / Pbound_OT
             on_rate_predict[i, j] = predictions[1]
             off_rate_predict[i, j] = predictions[2]
@@ -183,3 +184,113 @@ def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_B
         ax.legend(loc='best', fontsize=12, frameon=True)
         sns.despine(ax=ax)
     return model, experiment
+
+
+##### Extra function for calculate predicitons from the file: 
+#### CRISPR_dCas9_binding_curve_Boyle 
+def calc_Boyle(CalcOccupancy, CalcOffRate, CalcOnRate,
+               parameters, mismatch_positions, guide_length=20, model_id='general_energies'):
+    '''
+    :param CalcOccupancy: boolian True if you want to calculate occupancy after 12 hrs
+    :param CalcOffRate: boolian, True if you want to calculate dissocation rate
+    :param CalcOnRate:  boolian, True if you want to calculate association rate
+    :return:
+    '''
+    # 0) Initialize output (in case I do not want to calculate all 3:
+    bound_fraction = float('nan')
+    dissociation_rate = float('nan')
+    association_rate = float('nan')
+
+    # 1) Unpack parameters and build rate matrix to be used in all types of calculations
+    rate_matrix = CalcABA.get_master_equation(parameters, mismatch_positions, model_id, guide_length)
+
+    #2) Do I want (need) the occupancy after 12 hours?
+    if CalcOccupancy or CalcOffRate:
+        everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+        Probability = CalcABA.get_Probability(rate_matrix=rate_matrix,initial_condition=everything_unbound,T=12*3600)
+        bound_fraction = np.sum(Probability[1:])
+
+    #3) Do I want the dissociation rate ?
+    if CalcOffRate:
+        dissociation_rate = calc_dissociation_rate(rate_matrix=rate_matrix,
+                                                 initial_condition=Probability,timepoints=[500.,1000.,1500.])
+    #4) Do I want the association rate?
+    if CalcOnRate:
+        association_rate = calc_association_rate(rate_matrix=rate_matrix,timepoints=[500.,1000.,1500.],
+                                                 guide_length=guide_length)
+
+    return bound_fraction, association_rate, dissociation_rate
+
+def calc_association_rate(rate_matrix,timepoints=[500.,1000.,1500.],guide_length=20,rel_concentration=0.1):
+    '''
+    Association experiment for the effective on-rate:
+    (repeating the protocol as used in Boyle et al.)
+    :return:
+    '''
+
+    #1) Calculate bound fraction for specified time points:
+    # Association experiment starts with all dCas9 being unbound:
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+
+    #3) Association rate is taken at 1nM the other data at 10nM --> adjust k_on appropriatly:
+    new_rate_matrix = rate_matrix.copy()
+    new_rate_matrix[0][0] *= rel_concentration  #rel_concentration=1 corresponds to 10nM
+    new_rate_matrix[1][0] *= rel_concentration
+
+    bound_fraction = []
+    for time in timepoints:
+        Probabilities = CalcABA.get_Probability(rate_matrix=new_rate_matrix,initial_condition=everything_unbound,T=time)
+        bound_fraction.append( np.sum(Probabilities[1:]))
+
+    #2) Use least-squares to fit straight line with origin forced through zero:
+    kon_lin_fit = least_squares_line_through_origin(x_points=np.array(timepoints),y_points=np.array(bound_fraction))
+    return kon_lin_fit
+
+def calc_dissociation_rate(rate_matrix,initial_condition,
+                           timepoints=[500.,1000.,1500.]):
+    '''
+    Dissociation experiment for (effective off-rate):
+    method as used in Boyle et al.
+
+    within calc_Boyle() (main function call) you will all ready calculate the occupation before flushing out dCas9
+    :return:
+    '''
+
+    # 1) Flush out all freely floating dCas9 --> Set occupation in solution to zero:
+    after_12hrs = initial_condition.copy()
+    after_12hrs[0] = 0.0
+
+    #2) Renormalize remainder:
+    after_12hrs = after_12hrs / np.sum(after_12hrs)
+
+    #3) Flush out all freely floating dCas9 --> Set on-rate to zero and rebuild matrix:
+    new_rate_matrix = rate_matrix.copy()
+    new_rate_matrix[0][0] = 0.0
+    new_rate_matrix[1][0] = 0.0
+
+    #4)  For time_k in timepoints solve the Master equation and track the fraction of dCas9 molecules in solution:
+    unbound_fraction = []
+    for time in timepoints:
+        Probabilities = CalcABA.get_Probability(rate_matrix=new_rate_matrix, initial_condition=after_12hrs, T=time)
+        unbound_fraction.append(Probabilities[0])
+
+    # 5) Use least-squares to fit :
+    _ , k_off_fit = least_squares(x_points=timepoints, y_points=unbound_fraction)
+    return k_off_fit
+
+def least_squares(x_points, y_points):
+    size = len(x_points)
+    X = np.ones((size, 2))
+    X[:, 1] = x_points
+
+    XT = X.transpose()
+    Y = y_points
+
+    a = np.dot(np.dot(np.linalg.inv(np.dot(XT, X)), XT), Y)
+
+    intercept = a[0]
+    slope = a[1]
+    return intercept, slope
+
+def least_squares_line_through_origin(x_points, y_points):
+    return np.sum( x_points*y_points )/np.sum( x_points*x_points )

@@ -8,7 +8,6 @@ sys.path.append(PATH_HPC05)
 import Nucleaseq_data_processing as processing
 import calculate_cleavage_rate as CRISPR
 import SimulatedAnnealing_Nucleaseq_parallel as SA
-import create_fake_data as cr
 
 from time import time
 '''
@@ -28,28 +27,30 @@ def main(argv):
     # /* Settings *\#
     #################
     # Loading the data
-    use_cluster = bool(int(argv[6]))
+    use_cluster = bool(int(argv[7]))
     if use_cluster:
-        path_to_data= PATH_HPC05+'data_nucleaseq_Finkelsteinlab/targetE/'
+        path_to_dataClv= PATH_HPC05+'data_nucleaseq_Finkelsteinlab/targetE/'
+        path_to_dataOn= path_to_dataClv
         nmbr_cores = 19
     else:
         # On my laptop use this line in stead:
-        path_to_data = '../' + '/data_nucleaseq_Finkelsteinlab/targetE/'
+        path_to_dataClv = '../' + '/data_nucleaseq_Finkelsteinlab/targetE/'
+        path_to_dataOn = '../Data_Boyle/'
         nmbr_cores = 2
 
     # Simmulated Annealing
     filename = argv[1]
-    model_ID =  argv[2]
-    monitor_file = argv[3]
-    fit_result_file = argv[4]
-    init_monitor_file = argv[5]
+    model_ID =  [argv[2],argv[3]]
+    monitor_file = argv[4]
+    fit_result_file = argv[5]
+    init_monitor_file = argv[6]
     
     gRNA_length = 20
-    fit_to_median = True    
+    #fit_to_median = False   
     
-    upper_bnd = [15.0]*40 +  [6.0]
-    lower_bnd = [-10.0]*20 + [0.0]*20 +[3.0]
-    initial_guess =  [0.0]*20 + [5.0]*20 + [4.5]
+    upper_bnd = [10.0] + [10.0]*40 + [6.0] + [6.0] + [6.0]
+    lower_bnd = [-10.0] + [-10.0]*20 + [0.0]*20 + [-1.0] + [1.0] + [3.0]
+    initial_guess =  [0.0] + [0.0]*20 + [5.0]*20 + [3.0] + [3.0] + [4.5]
     
 
     ###########################
@@ -63,13 +64,35 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq(filename,path_to_data,fit_to_median)
+    xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
-   
     # print ydata
     # print "test ... " + ' \n'
     # KineticModel(np.array(initial_guess),xdata,ydata,np.array([]),1.0)
+    
+    
+    #######################
+    # Determining weights #
+    #######################
+    perfectClv = np.float(len(ydata[0][0]))
+    perfectOn = np.float(len(ydata[0][1]))
+    singleClv = 0.0
+    singleOn = 0.0
+    doubleClv = 0.0
+    doubleOn = 0.0
+    for i in range(len(xdata)):
+        if len(xdata[i])==1:
+            singleClv += len(ydata[i][0])
+            singleOn += len(ydata[i][1])
+        if len(xdata[i])==2:
+            doubleClv += len(ydata[i][0])
+            doubleOn += len(ydata[i][1])
+    
+    chi_weights = [1/perfectClv,1/singleClv,1/doubleClv,1/perfectOn,1/singleOn,1/doubleOn]
+    #chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0] 
+    #perfClv, sinClv, doubClv, perfOn, sinOn, doubOn 
+    
     
     ##############################################
     # /*   Call the Simulated Annealing code   *\#
@@ -100,7 +123,8 @@ def main(argv):
                                 nprocs=nmbr_cores,
                                 output_file_results = fit_result_file,
                                 output_file_monitor = monitor_file,
-                                output_file_init_monitor=init_monitor_file
+                                output_file_init_monitor=init_monitor_file,
+                                chi_weights=chi_weights
                                 )
 
     t2 = time()

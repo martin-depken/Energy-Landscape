@@ -1,0 +1,1 @@
+$PBS_NODEFILE slots=$PBS_NUM_PPN

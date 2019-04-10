@@ -191,7 +191,7 @@ def V(SA, xdata,ydata,yerr,params):
     :return: Chi^2 value, LogLikeLihood value... the value of the objective function to be minimized
     '''
     # calculate on_target here, since then you do not have to calculate it for all the data entries
-    ontarget_ABA=SA.on_target_function(params)
+    ontarget_ABA=42 #SA.on_target_function(params)
 
     # Multiprocessing
     if SA.MP:
@@ -291,24 +291,26 @@ class SimAnneal():
         return
 
 
-
-
-def TakeStep(SA,X):
+def TakeStep(SA, X, lwrbnd, upbnd):
     '''
     This function produces a trial configuration for the continuous variables(slopes)
     :param SA:
     :param X: current solution
     :return: trial solution
     '''
-
     delta = SA.step_size
+    Xtrial = np.zeros(len(X))
+
     if SA.RelativeSteps:
         X = np.log(X)
-        Xtrial = X + np.random.uniform(-delta, delta, size=len(X))
-        Xtrial = np.exp(Xtrial)
-        X = np.exp(X)
+        for i in range(len(X)):
+            Xtrial[i] = np.random.uniform(np.max([X[i] - delta, np.log(lwrbnd[i])]),
+                                          np.min([X[i] + delta, np.log(upbnd[i])]))
     else:
-        Xtrial = X + np.random.uniform(-delta, delta, size=len(X))
+        for i in range(len(X)):
+            Xtrial[i] = np.random.uniform(np.max([X[i] - delta, lwrbnd[i]]),
+                                          np.min([X[i] + delta, upbnd[i]]))
+
     return Xtrial
 
 
@@ -329,14 +331,10 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     :param upbnd: user defined upper bound for parameter values
     :return: current solution (rejected Xtrial) or updated solution (accepted Xtrial)
     '''
-    Xtrial = TakeStep(SA, X)
+    Xtrial = TakeStep(SA, X,lwrbnd,upbnd)
 
     # print Xtrial
     # print X
-
-    while (Xtrial < lwrbnd).any() or (Xtrial > upbnd).any():
-        # print 'oops, solution not within bounds! Trying again...'
-        Xtrial = TakeStep(SA,X)
 
     # Let V({dataset}|{parameterset}) be your residual function.
     # Metropolis:
