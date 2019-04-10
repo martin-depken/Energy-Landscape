@@ -12,7 +12,7 @@ __status__ = "Production"
 
 import pickle # for reading and saving dict
 import numpy as np
-#from read_model_ID import *
+from read_model_ID import *
 
 
 #============================================
@@ -252,7 +252,7 @@ def partition(file,mainpath,startpos,guide,lut_pam,lut_tar,Cas,reverse,Chr,inclu
 		if position%(int(endpos/4)) == 0:
 			if (time()-lasttime)>1200:
 				try:
-					hpc05notification.hpc05notification([position,endpos,Chr,filenamepart],"milestone","comp")
+					hpc05notification.hpc05notification(str(position)+" of "+endpos+" ("+Chr+filenamepart+")","milestone","comp")
 				except:
 					print("Notification failed.")
 			
@@ -268,8 +268,12 @@ def partition(file,mainpath,startpos,guide,lut_pam,lut_tar,Cas,reverse,Chr,inclu
 		
 		admissiblePAMS = {'GGA','GGC','GGG','GGT'}
 		
+		if str(PAM+target).translate(None,'ACGTN') != "":
+			print("Found a wrong nucleotide in ",str(PAM+target)," at position ",position)
+			continue
+
 		if ((not 'N' in PAM+target) or includeNs) and ((PAM in admissiblePAMS) or includePAMs):
-			
+			#print(PAM+"|"+target+str(position))
 			#calculate energies and forward rates
 			pamenergy,pamrate,solrate = lut_pam[PAM]
 			energy,forwardrates = single_target(target,guide,lut_tar,Cas)
