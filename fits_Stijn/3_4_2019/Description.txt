@@ -1,0 +1,1 @@
+Test fits on target E full data, to test the new log-chi squared.
