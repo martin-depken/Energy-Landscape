@@ -37,7 +37,7 @@ def prepare_multiprocessing_nucleaseq(filename, path, fit_to_median=False):
     return xdata, ydata, yerr
 
 
-def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv):
+def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to_median=False):
     xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq_log(filename_clv,path_clv)
     xdata_on, ydata_on, yerr_on = processing.prepare_multiprocessing(rep_on,path_on,True,False,False,False,False)
     
@@ -57,6 +57,19 @@ def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv):
                   or (len(xdata_clv[i])==2 and xdata_clv[i][0]==xdata_on[j][1] and xdata_clv[i][1]==xdata_on[j][0])):
                     ydata.append([ydata_clv[i],ydata_on[j][1]])
                     yerr.append([yerr_clv[i],yerr_on[j][1]]) 
+    if fit_to_median:
+        for i in range(len(xdata_clv)):
+            ydata[i][0] = [np.average(ydata[i][0],weights=np.reciprocal(yerr[i][0]))]
+            if len(ydata[i][1])==0:
+                ydata[i][1] = []
+            else:
+                ydata[i][1] = [np.average(ydata[i][1],weights=np.reciprocal(yerr[i][1]))]
+            
+            yerr[i][0] = [np.sqrt(len(yerr[i][0])/(np.sum(np.reciprocal(yerr[i][0])))**2)]
+            if len(ydata[i][1])==0:
+                yerr[i][1] = []
+            else:
+                yerr[i][1] = [np.sqrt(len(yerr[i][1])/(np.sum(np.reciprocal(yerr[i][1])))**2)]
     
     return xdata_clv, ydata, yerr
     
