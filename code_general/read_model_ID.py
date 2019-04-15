@@ -26,6 +26,34 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
     
+    if model_id == 'Sequence_dependent_clv_v1':
+        if len(parameters)!=35:
+            print 'Wrong number of parameters'
+            return
+        
+        epsilonConfig = np.zeros(21)
+        epsilonConfig[0] = -100.0 #PAM
+        epsilonConfig[1:21] = parameters[0:20] #Configuration Energies
+        
+        epsilonBind = np.zeros(13)
+        epsilonBind[:] = parameters[20:33] #Binding Energies
+        
+        # For different combinations of bases:
+        #  0  1  2  3  4  5  6  7  8  9 10 11 12
+        #  A  A  A  A  A  T  T  T  G  G  G  C  C
+        #  A  T  G  C  U  G  C  U  G  C  U  C  U
+        
+        rate_sol_to_PAM = 1000.0
+        rate_internal = 10**parameters[-2]
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = rate_clv
+        
+        return epsilonConfig, epsilonBind, forward_rates
+        
+        
     if model_id == 'Clv_Saturated_fixed_kf_general_energies_v2':
         if len(parameters)!=41:
             print 'Wrong number of parameters'
