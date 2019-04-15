@@ -52,9 +52,9 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,
             chi_sqrd_clv_double = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
             chi_sqrd_on_double = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
             
-        chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] + chi_sqrd_on_perfect*chi_weights[1] +
-                    chi_sqrd_clv_single*chi_weights[2] + chi_sqrd_on_single*chi_weights[3] +
-                    chi_sqrd_clv_double*chi_weights[4] + chi_sqrd_on_double*chi_weights[5])
+        chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] + chi_sqrd_on_perfect*chi_weights[3] +
+                    chi_sqrd_clv_single*chi_weights[1] + chi_sqrd_on_single*chi_weights[4] +
+                    chi_sqrd_clv_double*chi_weights[2] + chi_sqrd_on_double*chi_weights[5])
         
         return chi_sqrd
 
