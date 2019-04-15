@@ -16,7 +16,7 @@ from email.mime.multipart import MIMEMultipart
 import random
 import time
 
-def hpc05notification(variables,stage="final",PS=""):
+def hpc05notification(variable,stage="final",PS=""):
 
 	compliments = {"You bring out th best in other people and I hope that you notice this today.",
 	"You have the power to make people happy, just by smiling at them.",
@@ -47,13 +47,13 @@ def hpc05notification(variables,stage="final",PS=""):
 	msg = MIMEMultipart()
 
 	if stage == "milestone":
-		msg['Subject'] = "HPC05 Milestone!"+str(variables[2])+str(variables[3])
+		msg['Subject'] = "HPC05 Milestone!"
 		_to   = ["hpc05notification@gmail.com"]
-		body = "Lectori salutem,\n\nThe HPC05 cluster has passed a milestone of your request at " + time.strftime("%H")+":"+time.strftime("%M")+"h. It is currently at position "+str(variables[0])+" of "+str(variables[1])+".\nPlease, await the result until further instruction.\n\nYours faithfully,\nHPC05"
+		body = "Lectori salutem,\n\nThe HPC05 cluster has passed a milestone of your request at " + time.strftime("%H")+":"+time.strftime("%M")+"h. It is currently at position "+variable+".\nPlease, await the result until further instruction.\n\nYours faithfully,\nHPC05"
 	else:		
-		msg['Subject'] = "HPC05 Finished!"+str(variables[1])+str(variables[2])
+		msg['Subject'] = "HPC05 Finished!"
 		_to   = ["hpc05notification@gmail.com"]
-		body = "Lectori salutem,\n\nThe HPC05 cluster has finished your request. It took "+str(variables[0])+" seconds.\nPlease, study the result at your earliest convenience.\n\nYours faithfully,\nHPC05"
+		body = "Lectori salutem,\n\nThe HPC05 cluster has finished your request. It took "+str(variable)+" seconds.\nPlease, study the result at your earliest convenience.\n\nYours faithfully,\nHPC05"
 
 	if PS == "comp":
 		body += "\n\nP.S. "+random.sample(compliments,1)[0]

@@ -2,10 +2,10 @@ import numpy as np
 import functools
 import sys
 
-# PATH_HPC05 = '/home/dddekker/BEP' #### Adjust this! Also in other files!
-PATH_HPC05 = '/home/mklein1/Diewertje'
+PATH_HPC05 = '/home/dddekker/BEP' #### Adjust this! Also in other files!
+#PATH_HPC05 = '/home/mklein1/Diewertje'
 sys.path.append(PATH_HPC05)
-import Prepare_data as Pre
+import Prepare_data_Simple as Pre # for this rawABA data! for delta ABA use the normal one
 import Chisq_Finkelstein as Chi
 import SimulatedAnnealing_Finkelstein_parallel as SA
 import Calculate_ABA_Finkelsteinlab_Diewertje as ABA
@@ -51,7 +51,7 @@ def main(argv):
     ###########################
     # /* Objective function *\#
     ###########################
-    concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) # in nanoMolair
+    concentrations = np.array([10,100])#[0.1, 0.3, 1, 3, 10, 30, 100, 300]) # in nanoMolair
     reference=1 # in nanomolair
     
     KineticModel = functools.partial(Chi.calc_Chi_square,model_id=model_ID, guide_length=gRNA_length,
@@ -66,8 +66,12 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Finkelstein *\#
     #############################################
-    filename= 'cas9-target-e-replicate-1-delta-abas_Canonical_OT-r_0-2.csv'
-    xdata,ydata,yerr=Pre.Prepare_Cdata(path_to_data,filename)
+    filename= 'TargetE-dCas9_AbsoluteABA_Canonical_OT-r_0-2.csv'
+    xdata,ydata,yerr=Pre.Prepare_Cdata(path_to_data,filename) 
+    # xdata=MMpos, ydata=ABA, yerr=Uncertainty
+    
+    #filename= 'cas9-target-e-replicate-1-delta-abas_Canonical_OT-r_0-2.csv'
+    #xdata,ydata,yerr=Pre.Prepare_Cdata(path_to_data,filename)
     # xdata=MMpos, ydata=Delta ABA, yerr=Uncertainty
 
     ##############################################

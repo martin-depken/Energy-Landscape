@@ -1,8 +1,12 @@
 #!/bin/bash
-#PBS -l nodes=2:ppn=3
+#PBS -l nodes=3:ppn=3
+
+numbr=$((PBS_NUM_PPN*PBS_NUM_NODES))
 
 module load mpi/openmpi-1.8.8-gnu
-/opt/ud/openmpi-1.8.8/bin/mpirun -np 6 python /home/dddekker/BEP/Hello_World_MPI.py
+/home/dddekker/miniconda3/envs/dev/bin/mpirun -np $numbr -hostfile $PBS_NODEFILE python /home/dddekker/BEP/Hello_World_MPI.py
+
+
 
 
 

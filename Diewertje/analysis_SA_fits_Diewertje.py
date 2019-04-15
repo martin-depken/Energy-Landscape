@@ -19,8 +19,7 @@ from read_model_ID import unpack_parameters
 import CRISPR_free_energy_landscape_Diewertje as FreeEnergy
 imp.reload(FreeEnergy);
 sys.path.append('../code_Boyle/')
-#import plotting_Boyle as plt_B
-#reload(plt_B)
+import plotting_Boyle_Diewertje as plt_B
 import CRISPR_dCas9_binding_curve_Boyle as dCas9
 imp.reload(dCas9);
 
