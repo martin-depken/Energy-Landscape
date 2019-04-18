@@ -52,7 +52,7 @@ def main(argv):
 		if mainpath[-1] != "\\" :
 			mainpath += '\\'
 	except:
-		mainpath = "/home/sfdejong/04_01_2019/"
+		mainpath = "/home/sfdejong/04_15_2019/"
 
 	t1 = time()
 	lut_tar = read_dict(mainpath+"lookuptable_target")
@@ -62,6 +62,7 @@ def main(argv):
 	if Cas.complementtarget == True: guide = str( Seq(guide).transcribe() )
 	if Cas.reversetarget == True:    guide = guide[::-1]
 	
+	print(Chr)
 	print("includePAMs = ",includePAMs)
 	print("reverse = ",reverse)
 	partition(file,mainpath,startpos,guide,lut_pam,lut_tar,Cas,reverse,Chr,False,includePAMs)
