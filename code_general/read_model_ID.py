@@ -26,6 +26,42 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
     
+    if model_id == 'Sequence_dependent_clv_v2':
+        if len(parameters)!=10:
+            print 'Wrong number of parameters'
+            return
+        
+        epsilonConfig = np.zeros(21)
+        epsilonConfig[0] = -100.0 #PAM
+        epsilonConfig[1:21] = [-8.51732646, -0.92309739,  4.31859981, -0.65323077,  0.56563897, -5.95998582,
+                                 -4.36131563,  2.83445163,  0.44828209,  9.52067702,  2.93084561, -6.94015605,
+                                  2.58949616, -6.66097551,  0.07608957,  6.30479899,  0.26091506, -0.91985863,
+                                 -4.12120118,  4.4768232] #Configuration Energies from cleavage fit
+        
+        epsilonBind = np.zeros(13)
+        epsilonBind[0] = parameters[0] #Binding Energies
+        epsilonBind[1] = 0. #match
+        epsilonBind[2:4] = parameters[1:3]
+        epsilonBind[4] = 0. #match
+        epsilonBind[5:9] = parameters[3:7]
+        epsilonBind[9] = 0. #match
+        epsilonBind[10:13] = parameters[7:10]
+        
+        # For different combinations of bases:
+        #  0  1  2  3  4  5  6  7  8  9 10 11 12
+        #  A  A  A  A  A  T  T  T  G  G  G  C  C
+        #  A  T  G  C  U  G  C  U  G  C  U  C  U
+        
+        rate_sol_to_PAM = 1000.0
+        rate_internal = 10**5.97986852
+        rate_clv = 10**4.9878502 #From cleavage fit
+        
+        forward_rates = forward_rates * rate_internal
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = rate_clv
+        
+        return epsilonConfig, epsilonBind, forward_rates
+    
     if model_id == 'Sequence_dependent_clv_v1':
         if len(parameters)!=35:
             print 'Wrong number of parameters'
