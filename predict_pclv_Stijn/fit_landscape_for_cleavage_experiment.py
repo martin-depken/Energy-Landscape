@@ -48,9 +48,9 @@ def main(argv):
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd = [10.0] + [10.0]*40 + [6.0] + [6.0] + [6.0]
-    lower_bnd = [-10.0] + [-10.0]*20 + [0.0]*20 + [-1.0] + [1.0] + [3.0]
-    initial_guess =  [0.0] + [0.0]*20 + [5.0]*20 + [3.0] + [3.0] + [4.5]
+    upper_bnd = [10.0] + [10.0]*40 + [6.0] + [3.0] + [6.0]
+    lower_bnd = [0.0] + [-10.0]*20 + [0.0]*20 + [-1.0] + [1.0] + [3.0]
+    initial_guess =  [5.0] + [0.0]*20 + [5.0]*20 + [1.0] + [3.0] + [4.5]
     
 
     ###########################
@@ -64,7 +64,7 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv)
+    xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,True)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata

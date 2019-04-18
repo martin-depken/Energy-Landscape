@@ -7,7 +7,6 @@ sys.path.append('../code_general/')
 from read_model_ID import unpack_parameters
 
 
-
 '''
 Main functions
 '''
