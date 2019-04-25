@@ -53,6 +53,7 @@ def convert_param(parameters,model_id,guide,target):
 	tuple in the form ( (e_1,kf_1) , (e_2,kf_2) , ... , (e_20,kf_20) )
 	"""
 	epsilon,forwardrates = unpack_parameters(parameters,model_id)
+	forwardrates[-1] = 1000 # adjust the cleavage rate
 	matches = {'AT','CG','GC','UA'}
 	if guide+target in matches:
 		epsilons = -np.array(epsilon[1:21]) # epsilon_c (negative by contention)
@@ -293,6 +294,7 @@ def partition(file,mainpath,startpos,guide,lut_pam,lut_tar,Cas,reverse,Chr,inclu
 				M = build_rate_matrix(forwardrates,backwardrates)
 				print("At position",position,"something went wrong with the matrix.\n",M)
 				continue
-			store_tclv(position,startpos,tclv,mainpath+Chr+filenamepart+".hdf5",Chr+filenamepart)
+			if tclv > 0.0:
+				store_tclv(position,startpos,tclv,mainpath+"output/"+Chr+filenamepart+".hdf5",Chr+filenamepart)
 			
 	return

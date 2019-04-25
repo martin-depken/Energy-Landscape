@@ -3,61 +3,28 @@ from scipy import linalg
 from scipy.optimize import curve_fit
 import sys 
 sys.path.append('/home/svandersmagt/Energy_Landscape_dCas9/code_general/')
-sys.path.append('../code_general/')
+sys.path.append('../../code_general/')
 from read_model_ID import unpack_parameters
+
 
 
 '''
 Main functions
 '''
 
-def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,
+def calc_chi_squared(parameters,xdata,ydata,yerr,
                     guide_length, model_id):
-    
-    if len(ydata)!=2:
+       
+    k_model = calc_clv_rate_fast(parameters, model_id, xdata,
+                            guide_length)
         
-        k_model = calc_clv_rate_fast(parameters, model_id, mismatch_positions,
-                                guide_length)
-            
-        ydata = np.array(ydata)
-        yerr = np.array(yerr)
-        chi_sqrd = np.sum(((ydata-np.log10(k_model))/yerr)**2)
-        return chi_sqrd
+    ydata = np.array(ydata)
+    yerr = np.array(yerr)
+    chi_sqrd = np.sum(((ydata-np.log10(k_model))/yerr)**2)
+    return chi_sqrd
 
-    if len(ydata)==2:
-        k_model_clv, k_model_on = calc_clv_on(parameters, model_id,
-                                              mismatch_positions, guide_length)
-        ydata_clv = np.array(ydata[0])
-        ydata_on = np.array(ydata[1])
-        yerr_clv = np.array(yerr[0])
-        yerr_on = np.array(yerr[1])
-        
-        chi_sqrd_clv_perfect = 0.0
-        chi_sqrd_clv_single = 0.0
-        chi_sqrd_clv_double = 0.0
-        chi_sqrd_on_perfect = 0.0
-        chi_sqrd_on_single = 0.0
-        chi_sqrd_on_double = 0.0
-        
-        if len(mismatch_positions)==0:
-            chi_sqrd_clv_perfect = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
-            chi_sqrd_on_perfect = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
-        
-        elif len(mismatch_positions)==1:
-            chi_sqrd_clv_single = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
-            chi_sqrd_on_single = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
-        
-        elif len(mismatch_positions)==2:
-            chi_sqrd_clv_double = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
-            chi_sqrd_on_double = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
-            
-        chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] + chi_sqrd_on_perfect*chi_weights[3] +
-                    chi_sqrd_clv_single*chi_weights[1] + chi_sqrd_on_single*chi_weights[4] +
-                    chi_sqrd_clv_double*chi_weights[2] + chi_sqrd_on_double*chi_weights[5])
-        
-        return chi_sqrd
 
-def calc_clv_rate(parameters, model_id, mismatch_positions, guide_length=20):
+def calc_clv_rate(parameters, model_id, xdata, guide_length=20):
      '''
      Calculates the cleavage rate, given the model_id, model parameters, 
      guide length and mismatch positions, at the given times.
@@ -80,7 +47,7 @@ def calc_clv_rate(parameters, model_id, mismatch_positions, guide_length=20):
      
      #calculate master equation
      mat = get_master_equation(parameters=parameters, 
-                       mismatch_positions=mismatch_positions, 
+                       xdata=xdata, 
                        model_id=model_id, 
                        guide_length=guide_length)
      
@@ -114,10 +81,10 @@ def calc_clv_rate(parameters, model_id, mismatch_positions, guide_length=20):
 
 
 
-def calc_clv_rate_fast(parameters, model_id, mismatch_positions, guide_length=20):
+def calc_clv_rate_fast(parameters, model_id, xdata, guide_length=20):
     #calculate master equation
     mat = get_master_equation(parameters=parameters, 
-                              mismatch_positions=mismatch_positions, 
+                              xdata=xdata, 
                               model_id=model_id, 
                               guide_length=guide_length)
     
@@ -127,7 +94,7 @@ def calc_clv_rate_fast(parameters, model_id, mismatch_positions, guide_length=20
     except:
         print 'INVERTING MATRIX FAILED, USE SLOWER METHOD'
         sys.stdout.flush()
-        return calc_clv_rate(parameters, model_id, mismatch_positions)
+        return calc_clv_rate(parameters, model_id, xdata)
     vec = np.ones(len(Minv))
     everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
     MFPT = vec.dot(Minv.dot(everything_unbound))
@@ -135,81 +102,12 @@ def calc_clv_rate_fast(parameters, model_id, mismatch_positions, guide_length=20
    
     return k
 
-
-def calc_clv_on(parameters, model_id, mismatch_positions, guide_length):
-    
-    matrix_clv, matrix_on = get_master_equation_clv_on(parameters,
-                                                       mismatch_positions,
-                                                       model_id,
-                                                       guide_length)
-    
-    ## Calculating cleavage rate
-    M_clv = -1 * matrix_clv
-    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
-    try:
-        Minv_clv = np.linalg.inv(M_clv)
-        vec_clv = np.ones(len(Minv_clv))
-        MFPT_clv = vec_clv.dot(Minv_clv.dot(everything_unbound))
-        k_clv = 1/MFPT_clv
-    except:
-        print 'INVERTING MATRIX FAILED, USE SLOWER METHOD'
-        sys.stdout.flush()
-        parameters_clv = parameters[1:42] + parameters[42:44]
-        k_clv = calc_clv_rate(parameters_clv, model_id[0], mismatch_positions, guide_length)
-    
-    
-    ## Calculating on rate
-    k_on = calc_association_rate(rate_matrix=matrix_on,timepoints=[500.,1000.,1500.],
-                                                 guide_length=guide_length)
-    
-    return k_clv, k_on
     
 '''
 Helper functions 
 '''
 
-def get_master_equation_clv_on(parameters,mismatch_positions,model_id,guide_length):
-    if len(parameters)!=44:
-            print 'Wrong number of parameters'
-            return
-    parameters_clv = np.zeros(42)
-    parameters_on = np.zeros(43)
-    parameters_clv[0:40] = parameters[1:41]
-    parameters_clv[-2] = parameters[-2]
-    parameters_clv[-1] = parameters[-1]
-    parameters_on[0:43] = parameters[0:43]
-    
-    model_id_clv = model_id[0]
-    model_id_on = model_id[1]
-    
-    epsilon_on, forward_rates_on = unpack_parameters(parameters_on, model_id_on, guide_length)
-    energies_on = get_energies(epsilon_on,mismatch_positions, guide_length)
-    backward_rates_on = get_backward_rates(energies_on, forward_rates_on,guide_length )
-    matrix_on = build_rate_matrix(forward_rates_on, backward_rates_on)
-    
-    epsilon_clv, forward_rates_clv = unpack_parameters(parameters_clv, model_id_clv, guide_length)
-    energies_clv = get_energies(epsilon_clv,mismatch_positions, guide_length)
-    backward_rates_clv = get_backward_rates(energies_clv,forward_rates_clv,guide_length)
-    
-    #most of the matrix entries are equal
-    matrix_clv = matrix_on.copy()
-    
-    #different rate from solution
-    matrix_clv[0][0] = -forward_rates_clv[0]
-    matrix_clv[1][0] = forward_rates_clv[0]
-    
-    #different cleavage rate
-    matrix_clv[-1][-1] = -(forward_rates_clv[-1]+backward_rates_clv[-1]) 
-    
-    #different ePAM
-    matrix_clv[0][1] = backward_rates_clv[1]
-    matrix_clv[1][1] = -(backward_rates_clv[1]+forward_rates_clv[1])
-    matrix_clv[1][2] = backward_rates_clv[2]
-    matrix_clv[2][2] = -(backward_rates_clv[2]+forward_rates_clv[2])
-    
-    return matrix_clv, matrix_on,
-
-def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
+def get_master_equation(parameters, xdata, model_id, guide_length):
     '''
     Construct rate matrix from given parameter set
     :param parameters:
@@ -217,13 +115,13 @@ def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     :param guide_length:
     :return:
     '''
-    epsilon, forward_rates = unpack_parameters(parameters, model_id, guide_length)
-    energies = get_energies(epsilon,mismatch_positions, guide_length)
+    epsilonConfig, epsilonBind, forward_rates = unpack_parameters(parameters, model_id, guide_length)
+    energies = get_energies(epsilonConfig,epsilonBind,xdata, guide_length)
     backward_rates = get_backward_rates(energies, forward_rates,guide_length )
     rate_matrix = build_rate_matrix(forward_rates, backward_rates)
     return rate_matrix
 
-def get_energies(epsilon,mismatch_positions, guide_length=20):
+def get_energies(epsilonConfig,epsilonBind,xdata, guide_length=20):
     '''
     For general (position dependent) model make a list with the energies at every bound state
     At positions with a mismatch incorporated: add mismatch penalty (epsI[mm_pos])
@@ -235,14 +133,48 @@ def get_energies(epsilon,mismatch_positions, guide_length=20):
     :param mismatch_positions: each mismach position has a range [1,2, ... , 20]
     :return: vector with the minima in the landscape
     '''
-    if type(mismatch_positions)==type([]):
-        mismatch_positions = np.array(mismatch_positions)
-    new_epsilon = epsilon.copy()
-    epsI = new_epsilon[(guide_length+1):]
-    energies = -1*new_epsilon[0:(guide_length+1)] # convention: epsC>0 means downward slope
-    energies[0] = new_epsilon[0]                 # convention: epsPAM>0 means upward slope
-    if len(mismatch_positions)>0:
-        energies[mismatch_positions.astype(int)] += epsI[(mismatch_positions.astype(int)-1)]
+    
+    energies = -1*epsilonConfig # convention: epsC>0 means downward slope
+    energies[0] = epsilonConfig[0] # convention: epsPAM>0 means upward slope
+    guide = xdata[1]
+    target = xdata[0]
+    for pos in range(guide_length):
+        if guide[pos]=='A':
+            if target[pos]=='T':
+                energies[pos+1]+=epsilonBind[0]
+            elif target[pos]=='A':
+                energies[pos+1]+=epsilonBind[1]
+            elif target[pos]=='C':
+                energies[pos+1]+=epsilonBind[2]
+            elif target[pos]=='G':
+                energies[pos+1]+=epsilonBind[3]
+        elif guide[pos]=='T':
+            if target[pos]=='T':
+                energies[pos+1]+=epsilonBind[4]
+            elif target[pos]=='A':
+                energies[pos+1]+=epsilonBind[7]
+            elif target[pos]=='C':
+                energies[pos+1]+=epsilonBind[10]
+            elif target[pos]=='G':
+                energies[pos+1]+=epsilonBind[12]
+        elif guide[pos]=='G':
+            if target[pos]=='T':
+                energies[pos+1]+=epsilonBind[2]
+            elif target[pos]=='A':
+                energies[pos+1]+=epsilonBind[5]
+            elif target[pos]=='C':
+                energies[pos+1]+=epsilonBind[8]
+            elif target[pos]=='G':
+                energies[pos+1]+=epsilonBind[9]
+        elif guide[pos]=='C':
+            if target[pos]=='T':
+                energies[pos+1]+=epsilonBind[3]
+            elif target[pos]=='A':
+                energies[pos+1]+=epsilonBind[6]
+            elif target[pos]=='C':
+                energies[pos+1]+=epsilonBind[9]
+            elif target[pos]=='G':
+                energies[pos+1]+=epsilonBind[11]
     return energies
 
 
