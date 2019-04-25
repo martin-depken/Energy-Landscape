@@ -28,7 +28,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     
     if model_id == 'Clv_Saturated_fixed_kf_general_energies_v2':
         if len(parameters)!=41:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters') 
             return
         
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
@@ -46,7 +46,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     
     elif model_id == 'Clv_Saturated_general_energies_v2':
         if len(parameters)!=42:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters')
             return
         
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
@@ -64,7 +64,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
 
     elif model_id == 'Clv_init_limit_Saturated_general_energies_v2':
         if len(parameters)!=43:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters')
             return
         
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
@@ -99,7 +99,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     elif model_id == 'general_energies_no_kPR':
         # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
         if len(parameters)!=43:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters')
             return
         # General position dependency
         epsilon = parameters[:-2]
@@ -377,8 +377,25 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[0] = k_PAM
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
+        
+    elif model_id == 'fixed_rates':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+        if len(parameters)!=41:
+            print('Wrong number of parameters')
+            return
+        # General position dependency
+        epsilon = parameters
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 0.0038941973449552435
+        rate_internal = 471.7450318294534
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+        
     else:
-        print 'Watch out! Non-existing model-ID..'
+        print('Watch out! Non-existing model-ID..')
         return
 
 
