@@ -16,19 +16,23 @@ current_colors = sns.color_palette()
 import sys
 sys.path.append('../code_general/')
 from read_model_ID import unpack_parameters
+
 import CRISPR_free_energy_landscape as FreeEnergy
 reload(FreeEnergy);
+
 import plotting_Boyle as plt_B
 reload(plt_B)
+
 import CRISPR_dCas9_binding_curve_Boyle as dCas9
 reload(dCas9);
+
+import Weighted_Average as WA
+reload(WA)
 
 from scipy import optimize
 import Boyle_data_processing as Bdata
 reload(Bdata);
 
-import CRISPR_dCas9_binding_curve_Boyle as dCas9
-reload(dCas9);
 sys.path.append('../code_Pclv/')
 import CRISPR_Kinetic_model as Pclv
 reload(Pclv);
@@ -443,6 +447,27 @@ def write_grid(V, kf_vals, Vopt, kf_opt, kSP_opt, forward_rates,binding_rates, f
 
 
 ###############################################################
+def select_on_prediction_WA(simset,
+                            percentage=0.1,
+                            Nparams=43,
+                            model_id='general_energies_no_kPR',
+                            path='../Data_Boyle/',
+                            replica='1'):
+    scores = []
+    for sim in simset:
+        #print sim
+        parameters = plt_B.load_simm_anneal(sim, Nparams)
+        score, _, _ = WA.predict_train(parameters, model_id=model_id, path=path, replica=replica, Plot=False)
+        scores.append(score)
+    scores = np.array(scores)
+    simset = np.array(simset)
+    selected_scores = scores[scores <= percentage]
+    selected_sims = simset[scores <= percentage]
+    return selected_sims, selected_scores, scores
+
+
+
+
 def replace_lower_triangle(M):
     '''
     sets the values in the lower triangle of matrix M equal to 1.
