@@ -28,7 +28,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     
     if model_id == 'Sequence_dependent_clv_v2':
         if len(parameters)!=10:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters')
             return
         
         epsilonConfig = np.zeros(21)
@@ -64,7 +64,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     
     if model_id == 'Sequence_dependent_clv_v1':
         if len(parameters)!=35:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters')
             return
         
         epsilonConfig = np.zeros(21)
