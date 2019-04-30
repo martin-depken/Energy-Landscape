@@ -141,40 +141,40 @@ def get_energies(epsilonConfig,epsilonBind,xdata, guide_length=20):
     for pos in range(guide_length):
         if guide[pos]=='A':
             if target[pos]=='T':
-                energies[pos+1]+=epsilonBind[0]
+                energies[pos+1]+=epsilonBind[0] #AA
             elif target[pos]=='A':
-                energies[pos+1]+=epsilonBind[1]
-            elif target[pos]=='C':
-                energies[pos+1]+=epsilonBind[2]
+                energies[pos+1]+=epsilonBind[1] #AT
             elif target[pos]=='G':
-                energies[pos+1]+=epsilonBind[3]
+                energies[pos+1]+=epsilonBind[2] #AC
+            elif target[pos]=='C':
+                energies[pos+1]+=epsilonBind[3] #AG
         elif guide[pos]=='T':
             if target[pos]=='T':
-                energies[pos+1]+=epsilonBind[4]
+                energies[pos+1]+=epsilonBind[4] #UA
             elif target[pos]=='A':
-                energies[pos+1]+=epsilonBind[7]
-            elif target[pos]=='C':
-                energies[pos+1]+=epsilonBind[10]
+                energies[pos+1]+=epsilonBind[5] #UT
             elif target[pos]=='G':
-                energies[pos+1]+=epsilonBind[12]
-        elif guide[pos]=='G':
-            if target[pos]=='T':
-                energies[pos+1]+=epsilonBind[2]
-            elif target[pos]=='A':
-                energies[pos+1]+=epsilonBind[5]
+                energies[pos+1]+=epsilonBind[6] #UC
             elif target[pos]=='C':
-                energies[pos+1]+=epsilonBind[8]
-            elif target[pos]=='G':
-                energies[pos+1]+=epsilonBind[9]
+                energies[pos+1]+=epsilonBind[7] #UG
         elif guide[pos]=='C':
             if target[pos]=='T':
-                energies[pos+1]+=epsilonBind[3]
+                energies[pos+1]+=epsilonBind[8] #CA
             elif target[pos]=='A':
-                energies[pos+1]+=epsilonBind[6]
-            elif target[pos]=='C':
-                energies[pos+1]+=epsilonBind[9]
+                energies[pos+1]+=epsilonBind[9] #CT
             elif target[pos]=='G':
-                energies[pos+1]+=epsilonBind[11]
+                energies[pos+1]+=epsilonBind[10] #CC
+            elif target[pos]=='C':
+                energies[pos+1]+=epsilonBind[11] #CG
+        elif guide[pos]=='G':
+            if target[pos]=='T':
+                energies[pos+1]+=epsilonBind[12] #GA
+            elif target[pos]=='A':
+                energies[pos+1]+=epsilonBind[13] #GT
+            elif target[pos]=='G':
+                energies[pos+1]+=epsilonBind[14] #GC
+            elif target[pos]=='C':
+                energies[pos+1]+=epsilonBind[15] #GG
     return energies
 
 
