@@ -1,5 +1,4 @@
 import numpy as np
-
 choose_model = ['general_energies_rates',
                 'general_energies',
                 'init_limit_general_energies',
@@ -12,7 +11,7 @@ choose_model = ['general_energies_rates',
 
 
 
-def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
+def unpack_parameters(parameters, model_id,guide_length=20):
     '''
     Use model ID to construct vector of epsilon values and forward rates.
 
@@ -25,8 +24,33 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
 
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
-    
-    if model_id == 'Sequence_dependent_clv_v2':
+
+    if model_id == 'fit_landscape_v1':
+        '''
+        in stead of fitting the epsilon_C, we fit the cummalative sum of them, that is the energies of the bound states 
+        '''
+        # General position dependency
+        energies_match = parameters[:21]
+        epsilonPAM = parameters[0]
+        epsilonC = -1*np.diff(energies_match)
+
+
+        epsilonI = parameters[21:-2]
+
+        epsilon = list([epsilonPAM]) + list(epsilonC) + list(epsilonI)
+        epsilon = np.array(epsilon)
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+
+
+
+    elif model_id == 'Sequence_dependent_clv_v2':
         if len(parameters)!=10:
             print('Wrong number of parameters')
             return
@@ -62,7 +86,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         
         return epsilonConfig, epsilonBind, forward_rates
     
-    if model_id == 'Sequence_dependent_clv_v1':
+    elif model_id == 'Sequence_dependent_clv_v1':
         if len(parameters)!=35:
             print('Wrong number of parameters')
             return
@@ -90,7 +114,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         return epsilonConfig, epsilonBind, forward_rates
         
         
-    if model_id == 'Clv_Saturated_fixed_kf_general_energies_v2':
+    elif model_id == 'Clv_Saturated_fixed_kf_general_energies_v2':
         if len(parameters)!=41:
             print('Wrong number of parameters') 
             return
