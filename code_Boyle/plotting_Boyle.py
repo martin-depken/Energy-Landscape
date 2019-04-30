@@ -59,7 +59,7 @@ def calc_predictions(parameters,model_id):
     return Pbound_predict, on_rate_predict, off_rate_predict
 
 
-def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/',show_plot=True,axis=None,cbar=True):
+def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/Weighted_Avarage/',show_plot=True,axis=None,cbar=True):
     '''
     Plot heatmap for double mismatches with Boyle's data in below diagonal and model above the diagonal
     :param model: matrix with double-mismatch values
@@ -102,34 +102,34 @@ def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenD
             ax = axis
 
     # 3) plot the data:
-    mask_exp = np.zeros(shape=experiment.shape)
-    for i in range(len(experiment)):
-        for j in range(i - 1, len(experiment)):
-            mask_exp[i, j] = 1
-    if show_plot:
-        sns.heatmap(experiment, cmap=colormap, mask=mask_exp, cbar=cbar, vmin=0, vmax=val_max,ax=ax);
-
-    # 4) Plot the model prediction alongside
-    mask = np.ones(shape=model.shape)
-    for i in range(len(model)):
-        for j in range(i + 1, len(model)):
+    mask = np.ones((20, 20))
+    for i in range(20):
+        for j in range(i + 1, 20):
             mask[i, j] = 0
     if show_plot:
-        sns.heatmap(model, cmap=colormap, mask=mask, cbar=cbar, vmin=val_min, vmax=val_max,ax=ax);
+        sns.heatmap(experiment, cmap=colormap, mask=mask, cbar=False, vmin=0, vmax=val_max,ax=ax);
+
+    # 4) Plot the model prediction alongside
+    if show_plot:
+        sns.heatmap(model, cmap=colormap, mask=mask.T, cbar=True, vmin=val_min, vmax=val_max,ax=ax);
 
 
         # 5) Adjust ticks and labels to get correct nucleotide positions
-        ax.set_xticklabels(map(lambda x: str(int(Ng-x)), ax.get_xticks() - 0.5));
-        #ax.set_yticklabels(map(lambda x: str(int(Ng-x)), ax.get_yticks() - 0.5));
-        ax.set_yticklabels(map(lambda x: str(int(x+1)), ax.get_yticks() - 0.5));
+        plt.xticks(fontsize=15)
+        ax.set_xticklabels(['20', '', '18', '', '16', '', '14', '', '12', '', '10', '', '8', '', '6', '', '4', '', '2', ''])
+        plt.yticks(fontsize=15)
+        ax.set_yticklabels(['20', '', '18', '', '16', '', '14', '', '12', '', '10', '', '8', '', '6', '', '4', '', '2', ''])
 
         # 6) Further window dressing
         ax.set_xlabel('mismatch 1', fontsize=15)
         ax.set_ylabel('mismatch 2', fontsize=15)
-        ax.set_title(title, fontsize=15);
+        ax.set_title(title, fontsize=15)
+
+        cax = plt.gcf().axes[-1]
+        cax.tick_params(labelsize=15)
     return model, experiment
 
-def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/KoenDataForMisha/BoyleData/',show_plot=True, axis=None):
+def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/Weighted_Avarage/',show_plot=True, axis=None):
     # 1) settings based on physical quantity you want to plot
     if kind == 'Occupancy':
         color = 'green'

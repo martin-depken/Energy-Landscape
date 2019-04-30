@@ -44,14 +44,14 @@ def main(argv):
     init_monitor_file = argv[4] #'init_monitor.txt'
     gRNA_length = 20
 
-    upper_bnd =  [10.0] + [10.0]*40 +  [3.0] *3 #*3
-    lower_bnd = [0.0] + [-10.0]*40 + [-7.0] *3 #*3
-    initial_guess = [5.0] + [3.0]*40 + [1.5] *3 #np.loadtxt('parameters.txt')
+    upper_bnd =  [10.0] + [10.0]*40 #+  [3.0] *3 #*3
+    lower_bnd = [0.0] + [-10.0]*40 #+ [-7.0] *3 #*3
+    initial_guess = [5.0] + [3.0]*40 #+ [1.5]*3 # if model id is general energies V2 again, you need 44 paramters!
 
     ###########################
     # /* Objective function *\#
     ###########################
-    concentrations = np.array([10,100])#[0.1, 0.3, 1, 3, 10, 30, 100, 300]) # in nanoMolair
+    concentrations = np.array([1,30,100])#[0.1, 0.3, 1, 3, 10, 30, 100, 300]) # in nanoMolair
     reference=1 # in nanomolair
     
     KineticModel = functools.partial(Chi.calc_Chi_square,model_id=model_ID, guide_length=gRNA_length,
