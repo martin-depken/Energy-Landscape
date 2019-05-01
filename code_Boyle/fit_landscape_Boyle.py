@@ -25,6 +25,8 @@ def main(argv):
     #################
     # /* Settings *\#
     #################
+
+
     # Loading the data
     use_cluster = bool(int(argv[6]))
     if use_cluster:
@@ -38,8 +40,8 @@ def main(argv):
     # Simmulated Annealing
     replica_ID = argv[1]
     model_ID =  argv[2]
-    monitor_file = argv[3]
-    fit_result_file = argv[4]
+    fit_result_file = argv[3]
+    monitor_file = argv[4]
     init_monitor_file = argv[5]
     gRNA_length = 20
     # Weights_Datasets = Boyle_data_processing.weights_averages(replica_ID,path_to_Boyle_data)
