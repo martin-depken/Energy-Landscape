@@ -1,7 +1,7 @@
 #!/bin/bash
 #PBS -l nodes=1:ppn=20
 
-parameters=$(sed -n -e "${PBS_ARRAYID}p" /home/mklein1/Energy_Landscape_dCas9/30_4_2019/jobs_30_4_2019_1_25.txt)
+parameters=$(sed -n -e "${PBS_ARRAYID}p" /home/mklein1/Energy_Landscape_dCas9/30_4_2019/jobs_30_4_2019_26_38.txt)
 parameterArray=($parameters)
 
 ReplicaID=${parameterArray[0]}
