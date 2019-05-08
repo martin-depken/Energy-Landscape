@@ -451,7 +451,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         epsilon = parameters
 
         # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
-        rate_sol_to_PAM = 0.0038941973449552435
+        rate_sol_to_PAM = 0.00038941973449552436
         rate_internal = 471.7450318294534
 
         forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates

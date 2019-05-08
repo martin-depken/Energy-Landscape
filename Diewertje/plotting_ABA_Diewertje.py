@@ -345,7 +345,7 @@ def predict_double_mm(parameters, model_id, T=60 * 10, guide_length=20, show_plo
                                                                                 guide_length=guide_length,
                                                                                 T=T)
             # this should be calc_delta_ABA if we do not work wit rawABA dataset
-
+            
     if show_plot:
         axHeatmap = sns.heatmap(delta_ABA_mat, cmap='coolwarm', mask=np.tril(delta_ABA_mat),vmin=2, vmax=5)
         plt.grid()

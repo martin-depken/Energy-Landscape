@@ -44,9 +44,9 @@ def main(argv):
     init_monitor_file = argv[4] #'init_monitor.txt'
     gRNA_length = 20
 
-    upper_bnd =  [10.0] + [10.0]*40 #+  [3.0] *3 #*3
-    lower_bnd = [0.0] + [-10.0]*20 + [0.0]*20 #+ [-7.0] *3 #*3
-    initial_guess = [5.0] + [3.0]*40 #+ [1.5]*3 # if model id is general energies V2 again, you need 44 paramters!
+    upper_bnd =  [10.0] + [10.0]*40+ [3.0]*2 #+  [3.0] *3 #*3
+    lower_bnd = [0.0] + [-10.0]*20 + [0.0]*20 + [-7.0]*2 #+ [-7.0] *3 #*3
+    initial_guess = [5.0] + [3.0]*40 + [1.5]*2 #+ [1.5]*3 # if model id is general energies V2 again, you need 44 paramters!
     # The epsilon c is allowed to be negative, the DNA RNA binding should gain energy (+), but due to conformational
     # change of the protien it can still cost energy so it can be (-)
     # The epsilon i cannot be negative, since then it is not a penalty anymore!
