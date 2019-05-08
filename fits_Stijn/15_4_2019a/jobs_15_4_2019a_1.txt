@@ -1,0 +1,1 @@
+combined_data_DE.csv	Sequence_dependent_clv_v1	nvt	/home/svandersmagt/Energy_Landscape_dCas9/15_4_2019a/monitor_15_4_2019a_sim_1.txt	/home/svandersmagt/Energy_Landscape_dCas9/15_4_2019a/fit_15_4_2019a_sim_1.txt	/home/svandersmagt/Energy_Landscape_dCas9/15_4_2019a/init_monitor_15_4_2019a_sim_1.txt	1

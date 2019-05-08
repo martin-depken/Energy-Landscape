@@ -1,0 +1,21 @@
+Same as 9_4_2019 but now fit to the new weighted average, with new errors. Constrained forward rate at 1,000,000 Hz
+
+fit_landscape_for_cleavage_experiment.py
+10 fits on NucleaSeq data: TargetE/ECas9_cleavage_rate_and_y0_Canonical_OT-r_0-2.csv
+and Boyle data rep 1.
+
+Used model is 'Clv_init_limit_Saturated_general_energies_v2' 
+with predefined ePAM = -100, rate_sol_to_PAM = 1000
+and 'general_energies_no_kPR'
+
+Tstart=1000.,
+use_relative_steps=False,
+delta=0.1,
+tol=1E-5,
+Tfinal=0.0,
+adjust_factor=1.1,
+cooling_rate=0.99,
+N_int=1000,
+AR_low=40,
+AR_high=60,
+                                	
