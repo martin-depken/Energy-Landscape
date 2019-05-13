@@ -24,7 +24,11 @@ def calc_Weighted_average(path='../Data_Boyle/', replica='1', outputdirectory='.
     data['xdata'] = xdata
     data['ydata'] = ydata
     data['yerr'] = yerr
-    data['WA'] = data.apply(Weighted_average, axis=1)
+    wa = []
+    for i in data.index:
+        wa.append(Weighted_average(data.loc[i]))
+    data['WA'] = wa
+    #data['WA'] = data.apply(Weighted_average, axis=1)
 
     WA_data = pd.DataFrame(columns=['MM_pos', 'WA_kon', 'WA_occ', 'WA_koff'])
     WA_data.MM_pos = xdata
@@ -67,7 +71,7 @@ def calc_Weighted_average(path='../Data_Boyle/', replica='1', outputdirectory='.
 
 
 def predict_train(parameters, model_id='general_energies_no_kPR', path='../Data_Boyle/', replica='1', Plot=True):
-    wa = calc_Weighted_average(path='../Data_Boyle/', replica='1', save=False)
+    wa = calc_Weighted_average(path=path, replica=replica, save=False)
     prediction = wa[['MM_pos', 'WA_kon']].copy()
     prediction['model_kon'] = wa['MM_pos'].apply(lambda x: dCas9.calc_Boyle(False, False, True, parameters, x, model_id=model_id)[1])
     score = prediction.dropna().apply(lambda x: np.abs(x['WA_kon'] - x['model_kon']) / x['WA_kon'], axis=1).mean()
