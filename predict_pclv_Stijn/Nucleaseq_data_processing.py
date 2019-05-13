@@ -85,7 +85,7 @@ def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to
     
     return xdata_clv, ydata, yerr
     
-def prepare_multiprocessing_nucleaseq_log(filename, path):
+def prepare_multiprocessing_nucleaseq_log(filename, path, fit_to_wa=False):
     data = pd.read_csv(path + filename,
                        usecols=['Mutation Positions', 'Mutation ID',
                                 'cleavage_rate', 'cleavage_rate_5th_pctl', 'cleavage_rate_95th_pctl'],
@@ -103,4 +103,11 @@ def prepare_multiprocessing_nucleaseq_log(filename, path):
     xdata = grouped_data['Mutation Positions list'].tolist()
     ydata = grouped_data['cleavage_rate_log'].tolist()
     yerr = grouped_data['error_log'].tolist()
+    
+    if fit_to_wa:
+        for i in range(len(xdata)):
+            weightsclv, errorclv = weighting(yerr[i])
+            ydata[i] = [np.average(ydata[i],weights=weightsclv)]
+            yerr[i] = [errorclv]
+        
     return xdata, ydata, yerr
