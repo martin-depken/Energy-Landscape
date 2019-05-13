@@ -241,6 +241,23 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = rate_clv
 
     
+    elif model_id == 'general_energies_no_kPR_fixed_PAM':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+        if len(parameters)!=42:
+            print('Wrong number of parameters')
+            return
+        # General position dependency
+        epsilon[0] = 1.4
+        epsilon[1:] = parameters[:-2]
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+    
     elif model_id == 'general_energies_no_kPR':
         # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
         if len(parameters)!=43:
