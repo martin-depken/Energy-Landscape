@@ -87,7 +87,7 @@ def predict_clv(Boyle_param, clv_rate=1000.0, Plot=True):
         plt.xlim([ymin, ymax])
         plt.ylim([ymin, ymax])
         plt.figure()
-        ax = sns.heatmap(double_mat, cmap='coolwarm', vmax=data.WA.min(), vmin=data.WA.max())
+        ax = sns.heatmap(double_mat, cmap='coolwarm', vmax=data.WA.max(), vmin=data.WA.min())
         plt.xticks(fontsize=15)
         plt.yticks(fontsize=15)
         labels = ['', '2', '', '4', '', '6', '', '8', '', '10', '', '12', '', '14', '', '16', '', '18', '', '20']
