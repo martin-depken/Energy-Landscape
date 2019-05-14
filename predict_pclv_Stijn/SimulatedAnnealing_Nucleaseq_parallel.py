@@ -16,9 +16,10 @@ Main function
 '''
 def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_multi_processing_in_stead',
                    objective_function='chi_squared',
-                Tstart=0.1, delta=2.0, tol=1E-3, Tfinal=0.01,adjust_factor=1.1, cooling_rate=0.85, N_int=1000,
-                 AR_low=40, AR_high=60, use_multiprocessing=False, nprocs=4, use_relative_steps=True,
-                 chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0],
+                Tstart=0.1, delta=2.0, tol=1E-3, Tfinal=0.01, potential_threshold=np.inf, adjust_factor=1.1, cooling_rate_high=0.85, 
+                   cooling_rate_low=0.99, N_int=1000,
+                 Ttransition = np.inf, AR_low=40, AR_high=60, use_multiprocessing=False, nprocs=4, use_relative_steps=True,
+                 chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0], NMAC=False, reanneal=False, 
                    output_file_results = 'fit_results.txt',
                    output_file_monitor = 'monitor.txt',
                    output_file_init_monitor='init_monitor.txt'):
@@ -56,16 +57,21 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    delta=delta,
                    tol=tol,
                    Tfinal=Tfinal,
+                   potential_threshold=potential_threshold,
                    adjust_factor=adjust_factor,
-                   cooling_rate=cooling_rate,
+                   cooling_rate_high=cooling_rate_high,
+                   cooling_rate_low=cooling_rate_low,
                    N_int=N_int,
+                   Ttransition = Ttransition,
                    AR_low=AR_low,
                    AR_high=AR_high,
                    use_multiprocessing=use_multiprocessing,
                    nprocs=nprocs,
                    use_relative_steps=use_relative_steps,
                    objective_function=objective_function,
-                   chi_weights=chi_weights)
+                   chi_weights=chi_weights,
+                   NMAC=NMAC,
+                   reanneal=reanneal)
 
     # Adjust initial temperature
     InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
@@ -73,6 +79,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     sys.stdout.flush()
     # store initial Temperature
     SA.initial_temperature = SA.T
+    SA.lowestPotentialSoFar = np.inf
     
 
     # Open File for intermediate fit results:
@@ -80,6 +87,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     for k in range(len(X)):
         OutputFitResults.write('Parameter ' + str(k+1) + '\t')
     OutputFitResults.write('Potential' + '\t')
+    OutputFitResults.write('Temperature' + '\t')
     OutputFitResults.write('Equilibruim')
     OutputFitResults.write('\n')
 
@@ -248,8 +256,7 @@ class SimAnneal():
     (Exponentiates again before calulating potentials)
     '''
 
-    def __init__(self, model, Tstart, delta, tol, Tfinal,adjust_factor, cooling_rate, N_int,
-                 AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, chi_weights):
+    def __init__(self, model, Tstart, delta, tol, Tfinal, potential_threshold, adjust_factor, cooling_rate_high, cooling_rate_low, N_int, Ttransition, AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, chi_weights, NMAC, reanneal):
         mp.freeze_support
         self.model = model
         self.T = Tstart
@@ -257,17 +264,27 @@ class SimAnneal():
         self.Tolerance = tol
         self.initial_temperature = Tstart
         self.final_temperature = Tfinal
+        self.potential_threshold = potential_threshold
         self.alpha = adjust_factor  # Factor to adjust stepsize and/or initial temperature
         self.accept = 0
         self.StopCondition = False
         self.EQ = False
         self.upperbnd = AR_high
         self.lwrbnd = AR_low
-        self.cooling_rate = cooling_rate
+        self.cooling_rate_high = cooling_rate_high
+        self.cooling_rate_low = cooling_rate_low
         self.interval = N_int
+        self.Ttransition = Ttransition
         self.potential = np.inf
         self.average_energy = np.inf
         self.chi_weights = chi_weights
+        self.lowestPotentialSoFar = np.inf
+        self.Tbest = Tstart
+        self.SSbest = delta
+        self.Treset = Tstart
+        self.NMAC = NMAC
+        self.reanneal = reanneal
+        self.nCycles = 0
 
         self.MP = use_multiprocessing
         # start the processes (worker function will be continuously running):
@@ -364,6 +381,14 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     Vnew = V(SA, xdata, ydata, yerr, Xtrial)
     Vold = SA.potential
     
+    if Vnew<SA.lowestPotentialSoFar:
+            SA.lowestPotentialSoFar = Vnew
+            SA.Tbest = SA.T
+            SA.SSbest = SA.step_size
+            
+    if SA.NMAC:
+        T = (1 + (Vnew - SA.lowestPotentialSoFar)/Vnew)*T #non-monotonic adaptive cooling temperature
+    
     if (np.random.uniform() < np.exp(-(Vnew - Vold) / T)):
         X = Xtrial
         SA.accept += 1
@@ -403,13 +428,19 @@ def Temperature_Cycle(SA, Eavg):
     # So wait until temperature is low enough before considering the tolerance
     # For now: T < 1% T0
     temperature_low_enough = SA.T < (0.01 * SA.initial_temperature)
+    
+    potential_low_enough = SA.potential < SA.potential_threshold
+    
+    if SA.reanneal:
+        if (tolerance_low_enough and not potential_low_enough):
+            reanneal(SA)
 
     # check stop condition
-    SA.StopCondition = (tolerance_low_enough and temperature_low_enough) or reached_final_temperature
+    SA.StopCondition = (tolerance_low_enough and temperature_low_enough and potential_low_enough) or reached_final_temperature
 
     # done with equillibrium <--> reset
     SA.EQ = False
-
+    print SA.T
     # Monitor (I assumed you come to this point at least once, otherwise there is not much to monitor anyways):
     SA.Monitor['reached final temperature'] = reached_final_temperature
     SA.Monitor['tolerance low enough']  = tolerance_low_enough
@@ -421,9 +452,17 @@ def Temperature_Cycle(SA, Eavg):
 
 
 def update_temperature(SA):
-    SA.T *= SA.cooling_rate
+    if SA.T > SA.Ttransition:
+        SA.T *= SA.cooling_rate_high
+    else:
+        SA.T *= SA.cooling_rate_low
     return
 
+def reanneal(SA):
+    SA.T = max(SA.Treset/2,SA.Tbest)
+    if SA.Tbest>SA.Treset:
+        SA.step_size = SA.SSbest #Stepsize can be reset to best value if temperature is reset to best value. Otherwise the stepsize will have to adjust itself, because the corresponding stepsize is not known.
+    SA.Treset = SA.T
 
 
 
@@ -553,6 +592,7 @@ def write_parameters(X, SA, output_file):
     for parameter in X:
         output_file.write(str(parameter) + '\t')
     output_file.write(str(SA.potential) + '\t')
+    output_file.write(str(SA.T) + '\t')
     output_file.write(str(SA.EQ) + '\t')
     output_file.write('\n')
     return

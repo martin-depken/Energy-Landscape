@@ -7,7 +7,6 @@ sys.path.append('../code_general/')
 from read_model_ID import unpack_parameters
 
 
-
 '''
 Main functions
 '''
@@ -155,7 +154,10 @@ def calc_clv_on(parameters, model_id, mismatch_positions, guide_length):
     except:
         print 'INVERTING MATRIX FAILED, USE SLOWER METHOD'
         sys.stdout.flush()
-        parameters_clv = parameters[1:42] + parameters[42:44]
+        if len(parameters)==44:
+            parameters_clv = parameters[1:42] + parameters[42:44]
+        if len(parameters)==43:
+            parameters_clv = parameters[0:40] + parameters[41:43]
         k_clv = calc_clv_rate(parameters_clv, model_id[0], mismatch_positions, guide_length)
     
     
@@ -170,16 +172,27 @@ Helper functions
 '''
 
 def get_master_equation_clv_on(parameters,mismatch_positions,model_id,guide_length):
-    if len(parameters)!=44:
+    
+    if len(parameters)==44:
+        parameters_clv = np.zeros(42)
+        parameters_on = np.zeros(43)
+        parameters_clv[0:40] = parameters[1:41]
+        parameters_clv[-2] = parameters[-2]
+        parameters_clv[-1] = parameters[-1]
+        parameters_on[0:43] = parameters[0:43]
+    
+    elif len(parameters)==43:
+        parameters_clv = np.zeros(42)
+        parameters_on = np.zeros(42)
+        parameters_clv[0:40] = parameters[0:40]
+        parameters_clv[-2] = parameters[-2]
+        parameters_clv[-1] = parameters[-1]
+        parameters_on[0:42] = parameters[0:42]
+    
+    else:
             print 'Wrong number of parameters'
             return
-    parameters_clv = np.zeros(42)
-    parameters_on = np.zeros(43)
-    parameters_clv[0:40] = parameters[1:41]
-    parameters_clv[-2] = parameters[-2]
-    parameters_clv[-1] = parameters[-1]
-    parameters_on[0:43] = parameters[0:43]
-    
+        
     model_id_clv = model_id[0]
     model_id_on = model_id[1]
     

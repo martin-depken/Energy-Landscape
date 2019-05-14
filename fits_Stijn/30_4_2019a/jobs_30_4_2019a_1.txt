@@ -1,0 +1,1 @@
+combined_data_DE.csv	Clv_Saturated_general_energies_v2	nvt	/home/svandersmagt/Energy_Landscape_dCas9/30_4_2019a/monitor_30_4_2019a_sim_1.txt	/home/svandersmagt/Energy_Landscape_dCas9/30_4_2019a/fit_30_4_2019a_sim_1.txt	/home/svandersmagt/Energy_Landscape_dCas9/30_4_2019a/init_monitor_30_4_2019a_sim_1.txt	1

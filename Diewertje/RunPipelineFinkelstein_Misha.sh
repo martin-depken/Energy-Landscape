@@ -8,5 +8,6 @@ OutputMonitor=${parameterArray[1]}
 OutputResults=${parameterArray[2]}
 OutputInitMonitor=${parameterArray[3]}
 UseHPC05=${parameterArray[4]}
+echo $ModelID
 python2  /home/mklein1/Diewertje/Pipeline_fit_Finkelstein.py $ModelID $OutputMonitor $OutputResults $OutputInitMonitor $UseHPC05
 

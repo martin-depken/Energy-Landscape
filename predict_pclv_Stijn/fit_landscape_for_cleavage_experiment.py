@@ -48,9 +48,9 @@ def main(argv):
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd = [10.0] + [10.0]*40 + [6.0] + [6.0] + [6.0]
-    lower_bnd = [-10.0] + [-10.0]*20 + [0.0]*20 + [-1.0] + [1.0] + [3.0]
-    initial_guess =  [0.0] + [0.0]*20 + [5.0]*20 + [3.0] + [3.0] + [4.5]
+    upper_bnd = [10.0]*40 + [6.0] + [3.0] + [6.0]
+    lower_bnd = [-10.0]*20 + [0.0]*20 + [-1.0] + [1.0] + [3.0]
+    initial_guess =  [0.0]*20 + [5.0]*20 + [1.0] + [2.0] + [4.5]
     
 
     ###########################
@@ -64,7 +64,7 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv)
+    xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,True)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata
@@ -109,14 +109,17 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=1000.,             # infered from run on my computer/other runs on cluster
+                                Tstart=100000.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=1.0,
                                 tol=1E-5,
                                 Tfinal=0.0,
+                                potential_threshold = 500.,
                                 adjust_factor=1.1,
-                                cooling_rate=0.99,
+                                cooling_rate_high=0.9,
+                                cooling_rate_low=0.99,
                                 N_int=1000,
+                                Ttransition=1000.,
                                 AR_low=40,
                                 AR_high=60,
                                 use_multiprocessing=True,
@@ -124,7 +127,9 @@ def main(argv):
                                 output_file_results = fit_result_file,
                                 output_file_monitor = monitor_file,
                                 output_file_init_monitor=init_monitor_file,
-                                chi_weights=chi_weights
+                                chi_weights=chi_weights,
+                                NMAC=False, #non-monotonic adaptive cooling
+                                reanneal=True #reheating when in local minimum, set to False to do no reheating
                                 )
 
     t2 = time()

@@ -36,8 +36,18 @@ def prepare_multiprocessing_nucleaseq(filename, path, fit_to_median=False):
 
     return xdata, ydata, yerr
 
+def weighting(yerr):
+    yerr_sqr = np.zeros(len(yerr))
+    for i in range(len(yerr)):
+        yerr_sqr[i] = yerr[i]**2
+    Z = np.sum(np.reciprocal(yerr_sqr))
+    weights = np.zeros(len(yerr))
+    for i in range(len(yerr)):
+        weights[i] = 1/yerr_sqr[i]/Z
+    error_of_wa = np.sqrt(1/Z)
+    return weights, error_of_wa
 
-def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to_median=False):
+def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to_wa=False):
     xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq_log(filename_clv,path_clv)
     xdata_on, ydata_on, yerr_on = processing.prepare_multiprocessing(rep_on,path_on,True,False,False,False,False)
     
@@ -57,23 +67,25 @@ def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to
                   or (len(xdata_clv[i])==2 and xdata_clv[i][0]==xdata_on[j][1] and xdata_clv[i][1]==xdata_on[j][0])):
                     ydata.append([ydata_clv[i],ydata_on[j][1]])
                     yerr.append([yerr_clv[i],yerr_on[j][1]]) 
-    if fit_to_median:
+    if fit_to_wa:
         for i in range(len(xdata_clv)):
-            ydata[i][0] = [np.average(ydata[i][0],weights=np.reciprocal(yerr[i][0]))]
+            weightsclv, errorclv = weighting(yerr[i][0])
+            ydata[i][0] = [np.average(ydata[i][0],weights=weightsclv)]
             if len(ydata[i][1])==0:
                 ydata[i][1] = []
             else:
-                ydata[i][1] = [np.average(ydata[i][1],weights=np.reciprocal(yerr[i][1]))]
+                weightson, erroron = weighting(yerr[i][1])
+                ydata[i][1] = [np.average(ydata[i][1],weights=weightson)]
             
-            yerr[i][0] = [np.sqrt(len(yerr[i][0])/(np.sum(np.reciprocal(yerr[i][0])))**2)]
+            yerr[i][0] = [errorclv]
             if len(ydata[i][1])==0:
                 yerr[i][1] = []
             else:
-                yerr[i][1] = [np.sqrt(len(yerr[i][1])/(np.sum(np.reciprocal(yerr[i][1])))**2)]
+                yerr[i][1] = [erroron]
     
     return xdata_clv, ydata, yerr
     
-def prepare_multiprocessing_nucleaseq_log(filename, path):
+def prepare_multiprocessing_nucleaseq_log(filename, path, fit_to_wa=False):
     data = pd.read_csv(path + filename,
                        usecols=['Mutation Positions', 'Mutation ID',
                                 'cleavage_rate', 'cleavage_rate_5th_pctl', 'cleavage_rate_95th_pctl'],
@@ -91,4 +103,11 @@ def prepare_multiprocessing_nucleaseq_log(filename, path):
     xdata = grouped_data['Mutation Positions list'].tolist()
     ydata = grouped_data['cleavage_rate_log'].tolist()
     yerr = grouped_data['error_log'].tolist()
+    
+    if fit_to_wa:
+        for i in range(len(xdata)):
+            weightsclv, errorclv = weighting(yerr[i])
+            ydata[i] = [np.average(ydata[i],weights=weightsclv)]
+            yerr[i] = [errorclv]
+        
     return xdata, ydata, yerr

@@ -5,7 +5,10 @@ import multiprocessing as mp
 
 PATH_HPC05 = '/home/svandersmagt/Energy_Landscape_dCas9/'
 sys.path.append(PATH_HPC05)
+sys.path.append(PATH_HPC05 + 'predict_pclv_Stijn')
 sys.path.append('../../predict_pclv_Stijn')
+sys.path.append('../../code_general')
+import calculate_cleavage_rate as clv
 import preprocessing as processing
 import cleavage_rate as CRISPR
 import SimulatedAnnealing_Nucleaseq_seqdep as SA
@@ -48,15 +51,35 @@ def main(argv):
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd = [10.0]*20 + [10.0]*13 + [4.0] + [6.0]
-    lower_bnd = [-10.0]*20 + [0.0]*13 + [1.0] + [3.0]
-    initial_guess =  [0.0]*20 + [5.0]*13 + [2.5] + [4.5]
+    #indep
+    upper_bnd = [10.]*40 + [6.] +[6.]
+    lower_bnd = [-10.]*20 + [0.]*20 + [1.] + [3.]
+    initial_guess = [0.]*20 + [5.]*20 + [3.] + [4.5]
+    
+    #v3
+    #upper_bnd = [10.]*12 + [6.]*2
+    #lower_bnd = [0.]*12 + [1.] + [3.]
+    #initial_guess = [5.]*12 + [3.] + [4.5]
+    
+    #v2
+    #upper_bnd = [10.0]*20 + [10.0]*16 + [4.0] + [6.0]
+    #lower_bnd = [-10.0]*20 + [0.0]*16 + [1.0] + [3.0]
+    #initial_guess =  [0.0]*20 + [5.0]*16 + [2.5] + [4.5]
+    #initial_guess[20+1] = 1.5
+    #initial_guess[20+4] = 1.5
+    #initial_guess[20+11] = 1.5
+    #initial_guess[20+14] = 1.5
+    #upper_bnd[20+1] = 3.
+    #upper_bnd[20+4] = 3.
+    #upper_bnd[20+11] = 3.
+    #upper_bnd[20+14] = 3.
     
 
     ###########################
     # /* Objective function *\#
     ###########################
-    KineticModel = functools.partial(CRISPR.calc_chi_squared,
+    ##CHANGE THIS BACK
+    KineticModel = functools.partial(clv.calc_chi_squared, chi_weights=[np.nan],
                         guide_length=gRNA_length,
                         model_id=model_ID)
 
@@ -64,7 +87,7 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata1, ydata1, yerr1 = processing.prepare_multiprocessing_seq_dep(filename,path_to_dataClv)
+    xdata1, ydata1, yerr1 = processing.prepare_multiprocessing_seq_indep(filename,path_to_dataClv)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata
@@ -74,8 +97,9 @@ def main(argv):
     ydata = []
     yerr = []
     
+    ##CHANGE THIS BACK
     for i in range(len(xdata1)):
-        if len(xdata1[i][2])<2:
+        if len(xdata1[i])<2:
             xdata.append(xdata1[i])
             ydata.append(ydata1[i])
             yerr.append(yerr1[i])
@@ -99,14 +123,14 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=1000000000.,             # infered from run on my computer/other runs on cluster
+                                Tstart=1000.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=1.0,
                                 tol=1E-5,
-                                Tfinal=990000000.,
+                                Tfinal=0.,
                                 adjust_factor=1.1,
                                 cooling_rate=0.99,
-                                N_int=10,
+                                N_int=1000,
                                 AR_low=40,
                                 AR_high=60,
                                 use_multiprocessing=True,

@@ -1,5 +1,4 @@
 import numpy as np
-
 choose_model = ['general_energies_rates',
                 'general_energies',
                 'init_limit_general_energies',
@@ -12,7 +11,7 @@ choose_model = ['general_energies_rates',
 
 
 
-def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
+def unpack_parameters(parameters, model_id,guide_length=20):
     '''
     Use model ID to construct vector of epsilon values and forward rates.
 
@@ -25,9 +24,90 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
 
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
+
+
+    if model_id == 'fit_landscape_v1':
+        '''
+        in stead of fitting the epsilon_C, we fit the cummalative sum of them, that is the energies of the bound states 
+        '''
+        # General position dependency
+        energies_match = parameters[:21]
+        epsilonPAM = parameters[0]
+        epsilonC = -1*np.diff(energies_match)
+
+
+        epsilonI = parameters[21:-2]
+
+        epsilon = list([epsilonPAM]) + list(epsilonC) + list(epsilonI)
+        epsilon = np.array(epsilon)
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+
+
+
+    elif model_id == 'Sequence_dependent_clv_v2':
+        if len(parameters)!=10:
+            print('Wrong number of parameters')
+
+    elif model_id == 'Sequence_dependent_clv_v3':
+        if len(parameters)!=14:
+            print 'Wrong number of parameters'
+
+            return
+        
+        epsilonConfig = np.zeros(21)
+        epsilonConfig[0] = -100.0 #PAM
+        epsilonConfig[1:21] = [-8.51732646, -0.92309739,  4.31859981, -0.65323077,  0.56563897, -5.95998582,
+                                 -4.36131563,  2.83445163,  0.44828209,  9.52067702,  2.93084561, -6.94015605,
+                                  2.58949616, -6.66097551,  0.07608957,  6.30479899,  0.26091506, -0.91985863,
+                                 -4.12120118,  4.4768232] #Configuration Energies from cleavage fit 3_4 fit 1
+        
+        epsilonBind = np.zeros(16)
+        epsilonBind[0] = parameters[0]   #AA
+        epsilonBind[1] = 0.              #AT
+        epsilonBind[2] = parameters[1]   #AC
+        epsilonBind[3] = parameters[2]   #AG
+        epsilonBind[4] = 0.              #UA
+        epsilonBind[5] = parameters[3]   #UT
+        epsilonBind[6] = parameters[4]   #UC
+        epsilonBind[7] = parameters[5]   #UG
+        epsilonBind[8] = parameters[6]   #CA
+        epsilonBind[9] = parameters[7]   #CT
+        epsilonBind[10] = parameters[8]  #CC
+        epsilonBind[11] = 0.             #CG
+        epsilonBind[12] = parameters[9]  #GA
+        epsilonBind[13] = parameters[10] #GT
+        epsilonBind[14] = 0.             #GC
+        epsilonBind[15] = parameters[11] #GG
+        
+        #  parameters:
+        #  0  1  2  3  4  5  6  7  8  9 10 11
+        #  A  A  A  U  U  U  C  C  C  G  G  G
+        #  A  C  G  T  C  G  A  T  C  A  T  G
+        
+        #  epsilonBind:
+        #  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+        #  A  A  A  A  U  U  U  U  C  C  C  C  G  G  G  G
+        #  A  T  C  G  A  T  C  G  A  T  C  G  A  T  C  G
+        
+        rate_sol_to_PAM = 1000.0
+        rate_internal = 10**parameters[-2]
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = rate_clv
+        
+        return epsilonConfig, epsilonBind, forward_rates
     
-    if model_id == 'Sequence_dependent_clv_v1':
-        if len(parameters)!=35:
+    elif model_id == 'Sequence_dependent_clv_v2':
+        if len(parameters)!=38:
             print 'Wrong number of parameters'
             return
         
@@ -35,13 +115,80 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         epsilonConfig[0] = -100.0 #PAM
         epsilonConfig[1:21] = parameters[0:20] #Configuration Energies
         
-        epsilonBind = np.zeros(13)
-        epsilonBind[:] = parameters[20:33] #Binding Energies
+        epsilonBind = np.zeros(16) #Binding Energies
+        epsilonBind[0] = parameters[0+20]    #AA
+        epsilonBind[1] = parameters[1+20]    #AT
+        epsilonBind[2] = parameters[2+20]    #AC
+        epsilonBind[3] = parameters[3+20]    #AG
+        epsilonBind[4] = parameters[4+20]    #UA
+        epsilonBind[5] = parameters[5+20]    #UT
+        epsilonBind[6] = parameters[6+20]    #UC
+        epsilonBind[7] = parameters[7+20]    #UG
+        epsilonBind[8] = parameters[8+20]    #CA
+        epsilonBind[9] = parameters[9+20]    #CT
+        epsilonBind[10] = parameters[10+20]  #CC
+        epsilonBind[11] = parameters[11+20]  #CG
+        epsilonBind[12] = parameters[12+20]  #GA
+        epsilonBind[13] = parameters[13+20]  #GT
+        epsilonBind[14] = parameters[14+20]  #GC
+        epsilonBind[15] = parameters[15+20]  #GG
         
-        # For different combinations of bases:
+        #  parameters:
+        #  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+        #  A  A  A  A  U  U  U  U  C  C  C  C  G  G  G  G
+        #  A  T  C  G  A  T  C  G  A  T  C  G  A  T  C  G
+        
+        #  epsilonBind:
+        #  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+        #  A  A  A  A  U  U  U  U  C  C  C  C  G  G  G  G
+        #  A  T  C  G  A  T  C  G  A  T  C  G  A  T  C  G
+        
+        rate_sol_to_PAM = 1000.0
+        rate_internal = 10**parameters[-2]
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = rate_clv
+        
+        return epsilonConfig, epsilonBind, forward_rates
+    
+    elif model_id == 'Sequence_dependent_clv_v1':
+        if len(parameters)!=35:
+            print('Wrong number of parameters')
+            return
+        
+        epsilonConfig = np.zeros(21)
+        epsilonConfig[0] = -100.0 #PAM
+        epsilonConfig[1:21] = parameters[0:20] #Configuration Energies
+        
+        epsilonBind = np.zeros(16) #Binding Energies
+        epsilonBind[0] = parameters[0+20]   #AA
+        epsilonBind[1] = parameters[1+20]   #AT
+        epsilonBind[2] = parameters[3+20]   #AC
+        epsilonBind[3] = parameters[2+20]   #AG
+        epsilonBind[4] = parameters[4+20]   #UA
+        epsilonBind[5] = parameters[7+20]   #UT
+        epsilonBind[6] = parameters[12+20]  #UC
+        epsilonBind[7] = parameters[10+20]  #UG
+        epsilonBind[8] = parameters[3+20]   #CA
+        epsilonBind[9] = parameters[6+20]   #CT
+        epsilonBind[10] = parameters[11+20] #CC
+        epsilonBind[11] = parameters[9+20]  #CG
+        epsilonBind[12] = parameters[2+20]  #GA
+        epsilonBind[13] = parameters[5+20]  #GT
+        epsilonBind[14] = parameters[9+20]  #GC
+        epsilonBind[15] = parameters[8+20]  #GG
+        
+        #  parameters:
         #  0  1  2  3  4  5  6  7  8  9 10 11 12
         #  A  A  A  A  A  T  T  T  G  G  G  C  C
         #  A  T  G  C  U  G  C  U  G  C  U  C  U
+        
+        #  epsilonBind:
+        #  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+        #  A  A  A  A  U  U  U  U  C  C  C  C  G  G  G  G
+        #  A  T  C  G  A  T  C  G  A  T  C  G  A  T  C  G
         
         rate_sol_to_PAM = 1000.0
         rate_internal = 10**parameters[-2]
@@ -54,9 +201,9 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         return epsilonConfig, epsilonBind, forward_rates
         
         
-    if model_id == 'Clv_Saturated_fixed_kf_general_energies_v2':
+    elif model_id == 'Clv_Saturated_fixed_kf_general_energies_v2':
         if len(parameters)!=41:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters') 
             return
         
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
@@ -74,7 +221,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
     
     elif model_id == 'Clv_Saturated_general_energies_v2':
         if len(parameters)!=42:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters')
             return
         
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
@@ -92,7 +239,7 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
 
     elif model_id == 'Clv_init_limit_Saturated_general_energies_v2':
         if len(parameters)!=43:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters')
             return
         
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
@@ -124,10 +271,27 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[-1] = rate_clv
 
     
+    elif model_id == 'general_energies_no_kPR_fixed_PAM':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+        if len(parameters)!=42:
+            print('Wrong number of parameters')
+            return
+        # General position dependency
+        epsilon[0] = 1.4
+        epsilon[1:] = parameters[:-2]
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+    
     elif model_id == 'general_energies_no_kPR':
         # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
         if len(parameters)!=43:
-            print 'Wrong number of parameters'
+            print('Wrong number of parameters')
             return
         # General position dependency
         epsilon = parameters[:-2]
@@ -405,8 +569,25 @@ def unpack_parameters(parameters, model_id='general_energies',guide_length=20):
         forward_rates[0] = k_PAM
         forward_rates[1] = k_1
         forward_rates[-1] = 0.0
+        
+    elif model_id == 'fixed_rates':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+        if len(parameters)!=41:
+            print('Wrong number of parameters')
+            return
+        # General position dependency
+        epsilon = parameters
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 0.00038941973449552436
+        rate_internal = 471.7450318294534
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+        
     else:
-        print 'Watch out! Non-existing model-ID..'
+        print('Watch out! Non-existing model-ID..')
         return
 
 
