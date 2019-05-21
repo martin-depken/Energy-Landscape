@@ -7,6 +7,11 @@ reload(read_model_ID);
 
 
 
+
+
+
+
+
 def plot_free_energy_landscape(parameters,model_id,show_plot=True):
     '''
     Plot the approximate the free-energy landscape for the on-target
@@ -46,8 +51,6 @@ def plot_free_energy_landscape(parameters,model_id,show_plot=True):
         sns.despine()
 
 
-
-
     free_energy =  -1*np.log( np.cumsum( np.exp(-landscape[1:])   )  )
 
     # plotting:
@@ -67,40 +70,81 @@ def plot_free_energy_landscape(parameters,model_id,show_plot=True):
 
 
 
-def plot_landscape(parameters, model_id, axis=None):
+def plot_landscape(parameters, model_id, mismatch_positions, show_plot=True, axis=None):
     '''
     Plot the (free-)energy landscape of the on-target
     :param parameters:
     :param model_id:
     :return:
     '''
+
+    # ---- retrieve model parameters from fit result -----
     epsilon, fwrd_rates = read_model_ID.unpack_parameters(parameters, model_id, guide_length=20)
-    epsilon_C = epsilon[:21]
-    epsilon_C[1:] *= -1
 
-    landscape = [0.0]
-    for eps in epsilon_C:
-        landscape.append(landscape[-1] + eps)
-
-    if axis is None:
-        plt.plot(range(-1,21),landscape, marker='s');
-        ax = plt.gca()
-    else:
-        ax = axis
-        ax.plot(range(-1,21),landscape, marker='s');
+    # ---- Get (possibly) mismatched energy landscape ----
+    energies = get_energies(epsilon, mismatch_positions, guide_length=20)
 
 
-    # window dressing:
-    ax.set_xlabel('targeting progression', fontsize=15)
-    ax.set_ylabel(r'free-energy ($k_BT$)',fontsize=15)
-    ax.set_xticks(range(-1,21))
-    ax.set_xticklabels( ['S', 'P',1,'', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20],
-                        rotation=0,
-                        fontsize=15);
-    ax.set_yticklabels(ax.get_yticks() ,fontsize=15)
-    ax.grid('on')
-    sns.despine(ax=ax)
+    # ---- Determine free-energy landscape ----
+    landscape = [0.0] + list(np.cumsum(energies))
+    landscape = np.array(landscape)
+
+
+    if show_plot:
+        if axis:
+            axis.plot(range(-1, 21), landscape, marker='s');
+            axis.set_xlabel('targeting progression', fontsize=15)
+            axis.set_ylabel(r'(approx.) free-energy ($k_BT$)', fontsize=15)
+            axis.set_xticks(range(-1, 21))
+            axis.set_xticklabels(['S', 'P', 1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20],
+                       rotation=0
+                       , fontsize=10);
+            axis.set_yticklabels(axis.get_yticks(),fontsize=10)
+            plt.grid('on')
+            sns.despine(ax=axis)
+        else:
+            plt.figure()
+            axis = plt.plot(range(-1,21),landscape, marker='s');
+            plt.xlabel('targeting progression', fontsize=15)
+            plt.ylabel(r'(approx.) free-energy ($k_BT$)',fontsize=15)
+            plt.xticks(range(-1,21),
+                       [ 'S','P',1,'', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
+                       ,fontsize=10);
+            plt.yticks(fontsize=10)
+            plt.grid('on')
+            sns.despine()
     return landscape
+
+
+
+def get_energies(epsilon,mismatch_positions, guide_length=20):
+    '''
+    For general (position dependent) model make a list with the energies at every bound state
+    At positions with a mismatch incorporated: add mismatch penalty (epsI[mm_pos])
+
+    So this function returns the minima in the energy lanscape (the actual energy at every state)
+
+    :param epsilon: [epsPAM, epsC[state_1],....,epsC[state_N],epsI[state_1],...epsI[state_N] ]
+    provide as np.array()
+    :param mismatch_positions: each mismach position has a range [1,2, ... , 20]
+    :return: vector with the minima in the landscape
+    '''
+    if type(mismatch_positions)==type([]):
+        mismatch_positions = np.array(mismatch_positions)
+    new_epsilon = epsilon.copy()
+    epsI = new_epsilon[(guide_length+1):]
+    energies = -1*new_epsilon[0:(guide_length+1)] # convention: epsC>0 means downward slope
+    energies[0] = new_epsilon[0]                 # convention: epsPAM>0 means upward slope
+    if len(mismatch_positions)>0:
+        energies[mismatch_positions.astype(int)] += epsI[(mismatch_positions.astype(int)-1)]
+    return energies
+
+
+
+
+
+
+
 
 
 def plot_mismatch_penalties(parameters, model_id,axis=None):
