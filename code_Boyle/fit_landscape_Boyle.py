@@ -97,7 +97,7 @@ def main(argv):
                                 on_target_function=OnTarget,
                                 Tstart=100.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
-                                delta=1.0,
+                                delta=.5,
                                 tol=1E-5,
                                 Tfinal=0.0,
                                 adjust_factor=1.1,
