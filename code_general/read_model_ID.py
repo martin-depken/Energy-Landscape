@@ -287,8 +287,8 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         
         landscape = np.zeros(21)
         landscape[0] = 1.389248-1.389248 #PAM Boyle, minus PAM Boyle :)
-        landscape[1:9] = np.ones(8)*parameters[0] #first bump of constant height
-        landscape[9:13] = [5.412620-1.389248, 1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
+        landscape[1:10] = np.ones(9)*parameters[0] #first bump of constant height
+        landscape[10:13] = [1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
         landscape[13:18] = np.ones(5)*parameters[1] #second bump of constant height
         landscape[18:21] = [-0.361180-1.389248,-4.009278-1.389248,-8.223548-1.389248] #well defined second dip, from Boyle
         
@@ -340,8 +340,8 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         
         landscape = np.zeros(21)
         landscape[0] = 1.389248-1.389248 #PAM Boyle, minus PAM Boyle :)
-        landscape[1:9] = np.ones(8)*parameters[0] #first bump of constant height
-        landscape[9:13] = [5.412620-1.389248, 1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
+        landscape[1:10] = np.ones(9)*parameters[0] #first bump of constant height
+        landscape[10:13] = [1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
         landscape[13:18] = np.ones(5)*parameters[1] #second bump of constant height
         landscape[18:21] = [-0.361180-1.389248,-4.009278-1.389248,-8.223548-1.389248] #well defined second dip, from Boyle
         
