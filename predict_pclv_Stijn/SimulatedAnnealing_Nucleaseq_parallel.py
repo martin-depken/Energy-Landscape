@@ -22,7 +22,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                  chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0], NMAC=False, reanneal=False, 
                    output_file_results = 'fit_results.txt',
                    output_file_monitor = 'monitor.txt',
-                   output_file_init_monitor='init_monitor.txt'):
+                   output_file_init_monitor='init_monitor.txt',combined_fit=False):
     '''
     Use Simmulated Annealing to perform Least-Square Fitting
 
@@ -71,7 +71,8 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    objective_function=objective_function,
                    chi_weights=chi_weights,
                    NMAC=NMAC,
-                   reanneal=reanneal)
+                   reanneal=reanneal,
+                   combined_fit=combined_fit)
 
     # Adjust initial temperature
     InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
@@ -205,7 +206,7 @@ def V(SA, xdata,ydata,yerr,params):
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
-            InputJob = [params, xdata[i],ydata[i],yerr[i],SA.chi_weights]
+            InputJob = [params, xdata[i],ydata[i],yerr[i],SA.chi_weights,SA.combined_fit]
             SA.inQ.put(InputJob)
         # Retreive the results from the results Que and add together to construct Chi-squared
         objective_sum = 0.0
@@ -256,7 +257,7 @@ class SimAnneal():
     (Exponentiates again before calulating potentials)
     '''
 
-    def __init__(self, model, Tstart, delta, tol, Tfinal, potential_threshold, adjust_factor, cooling_rate_high, cooling_rate_low, N_int, Ttransition, AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, chi_weights, NMAC, reanneal):
+    def __init__(self, model, Tstart, delta, tol, Tfinal, potential_threshold, adjust_factor, cooling_rate_high, cooling_rate_low, N_int, Ttransition, AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, chi_weights, NMAC, reanneal, combined_fit):
         mp.freeze_support
         self.model = model
         self.T = Tstart
@@ -285,6 +286,7 @@ class SimAnneal():
         self.NMAC = NMAC
         self.reanneal = reanneal
         self.nCycles = 0
+        self.combined_fit = combined_fit
 
         self.MP = use_multiprocessing
         # start the processes (worker function will be continuously running):
@@ -361,10 +363,8 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     :return: current solution (rejected Xtrial) or updated solution (accepted Xtrial)
     '''
     Xtrial = TakeStep(SA, X, lwrbnd, upbnd)
-
     # print Xtrial
     # print X
-
 # =============================================================================
 #     while (Xtrial < lwrbnd).any() or (Xtrial > upbnd).any():
 #         #print 'oops, solution not within bounds! Trying again...'
@@ -533,12 +533,13 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
         ydata = job[2]
         yerr  = job[3]
         chi_weights = job[4]
+        combined_fit = job[5]
 
-        if len(job)>5:
-            addidtional_argument = job[5]
-            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights,addidtional_argument)
+        if len(job)>6:
+            addidtional_argument = job[6]
+            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights,combined_fit,addidtional_argument)
         else:
-            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights)
+            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights,combined_fit)
         # Perform the job:
         OutQ.put(output)
 

@@ -39,18 +39,24 @@ def main(argv):
         nmbr_cores = 2
 
     # Simmulated Annealing
+    combined_fit = bool(int(argv[8]))
+    
     filename = argv[1]
-    model_ID =  [argv[2],argv[3]]
+    if combined_fit:
+        model_ID =  argv[2] + '+' + argv[3]
+    else:
+        model_ID = argv[2]
     monitor_file = argv[4]
     fit_result_file = argv[5]
     init_monitor_file = argv[6]
     
+    
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd = [10.0]*40 + [6.0] + [3.0] + [6.0]
-    lower_bnd = [-10.0]*20 + [0.0]*20 + [-1.0] + [1.0] + [3.0]
-    initial_guess =  [0.0]*20 + [5.0]*20 + [1.0] + [2.0] + [4.5]
+    upper_bnd = [10.] + [5.0] + [10.0]*20 + [6.]  + [3.0] + [4.0]
+    lower_bnd = [0.0] + [0.0] + [0.0]*20  + [-3.] + [1.0] + [-1.0]
+    initial_guess =  [7.5] + [2.5] + [5.0]*20 + [0.] + [2.0] + [1.0]
     
 
     ###########################
@@ -64,7 +70,11 @@ def main(argv):
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
-    xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,True)
+    if combined_fit:
+        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,True)
+    
+    if not combined_fit:
+        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,True)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata
@@ -75,23 +85,39 @@ def main(argv):
     #######################
     # Determining weights #
     #######################
-    perfectClv = np.float(len(ydata[0][0]))
-    perfectOn = np.float(len(ydata[0][1]))
-    singleClv = 0.0
-    singleOn = 0.0
-    doubleClv = 0.0
-    doubleOn = 0.0
-    for i in range(len(xdata)):
-        if len(xdata[i])==1:
-            singleClv += len(ydata[i][0])
-            singleOn += len(ydata[i][1])
-        if len(xdata[i])==2:
-            doubleClv += len(ydata[i][0])
-            doubleOn += len(ydata[i][1])
     
-    chi_weights = [1/perfectClv,1/singleClv,1/doubleClv,1/perfectOn,1/singleOn,1/doubleOn]
-    #chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0] 
-    #perfClv, sinClv, doubClv, perfOn, sinOn, doubOn 
+    if combined_fit:
+        perfectClv = np.float(len(ydata[0][0]))
+        perfectOn = np.float(len(ydata[0][1]))
+        singleClv = 0.0
+        singleOn = 0.0
+        doubleClv = 0.0
+        doubleOn = 0.0
+        for i in range(len(xdata)):
+            if len(xdata[i])==1:
+                if xdata[i][0]==1 or xdata[i][0]==3 or xdata[i][0]==4 or xdata[i][0]==6 or xdata[i][0]==7:
+                    ydata[i][1] = []
+                singleClv += len(ydata[i][0])
+                singleOn += len(ydata[i][1])
+            if len(xdata[i])==2:
+                doubleClv += len(ydata[i][0])
+                doubleOn += len(ydata[i][1])
+
+        chi_weights = [1/perfectClv,1/singleClv,1/doubleClv,1/perfectOn,1/singleOn,1/doubleOn]
+        #chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0] 
+        #perfClv, sinClv, doubClv, perfOn, sinOn, doubOn
+    
+    else:
+        perfectClv = np.float(len(ydata[0]))
+        singleClv = 0.0
+        doubleClv = 0.0
+        for i in range(len(xdata)):
+            if len(xdata[i])==1:
+                singleClv += len(ydata[i])
+            if len(xdata[i])==2:
+                doubleClv += len(ydata[i])
+
+        chi_weights = [1/perfectClv,1/singleClv,1/doubleClv]
     
     
     ##############################################
@@ -109,14 +135,14 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=100000.,             # infered from run on my computer/other runs on cluster
+                                Tstart=1000.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=1.0,
                                 tol=1E-5,
                                 Tfinal=0.0,
-                                potential_threshold = 500.,
+                                potential_threshold = 375.,
                                 adjust_factor=1.1,
-                                cooling_rate_high=0.9,
+                                cooling_rate_high=0.99,
                                 cooling_rate_low=0.99,
                                 N_int=1000,
                                 Ttransition=1000.,
@@ -129,7 +155,8 @@ def main(argv):
                                 output_file_init_monitor=init_monitor_file,
                                 chi_weights=chi_weights,
                                 NMAC=False, #non-monotonic adaptive cooling
-                                reanneal=True #reheating when in local minimum, set to False to do no reheating
+                                reanneal=True, #reheating when in local minimum, set to False to do no reheating
+                                combined_fit=combined_fit
                                 )
 
     t2 = time()
