@@ -446,6 +446,27 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
         forward_rates[0] = rate_sol_to_PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
+        
+    elif model_id == 'general_energies_no_kPR_landscape':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+        if len(parameters)!=43:
+            print('Wrong number of parameters')
+            return
+        landscape = np.array(parameters[0:21])
+        landscape[0] = 0.
+
+        epsilon[0] = parameters[0]
+        for i in range(1,21):
+            epsilon[i] = -(landscape[i] - landscape[i-1])
+        epsilon[21:41] = parameters[21:41]
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
 
 
     elif model_id == 'landscape_lowest_chi_squared_fit_rates':
@@ -763,6 +784,13 @@ def combined_model(parameters,model_ID):
         parameters_on = np.array(parameters[0:24])
         
     elif model_ID == 'Clv_Saturated_general_energies_v2+general_energies_no_kPR':
+        if len(parameters)!=44:
+            print('Wrong number of parameters')
+            return
+        parameters_clv = np.append(parameters[1:41],parameters[42:44])
+        parameters_on = np.array(parameters[0:43])
+        
+    elif model_ID == 'Clv_Saturated_general_energies_landscape+general_energies_no_kPR_landscape':
         if len(parameters)!=44:
             print('Wrong number of parameters')
             return
