@@ -47,7 +47,7 @@ def weighting(yerr):
     error_of_wa = np.sqrt(1/Z)
     return weights, error_of_wa
 
-def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to_wa=False):
+def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to_wa=False,only_single=False):
     xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq_log(filename_clv,path_clv)
     xdata_on, ydata_on, yerr_on = processing.prepare_multiprocessing(rep_on,path_on,True,False,False,False,False)
     
@@ -82,6 +82,17 @@ def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to
                 yerr[i][1] = []
             else:
                 yerr[i][1] = [erroron]
+                
+    if only_single:
+        xdata_single = []
+        ydata_single = []
+        yerr_single = []
+        for i in range(len(xdata_clv)):
+            if len(xdata_clv[i])<2:
+                xdata_single.append(xdata_clv[i])
+                ydata_single.append(ydata[i])
+                yerr_single.append(yerr[i])
+        return xdata_single, ydata_single, yerr_single
     
     return xdata_clv, ydata, yerr
     

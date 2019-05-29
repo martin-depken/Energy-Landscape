@@ -22,7 +22,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                  chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0], NMAC=False, reanneal=False, 
                    output_file_results = 'fit_results.txt',
                    output_file_monitor = 'monitor.txt',
-                   output_file_init_monitor='init_monitor.txt',combined_fit=False):
+                   output_file_init_monitor='init_monitor.txt',combined_fit=False,random_step=False):
     '''
     Use Simmulated Annealing to perform Least-Square Fitting
 
@@ -72,10 +72,13 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    chi_weights=chi_weights,
                    NMAC=NMAC,
                    reanneal=reanneal,
-                   combined_fit=combined_fit)
+                   combined_fit=combined_fit,
+                   random_step=random_step)
+    
+    bound_widths = np.subtract(np.array(upbnd),np.array(lwrbnd))
 
     # Adjust initial temperature
-    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
+    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths, output_file_init_monitor)
     print('Initial temp:  ', SA.T)
     sys.stdout.flush()
     # store initial Temperature
@@ -144,7 +147,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
 
         # Accept or reject trial configuration based on Metropolis Monte Carlo.
         # Input: parameters X, output: updates values of parameters X if accepted
-        X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
+        X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths)
 
 
     # Close worker processes
@@ -257,7 +260,7 @@ class SimAnneal():
     (Exponentiates again before calulating potentials)
     '''
 
-    def __init__(self, model, Tstart, delta, tol, Tfinal, potential_threshold, adjust_factor, cooling_rate_high, cooling_rate_low, N_int, Ttransition, AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, chi_weights, NMAC, reanneal, combined_fit):
+    def __init__(self, model, Tstart, delta, tol, Tfinal, potential_threshold, adjust_factor, cooling_rate_high, cooling_rate_low, N_int, Ttransition, AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, chi_weights, NMAC, reanneal, combined_fit, random_step):
         mp.freeze_support
         self.model = model
         self.T = Tstart
@@ -287,6 +290,7 @@ class SimAnneal():
         self.reanneal = reanneal
         self.nCycles = 0
         self.combined_fit = combined_fit
+        self.random_step = random_step
 
         self.MP = use_multiprocessing
         # start the processes (worker function will be continuously running):
@@ -322,31 +326,36 @@ class SimAnneal():
 
 
 
-def TakeStep(SA,X,lwrbnd,upbnd):
+def TakeStep(SA,X,lwrbnd,upbnd,bound_widths):
     '''
     This function produces a trial configuration for the continuous variables(slopes)
     :param SA:
     :param X: current solution
     :return: trial solution
     '''
-    delta = SA.step_size
+    delta = SA.step_size*bound_widths
     Xtrial = np.zeros(len(X))
+    if SA.random_step:
+        stepnumber = np.random.randint(1,20)
+        step = np.array([1]*stepnumber + [0]*(20-stepnumber))
+        step = np.random.shuffle(step)
+        delta = delta*step
     
     if SA.RelativeSteps:
         X = np.log(X)
         for i in range(len(X)):
-            Xtrial[i] = np.random.uniform(np.max([X[i]-delta,np.log(lwrbnd[i])]),
-                                          np.min([X[i]+delta,np.log(upbnd[i])]))
+            Xtrial[i] = np.random.uniform(np.max([X[i]-delta[i],np.log(lwrbnd[i])]),
+                                          np.min([X[i]+delta[i],np.log(upbnd[i])]))
     else:
         for i in range(len(X)):
-            Xtrial[i] =  np.random.uniform(np.max([X[i]-delta,lwrbnd[i]]),
-                                          np.min([X[i]+delta,upbnd[i]]))
+            Xtrial[i] =  np.random.uniform(np.max([X[i]-delta[i],lwrbnd[i]]),
+                                          np.min([X[i]+delta[i],upbnd[i]]))
    
     return Xtrial
 
 
 
-def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
+def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths):
     '''
     Metropolis Algorithm to decide if you accept the trial solution.
     Trial solution (Xtrial) is generated with function ('TakeStep()').
@@ -362,7 +371,7 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     :param upbnd: user defined upper bound for parameter values
     :return: current solution (rejected Xtrial) or updated solution (accepted Xtrial)
     '''
-    Xtrial = TakeStep(SA, X, lwrbnd, upbnd)
+    Xtrial = TakeStep(SA, X, lwrbnd, upbnd, bound_widths)
     # print Xtrial
     # print X
 # =============================================================================
@@ -440,7 +449,6 @@ def Temperature_Cycle(SA, Eavg):
 
     # done with equillibrium <--> reset
     SA.EQ = False
-    print SA.T
     # Monitor (I assumed you come to this point at least once, otherwise there is not much to monitor anyways):
     SA.Monitor['reached final temperature'] = reached_final_temperature
     SA.Monitor['tolerance low enough']  = tolerance_low_enough
@@ -469,7 +477,7 @@ def reanneal(SA):
 '''
 Initial Temperature 
 '''
-def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
+def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths, initial_monitor_file):
     '''
     Finds starting temperature for SA optimisation by performing some initial iterations until acceptance ratio
     is within acceptable bounds.
@@ -497,7 +505,7 @@ def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
                 SA.accept = 0
                 break
             write_initial_monitor(AR,SA,initial_monitor_file,steps)
-        X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
+        X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths)
     return
 
 

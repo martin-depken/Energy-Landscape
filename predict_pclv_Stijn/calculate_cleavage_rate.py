@@ -15,7 +15,6 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combin
                     guide_length, model_id):
     
     if not combined_fit:
-        
         k_model = calc_clv_rate_fast(parameters, model_id, mismatch_positions,
                                 guide_length)
             
@@ -217,7 +216,7 @@ def get_master_equation_clv_on(parameters,mismatch_positions,model_id,guide_leng
     matrix_clv[1][2] = backward_rates_clv[2]
     matrix_clv[2][2] = -(backward_rates_clv[2]+forward_rates_clv[2])
     
-    return matrix_clv, matrix_on,
+    return matrix_clv, matrix_on
 
 def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     '''
