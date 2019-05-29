@@ -365,3 +365,45 @@ def predict_double_mm(parameters, model_id, T=60 * 10, guide_length=20, show_plo
         plt.xlabel('Mismatch 1', fontsize=15)
         plt.ylabel('Mismatch 2', fontsize=15)
     return delta_ABA_mat
+
+def predict_double_mm_delta(parameters, model_id, T=60 * 10, guide_length=20, show_plot=True, show_data=True,
+                      data_file='../Data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/cas9-target-e-replicate-1-delta-abas-processed.csv'):
+    concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) #2 ** np.array(range(0, 11)) * 0.5
+    reference_conc = 1 #10
+    ontarget_ABA = 42#CalcABA.calc_ABA(parameters, concentrations, reference_conc,
+                                   # mismatch_positions=[],
+                                   # model_id=model_id,
+                                   # guide_length=20,
+                                    #T=60 * 10)
+
+    delta_ABA_mat = np.zeros((guide_length, guide_length))
+    for first_mm in range(1, guide_length + 1):
+        for second_mm in range(1, guide_length + 1):
+            delta_ABA_mat[first_mm - 1, second_mm - 1] = CalcABA.calc_ABA(parameters, concentrations,
+                                                                                reference_conc,
+                                                                                mismatch_positions=[first_mm,
+                                                                                                    second_mm],
+                                                                                model_id=model_id,
+                                                                                guide_length=guide_length,
+                                                                                T=T)
+            # this should be calc_delta_ABA if we do not work wit rawABA dataset
+            
+    if show_plot:
+        axHeatmap = sns.heatmap(delta_ABA_mat, cmap='coolwarm', mask=np.tril(delta_ABA_mat),vmin=2, vmax=5)
+        plt.grid()
+        ax = plt.gca()
+        ax.set_xticklabels(list(map(lambda x: str(int(x)), ax.get_xticks() + 0.5)), fontsize=15);
+        ax.set_yticklabels(list(map(lambda x: str(int(x)), 20 - ax.get_yticks() + 0.5)), fontsize=15, rotation=0);
+        str_title = 'Prediction (top)'
+
+        if show_data:
+            IlyaData = data_file #pd.read_csv(data_file)
+            _, double_mut_map = pltF.plot_double_mut_data(IlyaData, data_colname='Delta ABA (kBT)', Mut_type='r', Canonical=True, Ng=20, data_name='Data', Plot=False,logplot=False, SaveFigures=False, figure_name='./Figure.pdf')
+            # data_colname = [delta ABA (kBT)]  if we use not rawABA dataset!
+            #plot_double_mut_ABA(data=IlyaData, Mut_type='r', Plot=False)
+            sns.heatmap(double_mut_map, cmap='coolwarm', ax=axHeatmap, vmin=2, vmax=5)
+            str_title += ' / Data (bottom)'
+        plt.title(str_title, fontsize=15)
+        plt.xlabel('Mismatch 1', fontsize=15)
+        plt.ylabel('Mismatch 2', fontsize=15)
+    return delta_ABA_mat

@@ -17,7 +17,7 @@ def calc_Chi_square(parameters,xdata,ydata,yerr,concentrations,reference,ontarge
                     guide_length=20,model_id='general_energies'):
     # concentrations in nMolair
     # reference = 1 nMolair
-    epsilon = parameters[:-3]
+    epsilon = parameters[:-2]
     energies=ABA.get_energies(epsilon,xdata, guide_length)
     mABA=-np.log(np.sum(np.exp(-np.cumsum(energies))))
     Chi_square=sum((((mABA*np.ones(len(ydata)))-np.array(ydata))/np.array(yerr))**2)
