@@ -16,12 +16,13 @@ Main function
 '''
 def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_multi_processing_in_stead',
                    objective_function='chi_squared',
-                Tstart=0.1, delta=2.0, tol=1E-3, Tfinal=0.01,adjust_factor=1.1, cooling_rate=0.85, N_int=1000,
-                 AR_low=40, AR_high=60, use_multiprocessing=False, nprocs=4, use_relative_steps=True,
-                 chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0],
+                Tstart=0.1, delta=2.0, tol=1E-3, Tfinal=0.01, potential_threshold=np.inf, adjust_factor=1.1, cooling_rate_high=0.85, 
+                   cooling_rate_low=0.99, N_int=1000,
+                 Ttransition = np.inf, AR_low=40, AR_high=60, use_multiprocessing=False, nprocs=4, use_relative_steps=True,
+                 chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0], NMAC=False, reanneal=False, 
                    output_file_results = 'fit_results.txt',
                    output_file_monitor = 'monitor.txt',
-                   output_file_init_monitor='init_monitor.txt'):
+                   output_file_init_monitor='init_monitor.txt',combined_fit=False,random_step=False):
     '''
     Use Simmulated Annealing to perform Least-Square Fitting
 
@@ -56,23 +57,33 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
                    delta=delta,
                    tol=tol,
                    Tfinal=Tfinal,
+                   potential_threshold=potential_threshold,
                    adjust_factor=adjust_factor,
-                   cooling_rate=cooling_rate,
+                   cooling_rate_high=cooling_rate_high,
+                   cooling_rate_low=cooling_rate_low,
                    N_int=N_int,
+                   Ttransition = Ttransition,
                    AR_low=AR_low,
                    AR_high=AR_high,
                    use_multiprocessing=use_multiprocessing,
                    nprocs=nprocs,
                    use_relative_steps=use_relative_steps,
                    objective_function=objective_function,
-                   chi_weights=chi_weights)
+                   chi_weights=chi_weights,
+                   NMAC=NMAC,
+                   reanneal=reanneal,
+                   combined_fit=combined_fit,
+                   random_step=random_step)
+    
+    bound_widths = np.subtract(np.array(upbnd),np.array(lwrbnd))
 
     # Adjust initial temperature
-    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, output_file_init_monitor)
+    InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths, output_file_init_monitor)
     print('Initial temp:  ', SA.T)
     sys.stdout.flush()
     # store initial Temperature
     SA.initial_temperature = SA.T
+    SA.lowestPotentialSoFar = np.inf
     
 
     # Open File for intermediate fit results:
@@ -80,6 +91,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
     for k in range(len(X)):
         OutputFitResults.write('Parameter ' + str(k+1) + '\t')
     OutputFitResults.write('Potential' + '\t')
+    OutputFitResults.write('Temperature' + '\t')
     OutputFitResults.write('Equilibruim')
     OutputFitResults.write('\n')
 
@@ -135,7 +147,7 @@ def sim_anneal_fit(xdata, ydata, yerr, Xstart, lwrbnd, upbnd, model='I_am_using_
 
         # Accept or reject trial configuration based on Metropolis Monte Carlo.
         # Input: parameters X, output: updates values of parameters X if accepted
-        X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
+        X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths)
 
 
     # Close worker processes
@@ -197,7 +209,7 @@ def V(SA, xdata,ydata,yerr,params):
         # split by xdata. Send each entry to an available core
         for i in range(len(xdata)):
             # Added the on_target_occupancy to the job entry. Only in the case of Boyle data is this needed
-            InputJob = [params, xdata[i],ydata[i],yerr[i],SA.chi_weights]
+            InputJob = [params, xdata[i],ydata[i],yerr[i],SA.chi_weights,SA.combined_fit]
             SA.inQ.put(InputJob)
         # Retreive the results from the results Que and add together to construct Chi-squared
         objective_sum = 0.0
@@ -248,8 +260,7 @@ class SimAnneal():
     (Exponentiates again before calulating potentials)
     '''
 
-    def __init__(self, model, Tstart, delta, tol, Tfinal,adjust_factor, cooling_rate, N_int,
-                 AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, chi_weights):
+    def __init__(self, model, Tstart, delta, tol, Tfinal, potential_threshold, adjust_factor, cooling_rate_high, cooling_rate_low, N_int, Ttransition, AR_low, AR_high, use_multiprocessing, nprocs, use_relative_steps, objective_function, chi_weights, NMAC, reanneal, combined_fit, random_step):
         mp.freeze_support
         self.model = model
         self.T = Tstart
@@ -257,17 +268,29 @@ class SimAnneal():
         self.Tolerance = tol
         self.initial_temperature = Tstart
         self.final_temperature = Tfinal
+        self.potential_threshold = potential_threshold
         self.alpha = adjust_factor  # Factor to adjust stepsize and/or initial temperature
         self.accept = 0
         self.StopCondition = False
         self.EQ = False
         self.upperbnd = AR_high
         self.lwrbnd = AR_low
-        self.cooling_rate = cooling_rate
+        self.cooling_rate_high = cooling_rate_high
+        self.cooling_rate_low = cooling_rate_low
         self.interval = N_int
+        self.Ttransition = Ttransition
         self.potential = np.inf
         self.average_energy = np.inf
         self.chi_weights = chi_weights
+        self.lowestPotentialSoFar = np.inf
+        self.Tbest = Tstart
+        self.SSbest = delta
+        self.Treset = Tstart
+        self.NMAC = NMAC
+        self.reanneal = reanneal
+        self.nCycles = 0
+        self.combined_fit = combined_fit
+        self.random_step = random_step
 
         self.MP = use_multiprocessing
         # start the processes (worker function will be continuously running):
@@ -303,31 +326,36 @@ class SimAnneal():
 
 
 
-def TakeStep(SA,X,lwrbnd,upbnd):
+def TakeStep(SA,X,lwrbnd,upbnd,bound_widths):
     '''
     This function produces a trial configuration for the continuous variables(slopes)
     :param SA:
     :param X: current solution
     :return: trial solution
     '''
-    delta = SA.step_size
+    delta = SA.step_size*bound_widths
     Xtrial = np.zeros(len(X))
+    if SA.random_step:
+        stepnumber = np.random.randint(1,20)
+        step = np.array([1]*stepnumber + [0]*(20-stepnumber))
+        step = np.random.shuffle(step)
+        delta = delta*step
     
     if SA.RelativeSteps:
         X = np.log(X)
         for i in range(len(X)):
-            Xtrial[i] = np.random.uniform(np.max([X[i]-delta,np.log(lwrbnd[i])]),
-                                          np.min([X[i]+delta,np.log(upbnd[i])]))
+            Xtrial[i] = np.random.uniform(np.max([X[i]-delta[i],np.log(lwrbnd[i])]),
+                                          np.min([X[i]+delta[i],np.log(upbnd[i])]))
     else:
         for i in range(len(X)):
-            Xtrial[i] =  np.random.uniform(np.max([X[i]-delta,lwrbnd[i]]),
-                                          np.min([X[i]+delta,upbnd[i]]))
+            Xtrial[i] =  np.random.uniform(np.max([X[i]-delta[i],lwrbnd[i]]),
+                                          np.min([X[i]+delta[i],upbnd[i]]))
    
     return Xtrial
 
 
 
-def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
+def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths):
     '''
     Metropolis Algorithm to decide if you accept the trial solution.
     Trial solution (Xtrial) is generated with function ('TakeStep()').
@@ -343,11 +371,9 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     :param upbnd: user defined upper bound for parameter values
     :return: current solution (rejected Xtrial) or updated solution (accepted Xtrial)
     '''
-    Xtrial = TakeStep(SA, X, lwrbnd, upbnd)
-
+    Xtrial = TakeStep(SA, X, lwrbnd, upbnd, bound_widths)
     # print Xtrial
     # print X
-
 # =============================================================================
 #     while (Xtrial < lwrbnd).any() or (Xtrial > upbnd).any():
 #         #print 'oops, solution not within bounds! Trying again...'
@@ -363,6 +389,14 @@ def Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd):
     T = SA.T
     Vnew = V(SA, xdata, ydata, yerr, Xtrial)
     Vold = SA.potential
+    
+    if Vnew<SA.lowestPotentialSoFar:
+            SA.lowestPotentialSoFar = Vnew
+            SA.Tbest = SA.T
+            SA.SSbest = SA.step_size
+            
+    if SA.NMAC:
+        T = (1 + (Vnew - SA.lowestPotentialSoFar)/Vnew)*T #non-monotonic adaptive cooling temperature
     
     if (np.random.uniform() < np.exp(-(Vnew - Vold) / T)):
         X = Xtrial
@@ -403,13 +437,18 @@ def Temperature_Cycle(SA, Eavg):
     # So wait until temperature is low enough before considering the tolerance
     # For now: T < 1% T0
     temperature_low_enough = SA.T < (0.01 * SA.initial_temperature)
+    
+    potential_low_enough = SA.potential < SA.potential_threshold
+    
+    if SA.reanneal:
+        if (tolerance_low_enough and not potential_low_enough):
+            reanneal(SA)
 
     # check stop condition
-    SA.StopCondition = (tolerance_low_enough and temperature_low_enough) or reached_final_temperature
+    SA.StopCondition = (tolerance_low_enough and temperature_low_enough and potential_low_enough) or reached_final_temperature
 
     # done with equillibrium <--> reset
     SA.EQ = False
-
     # Monitor (I assumed you come to this point at least once, otherwise there is not much to monitor anyways):
     SA.Monitor['reached final temperature'] = reached_final_temperature
     SA.Monitor['tolerance low enough']  = tolerance_low_enough
@@ -421,16 +460,24 @@ def Temperature_Cycle(SA, Eavg):
 
 
 def update_temperature(SA):
-    SA.T *= SA.cooling_rate
+    if SA.T > SA.Ttransition:
+        SA.T *= SA.cooling_rate_high
+    else:
+        SA.T *= SA.cooling_rate_low
     return
 
+def reanneal(SA):
+    SA.T = max(SA.Treset/2,SA.Tbest)
+    if SA.Tbest>SA.Treset:
+        SA.step_size = SA.SSbest #Stepsize can be reset to best value if temperature is reset to best value. Otherwise the stepsize will have to adjust itself, because the corresponding stepsize is not known.
+    SA.Treset = SA.T
 
 
 
 '''
 Initial Temperature 
 '''
-def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
+def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths, initial_monitor_file):
     '''
     Finds starting temperature for SA optimisation by performing some initial iterations until acceptance ratio
     is within acceptable bounds.
@@ -458,7 +505,7 @@ def InitialLoop(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, initial_monitor_file):
                 SA.accept = 0
                 break
             write_initial_monitor(AR,SA,initial_monitor_file,steps)
-        X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd)
+        X = Metropolis(SA, X, xdata, ydata, yerr, lwrbnd, upbnd, bound_widths)
     return
 
 
@@ -494,12 +541,13 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
         ydata = job[2]
         yerr  = job[3]
         chi_weights = job[4]
+        combined_fit = job[5]
 
-        if len(job)>5:
-            addidtional_argument = job[5]
-            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights,addidtional_argument)
+        if len(job)>6:
+            addidtional_argument = job[6]
+            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights,combined_fit,addidtional_argument)
         else:
-            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights)
+            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights,combined_fit)
         # Perform the job:
         OutQ.put(output)
 
@@ -553,6 +601,7 @@ def write_parameters(X, SA, output_file):
     for parameter in X:
         output_file.write(str(parameter) + '\t')
     output_file.write(str(SA.potential) + '\t')
+    output_file.write(str(SA.T) + '\t')
     output_file.write(str(SA.EQ) + '\t')
     output_file.write('\n')
     return

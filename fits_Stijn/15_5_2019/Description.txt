@@ -1,0 +1,2 @@
+Fit only on cleavage, but with parts of the Boyle landscape.
+Turns out, it can perfectly fit cleavage, but at the cost of on-rate.

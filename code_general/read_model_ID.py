@@ -50,11 +50,6 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
 
-
-    elif model_id == 'Sequence_dependent_clv_v2':
-        if len(parameters)!=10:
-            print('Wrong number of parameters')
-
     elif model_id == 'Sequence_dependent_clv_v3':
         if len(parameters)!=14:
             print 'Wrong number of parameters'
@@ -236,7 +231,135 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         forward_rates[0] = rate_sol_to_PAM
         forward_rates[1] = rate_PAM_to_R1
         forward_rates[-1] = rate_clv
-
+        
+    elif model_id == 'Clv_Saturated_general_energies_landscape':
+        if len(parameters)!=42:
+            print('Wrong number of parameters')
+            return
+        
+        epsilon[0] = -100.0 #predefined epsilon PAM at saturation
+        epsilon[1] = -parameters[0]
+        for i in range(2,21):
+            epsilon[i] = -(parameters[i-1] - parameters[i-2])
+        epsilon[21:41] = parameters[20:40]
+        
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
+        rate_PAM_to_R1 = 10**parameters[-2]
+        rate_internal = 10**parameters[-2] #rate from PAM to R is equal to internal rate
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
+    elif model_id == 'Clv_Saturated_edit_boyle_landscape':
+        if len(parameters)!=35:
+            print('Wrong number of parameters')
+            return
+        
+        landscape = np.zeros(21)
+        landscape[0] = 1.389248-1.389248 #PAM Boyle, minus PAM Boyle :)
+        landscape[1:9] = parameters[0:8] #first bump
+        landscape[9:13] = [5.412620-1.389248, 1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
+        landscape[13:18] = parameters[8:13] #second bump
+        landscape[18:21] = [-0.361180-1.389248,-4.009278-1.389248,-8.223548-1.389248] #well defined second dip, from Boyle
+        
+        epsilon[0] = -100.0 #predefined epsilon PAM at saturation
+        for i in range(1,21):
+            epsilon[i] = -(landscape[i] - landscape[i-1])
+        epsilon[21:41] = parameters[13:33]
+        
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
+        rate_PAM_to_R1 = 10**parameters[-2]
+        rate_internal = 10**parameters[-2] #rate from PAM to R is equal to internal rate
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
+    elif model_id == 'Clv_Saturated_edit_boyle_landscape_flat':
+        if len(parameters)!=24:
+            print('Wrong number of parameters')
+            return
+        
+        landscape = np.zeros(21)
+        landscape[0] = 1.389248-1.389248 #PAM Boyle, minus PAM Boyle :)
+        landscape[1:10] = np.ones(9)*parameters[0] #first bump of constant height
+        landscape[10:13] = [1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
+        landscape[13:18] = np.ones(5)*parameters[1] #second bump of constant height
+        landscape[18:21] = [-0.361180-1.389248,-4.009278-1.389248,-8.223548-1.389248] #well defined second dip, from Boyle
+        
+        epsilon[0] = -100.0 #predefined epsilon PAM at saturation
+        for i in range(1,21):
+            epsilon[i] = -(landscape[i] - landscape[i-1])
+        epsilon[21:41] = parameters[2:22]
+        
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
+        rate_PAM_to_R1 = 10**parameters[-2]
+        rate_internal = 10**parameters[-2] #rate from PAM to R is equal to internal rate
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv        
+        
+    elif model_id == 'On_edit_boyle_landscape':
+        if len(parameters)!=35:
+            print('Wrong number of parameters')
+            return
+        landscape = np.zeros(21)
+        landscape[0] = 1.389248-1.389248 #PAM Boyle, minus PAM Boyle :)
+        landscape[1:9] = parameters[0:8] #first bump
+        landscape[9:13] = [5.412620-1.389248, 1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
+        landscape[13:18] = parameters[8:13] #second bump
+        landscape[18:21] = [-0.361180-1.389248,-4.009278-1.389248,-8.223548-1.389248] #well defined second dip, from Boyle
+        
+        epsilon[0] = 1.389248 #Boyle PAM
+        for i in range(1,21):
+            epsilon[i] = -(landscape[i] - landscape[i-1])
+        epsilon[21:41] = parameters[13:33]
+        
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_PAM_to_R1 = 10**parameters[-1]
+        rate_internal = 10**parameters[-1] #rate from PAM to R is equal to internal rate
+        rate_clv = 0
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
+    elif model_id == 'On_edit_boyle_landscape_flat':
+        if len(parameters)!=24:
+            print('Wrong number of parameters')
+            return
+        
+        landscape = np.zeros(21)
+        landscape[0] = 1.389248-1.389248 #PAM Boyle, minus PAM Boyle :)
+        landscape[1:10] = np.ones(9)*parameters[0] #first bump of constant height
+        landscape[10:13] = [1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
+        landscape[13:18] = np.ones(5)*parameters[1] #second bump of constant height
+        landscape[18:21] = [-0.361180-1.389248,-4.009278-1.389248,-8.223548-1.389248] #well defined second dip, from Boyle
+        
+        epsilon[0] = 1.389248 #Boyle PAM
+        for i in range(1,21):
+            epsilon[i] = -(landscape[i] - landscape[i-1])
+        epsilon[21:41] = parameters[2:22]
+        
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_PAM_to_R1 = 10**parameters[-1]
+        rate_internal = 10**parameters[-1] #rate from PAM to R is equal to internal rate
+        rate_clv = 0
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
     elif model_id == 'Clv_init_limit_Saturated_general_energies_v2':
         if len(parameters)!=43:
             print('Wrong number of parameters')
@@ -271,6 +394,43 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         forward_rates[-1] = rate_clv
 
     
+    elif model_id == 'general_energies_no_kPR_fixed_PAM':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+        if len(parameters)!=42:
+            print('Wrong number of parameters')
+            return
+        # General position dependency
+        epsilon[0] = 1.4
+        epsilon[1:] = parameters[:-2]
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+        
+    elif model_id == 'general_energies_no_kPR_fixed_PAM_landscape':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+        if len(parameters)!=42:
+            print('Wrong number of parameters')
+            return
+        # General position dependency
+        epsilon[0] = 1.4
+        epsilon[1] = -parameters[0]
+        for i in range(2,21):
+            epsilon[i] = -(parameters[i-1] - parameters[i-2])
+        epsilon[21:41] = parameters[20:40]
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+    
     elif model_id == 'general_energies_no_kPR':
         # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
         if len(parameters)!=43:
@@ -278,6 +438,27 @@ def unpack_parameters(parameters, model_id,guide_length=20):
             return
         # General position dependency
         epsilon = parameters[:-2]
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_internal = 10**parameters[-1]
+
+        forward_rates = np.ones(guide_length + 2) * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[-1] = 0.0  # dCas9 does not cleave
+        
+    elif model_id == 'general_energies_no_kPR_landscape':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+        if len(parameters)!=43:
+            print('Wrong number of parameters')
+            return
+        landscape = np.array(parameters[0:21])
+        landscape[0] = 0.
+
+        epsilon[0] = parameters[0]
+        for i in range(1,21):
+            epsilon[i] = -(landscape[i] - landscape[i-1])
+        epsilon[21:41] = parameters[21:41]
 
         # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
         rate_sol_to_PAM = 10**parameters[-2]
@@ -576,3 +757,44 @@ def unpack_parameters(parameters, model_id,guide_length=20):
 
 
     return epsilon, forward_rates
+
+def combined_model(parameters,model_ID):
+    
+    model_ID_clv, model_ID_on = model_ID.split('+')
+    
+    if model_ID == 'Clv_Saturated_general_energies_landscape+general_energies_no_kPR_fixed_PAM_landscape':
+        if len(parameters)!=43:
+            print('Wrong number of parameters')
+            return
+        parameters_clv = np.append(parameters[0:40],parameters[41:43])
+        parameters_on = np.array(parameters[0:42])
+        
+    elif model_ID == 'Clv_Saturated_edit_boyle_landscape+On_edit_boyle_landscape':
+        if len(parameters)!=36:
+            print('Wrong number of parameters')
+            return
+        parameters_clv = np.append(parameters[0:33],parameters[34:36])
+        parameters_on = np.array(parameters[0:35])
+        
+    elif model_ID == 'Clv_Saturated_edit_boyle_landscape_flat+On_edit_boyle_landscape_flat':
+        if len(parameters)!=25:
+            print('Wrong number of parameters')
+            return
+        parameters_clv = np.append(parameters[0:22],parameters[23:25])
+        parameters_on = np.array(parameters[0:24])
+        
+    elif model_ID == 'Clv_Saturated_general_energies_v2+general_energies_no_kPR':
+        if len(parameters)!=44:
+            print('Wrong number of parameters')
+            return
+        parameters_clv = np.append(parameters[1:41],parameters[42:44])
+        parameters_on = np.array(parameters[0:43])
+        
+    elif model_ID == 'Clv_Saturated_general_energies_landscape+general_energies_no_kPR_landscape':
+        if len(parameters)!=44:
+            print('Wrong number of parameters')
+            return
+        parameters_clv = np.append(parameters[1:41],parameters[42:44])
+        parameters_on = np.array(parameters[0:43])
+    
+    return model_ID_clv, model_ID_on, parameters_clv, parameters_on

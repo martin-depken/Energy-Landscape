@@ -47,7 +47,7 @@ def weighting(yerr):
     error_of_wa = np.sqrt(1/Z)
     return weights, error_of_wa
 
-def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to_wa=False):
+def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to_wa=False,only_single=False):
     xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq_log(filename_clv,path_clv)
     xdata_on, ydata_on, yerr_on = processing.prepare_multiprocessing(rep_on,path_on,True,False,False,False,False)
     
@@ -82,10 +82,21 @@ def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to
                 yerr[i][1] = []
             else:
                 yerr[i][1] = [erroron]
+                
+    if only_single:
+        xdata_single = []
+        ydata_single = []
+        yerr_single = []
+        for i in range(len(xdata_clv)):
+            if len(xdata_clv[i])<2:
+                xdata_single.append(xdata_clv[i])
+                ydata_single.append(ydata[i])
+                yerr_single.append(yerr[i])
+        return xdata_single, ydata_single, yerr_single
     
     return xdata_clv, ydata, yerr
     
-def prepare_multiprocessing_nucleaseq_log(filename, path):
+def prepare_multiprocessing_nucleaseq_log(filename, path, fit_to_wa=False):
     data = pd.read_csv(path + filename,
                        usecols=['Mutation Positions', 'Mutation ID',
                                 'cleavage_rate', 'cleavage_rate_5th_pctl', 'cleavage_rate_95th_pctl'],
@@ -103,4 +114,11 @@ def prepare_multiprocessing_nucleaseq_log(filename, path):
     xdata = grouped_data['Mutation Positions list'].tolist()
     ydata = grouped_data['cleavage_rate_log'].tolist()
     yerr = grouped_data['error_log'].tolist()
+    
+    if fit_to_wa:
+        for i in range(len(xdata)):
+            weightsclv, errorclv = weighting(yerr[i])
+            ydata[i] = [np.average(ydata[i],weights=weightsclv)]
+            yerr[i] = [errorclv]
+        
     return xdata, ydata, yerr

@@ -4,27 +4,43 @@ from scipy.optimize import curve_fit
 import sys 
 sys.path.append('/home/svandersmagt/Energy_Landscape_dCas9/code_general/')
 sys.path.append('../code_general/')
-from read_model_ID import unpack_parameters
+import read_model_ID as model
 
 
 '''
 Main functions
 '''
 
-def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,
+def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combined_fit,
                     guide_length, model_id):
     
-    if len(ydata)!=2:
-        
+    if not combined_fit:
         k_model = calc_clv_rate_fast(parameters, model_id, mismatch_positions,
                                 guide_length)
             
         ydata = np.array(ydata)
         yerr = np.array(yerr)
-        chi_sqrd = np.sum(((ydata-np.log10(k_model))/yerr)**2)
+        
+        chi_sqrd_clv_perfect = 0.0
+        chi_sqrd_clv_single = 0.0
+        chi_sqrd_clv_double = 0.0
+        
+        if len(mismatch_positions)==0:
+            chi_sqrd_clv_perfect = np.sum(((ydata-np.log10(k_model))/yerr)**2)
+        
+        elif len(mismatch_positions)==1:
+            chi_sqrd_clv_single = np.sum(((ydata-np.log10(k_model))/yerr)**2)
+        
+        elif len(mismatch_positions)==2:
+            chi_sqrd_clv_double = np.sum(((ydata-np.log10(k_model))/yerr)**2)
+            
+        chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] +
+                    chi_sqrd_clv_single*chi_weights[1] +
+                    chi_sqrd_clv_double*chi_weights[2])
+        
         return chi_sqrd
 
-    if len(ydata)==2:
+    if combined_fit:
         k_model_clv, k_model_on = calc_clv_on(parameters, model_id,
                                               mismatch_positions, guide_length)
         ydata_clv = np.array(ydata[0])
@@ -154,7 +170,10 @@ def calc_clv_on(parameters, model_id, mismatch_positions, guide_length):
     except:
         print 'INVERTING MATRIX FAILED, USE SLOWER METHOD'
         sys.stdout.flush()
-        parameters_clv = parameters[1:42] + parameters[42:44]
+        if len(parameters)==44:
+            parameters_clv = parameters[1:42] + parameters[42:44]
+        if len(parameters)==43:
+            parameters_clv = parameters[0:40] + parameters[41:43]
         k_clv = calc_clv_rate(parameters_clv, model_id[0], mismatch_positions, guide_length)
     
     
@@ -169,25 +188,15 @@ Helper functions
 '''
 
 def get_master_equation_clv_on(parameters,mismatch_positions,model_id,guide_length):
-    if len(parameters)!=44:
-            print 'Wrong number of parameters'
-            return
-    parameters_clv = np.zeros(42)
-    parameters_on = np.zeros(43)
-    parameters_clv[0:40] = parameters[1:41]
-    parameters_clv[-2] = parameters[-2]
-    parameters_clv[-1] = parameters[-1]
-    parameters_on[0:43] = parameters[0:43]
     
-    model_id_clv = model_id[0]
-    model_id_on = model_id[1]
+    model_id_clv,model_id_on,parameters_clv,parameters_on = model.combined_model(parameters,model_id)
     
-    epsilon_on, forward_rates_on = unpack_parameters(parameters_on, model_id_on, guide_length)
+    epsilon_on, forward_rates_on = model.unpack_parameters(parameters_on, model_id_on, guide_length)
     energies_on = get_energies(epsilon_on,mismatch_positions, guide_length)
     backward_rates_on = get_backward_rates(energies_on, forward_rates_on,guide_length )
     matrix_on = build_rate_matrix(forward_rates_on, backward_rates_on)
     
-    epsilon_clv, forward_rates_clv = unpack_parameters(parameters_clv, model_id_clv, guide_length)
+    epsilon_clv, forward_rates_clv = model.unpack_parameters(parameters_clv, model_id_clv, guide_length)
     energies_clv = get_energies(epsilon_clv,mismatch_positions, guide_length)
     backward_rates_clv = get_backward_rates(energies_clv,forward_rates_clv,guide_length)
     
@@ -207,7 +216,7 @@ def get_master_equation_clv_on(parameters,mismatch_positions,model_id,guide_leng
     matrix_clv[1][2] = backward_rates_clv[2]
     matrix_clv[2][2] = -(backward_rates_clv[2]+forward_rates_clv[2])
     
-    return matrix_clv, matrix_on,
+    return matrix_clv, matrix_on
 
 def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     '''
@@ -217,7 +226,7 @@ def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     :param guide_length:
     :return:
     '''
-    epsilon, forward_rates = unpack_parameters(parameters, model_id, guide_length)
+    epsilon, forward_rates = model.unpack_parameters(parameters, model_id, guide_length)
     energies = get_energies(epsilon,mismatch_positions, guide_length)
     backward_rates = get_backward_rates(energies, forward_rates,guide_length )
     rate_matrix = build_rate_matrix(forward_rates, backward_rates)
@@ -259,8 +268,9 @@ def get_backward_rates(energies, forward_rates,guide_length=20):
     backward_rates = np.zeros(guide_length+2)
 
     # 1) Apply detailed balance condition:
-    backward_rates[1:] = forward_rates[:-1] * np.exp(energies)
-
+    #backward_rates[1:] = forward_rates[:-1] * np.exp(energies), somehow this suddenly does not work anymore..
+    for i in range(1,len(backward_rates)):
+        backward_rates[i] = forward_rates[i-1]*np.exp(energies[i-1])
     # 2) No rate backward from solution state
     backward_rates[0] = 0.0
     return backward_rates
