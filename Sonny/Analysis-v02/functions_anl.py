@@ -17,6 +17,7 @@ import os
 import hpc05notification
 import pickle
 from kinetic_model import *
+from Bio.Seq import Seq
 
 def readout_genome(name,mainpath,begin,end):
 	"""
@@ -91,6 +92,11 @@ def single_target(target,guide,lut,Cas):
 	"""
 	Finds the energies and forward rates associated to a target sequence, guide sequence and lookup table.
 	"""
+	
+		
+	print(target,"t")
+	print(guide,"g")
+	
 	energy = np.zeros([Cas.guidelength])
 	rates = np.zeros([Cas.guidelength])
 	for index in range(Cas.guidelength):
@@ -98,7 +104,7 @@ def single_target(target,guide,lut,Cas):
 	return energy,rates	
 	
 def calculate_kclv(sequence,guide,lut_pam,lut_tar,Cas,reverse=False):
-	
+
 	guidelength = Cas.guidelength
 	pamlength   = Cas.pamlength
 	_5prsd = Cas._5primeseed_wrt_target
