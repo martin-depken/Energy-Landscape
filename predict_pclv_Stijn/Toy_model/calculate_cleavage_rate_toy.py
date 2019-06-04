@@ -81,7 +81,7 @@ def calc_cleavage_rate_fast(parameters,model_id,mismatch_positions):
         sys.stdout.flush()
         return calc_clv_rate_slow(parameters, model_id, mismatch_positions)
     vec = np.ones(len(Minv))
-    everything_unbound = np.array([1.0] + [0.0] * (3))
+    everything_unbound = np.array([1.0] + [0.0] * (len(rate_matrix[0])-1))
     MFPT = vec.dot(Minv.dot(everything_unbound))
     k = 1/MFPT
     
@@ -99,7 +99,7 @@ def calc_cleavage_rate_slow(parameters,model_id,mismatch_positions):
     mat = master_equation(parameters,model_id,mismatch_positions)
      
     #calculate probabilities in time
-    initial_prob = np.zeros(4)
+    initial_prob = np.zeros(len(mat[0]))
     initial_prob[0] = 1
      
     prob_uncleaved = np.zeros(len(times))
@@ -132,9 +132,10 @@ def master_equation(parameters,model_id,mismatch_positions):
     diagonal1 = -(forward_combined + backward_combined)
     diagonal2 = backward_combined[1:]
     diagonal3 = forward_combined[:-1]
-    # rate_matrix = np.zeros((len(forward_rates), len(forward_rates)))  # Build the matrix
+    #rate_matrix = np.zeros((len(forward_rates), len(forward_rates)))  # Build the matrix
 
     rate_matrix = np.diag(diagonal1, k=0) + np.diag(diagonal2, k=1) + np.diag(diagonal3, k=-1)
+    rate_matrix[-2][-2] -= forward_combined[-1]/100. # to add cleavage from the second to last state
     
     return rate_matrix
 
@@ -188,7 +189,8 @@ def combined_rates(parameters,model_id,mismatch_positions):
     backward_combined[2] = (backward_OT[3]*backward_OT[2])/(backward_OT[3] + rates_OT[2] + backward_OT[2])
     backward_combined[3] = (backward_OT[5]*backward_OT[4])/(backward_OT[5] + rates_OT[4] + backward_OT[4])
     
-    return forward_combined, backward_combined
+#    return forward_combined, backward_combined
+    return rates_OT, backward_OT
 
 def calc_clv_on(parameters, model_id, mismatch_positions):
     
@@ -198,7 +200,7 @@ def calc_clv_on(parameters, model_id, mismatch_positions):
     
     ## Calculating cleavage rate
     M_clv = -1 * matrix_clv
-    everything_unbound = np.array([1.0] + [0.0] * (3))
+    everything_unbound = np.array([1.0] + [0.0] * (len(matrix_clv[0])-1))
 #    try:
     Minv_clv = np.linalg.inv(M_clv)
     vec_clv = np.ones(len(Minv_clv))
@@ -235,7 +237,8 @@ def get_master_equation_clv_on(parameters,mismatch_positions,model_id):
     matrix_clv[1][0] = forward_rates_clv[0]
     
     #different cleavage rate
-    matrix_clv[-1][-1] = -(forward_rates_clv[-1]+backward_rates_clv[-1]) 
+    matrix_clv[-1][-1] = -(forward_rates_clv[-1]+backward_rates_clv[-1])
+    matrix_clv[-2][-2] -= forward_rates_clv[-1]/100. # to add cleavage from the second to last state
     
     #different ePAM
     matrix_clv[0][1] = backward_rates_clv[1]
@@ -255,7 +258,7 @@ def calc_association_rate(rate_matrix,timepoints=[500.,1000.,1500.],rel_concentr
 
     #1) Calculate bound fraction for specified time points:
     # Association experiment starts with all dCas9 being unbound:
-    everything_unbound = np.array([1.0] + [0.0] * (3))
+    everything_unbound = np.array([1.0] + [0.0] * (len(rate_matrix[0])-1))
 
     #3) Association rate is taken at 1nM the other data at 10nM --> adjust k_on appropriatly:
     new_rate_matrix = rate_matrix.copy()
