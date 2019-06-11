@@ -49,7 +49,7 @@ def main(argv):
     monitor_file = argv[4]
     fit_result_file = argv[5]
     init_monitor_file = argv[6]
-    only_single = True
+    only_single = False
     
     
     gRNA_length = 20
@@ -97,7 +97,7 @@ def main(argv):
             doubleOn = 0.0
             for i in range(len(xdata)):
                 if len(xdata[i])==1:
-                    if xdata[i][0]==1 or xdata[i][0]==3 or xdata[i][0]==4 or xdata[i][0]==6 or xdata[i][0]==7:
+                    if xdata[i][0]==6 or xdata[i][0]==7:
                         ydata[i][1] = []
                         yerr[i][1] = []
                     singleClv += len(ydata[i][0])
@@ -159,7 +159,7 @@ def main(argv):
                                 delta=0.1,
                                 tol=1E-5,
                                 Tfinal=0.0,
-                                potential_threshold = 375.,
+                                potential_threshold = 300.,
                                 adjust_factor=1.1,
                                 cooling_rate_high=0.95,
                                 cooling_rate_low=0.99,

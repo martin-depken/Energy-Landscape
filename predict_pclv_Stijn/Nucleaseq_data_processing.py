@@ -36,7 +36,7 @@ def prepare_multiprocessing_nucleaseq(filename, path, fit_to_median=False):
 
     return xdata, ydata, yerr
 
-def weighting(yerr):
+def weighting(yerr): #used for calculating weighted average
     yerr_sqr = np.zeros(len(yerr))
     for i in range(len(yerr)):
         yerr_sqr[i] = yerr[i]**2
