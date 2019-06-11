@@ -322,8 +322,8 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         epsilon[0] = -100.0 #predefined epsilon PAM at saturation
         for i in range(1,21):
             epsilon[i] = -(landscape[i] - landscape[i-1])
-        epsilon[21:38] = parameters[2]
-        epsilon[38:41] = parameters[3]
+        epsilon[21:37] = parameters[2]
+        epsilon[37:41] = parameters[3]
         
         rate_sol_to_PAM = 1000.0 #predefined at saturation
         rate_PAM_to_R1 = 10**parameters[-2]
@@ -403,8 +403,8 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         epsilon[0] = 1.389248 #Boyle PAM
         for i in range(1,21):
             epsilon[i] = -(landscape[i] - landscape[i-1])
-        epsilon[21:38] = parameters[2]
-        epsilon[38:41] = parameters[3]
+        epsilon[21:37] = parameters[2]
+        epsilon[37:41] = parameters[3]
         
         rate_sol_to_PAM = 10**parameters[-2]
         rate_PAM_to_R1 = 10**parameters[-1]
