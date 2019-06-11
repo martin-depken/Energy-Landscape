@@ -57,9 +57,9 @@ def main(argv):
     #gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [3.0] + [10.0]*24 + [3.0]  + [5.0]  + [4.0]
-    lower_bnd =      [0.0] + [0.0]*24  + [-3.0] + [-1.0] + [-1.0]
-    initial_guess =  [1.5] + [5.0]*24  + [0.0]  + [2.0]  + [1.0]
+    upper_bnd =      [3.0] + [10.0]*2 + [7.5]*20 + [3.0]  + [3.0]*2  + [4.0]
+    lower_bnd =      [0.0] + [0.0]*2  + [2.5]*20 + [-3.0] + [-3.0]*2 + [-1.0]
+    initial_guess =  [1.5] + [5.0]*2  + [5.0]*20 + [0.0]  + [0.0] *2 + [1.0]
     
 
     ###########################
@@ -154,12 +154,12 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=100000.,             # infered from run on my computer/other runs on cluster
+                                Tstart=20000.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=0.1,
                                 tol=1E-5,
                                 Tfinal=0.0,
-                                potential_threshold = 375.,
+                                potential_threshold = 1500.,
                                 adjust_factor=1.1,
                                 cooling_rate_high=0.95,
                                 cooling_rate_low=0.99,
@@ -174,7 +174,7 @@ def main(argv):
                                 output_file_init_monitor=init_monitor_file,
                                 chi_weights=chi_weights,
                                 NMAC=False, #non-monotonic adaptive cooling
-                                reanneal=True, #reheating when in local minimum, set to False to do no reheating
+                                reanneal=False, #reheating when in local minimum, set to False to do no reheating
                                 combined_fit=combined_fit,
                                 random_step=False
                                 )
