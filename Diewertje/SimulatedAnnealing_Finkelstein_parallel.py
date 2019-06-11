@@ -193,7 +193,7 @@ def V(SA, xdata,ydata,yerr,params):
     :return: Chi^2 value, LogLikeLihood value... the value of the objective function to be minimized
     '''
     # calculate on_target here, since then you do not have to calculate it for all the data entries
-    ontarget_ABA=42 #SA.on_target_function(params)
+    ontarget_ABA= SA.on_target_function(params) #42 if you have ABA delta instead of delta ABA!!!!
 
     # Multiprocessing
     if SA.MP:

@@ -35,6 +35,11 @@ imp.reload(Pclv);
 
 import get_parameters_fit_Diewertje as gpf
 
+import Weighted_Average_Diewertje as WA
+
+import get_parameters_fit_Diewertje as getParm
+
+
 ########################
 
 def P(kon,koff,t):
@@ -479,55 +484,63 @@ def difference_model_predictions(model, reference):
     diff = sum_difference/total_nmbr_of_points
     return diff
 
-
+def select_on_prediction_WA(simset,
+                            percentage=0.1,
+                            Nparams=43,
+                            model_id='general_energies_no_kPR',
+                            path='../Data_Boyle/',
+                            replica='1'):
+    # in my case replica is filename!
+    scores = []
+    for sim in simset:
+        #print sim
+        parameters = getParm.load_simm_anneal(sim, Nparams)
+        score, _, _ = WA.predict_train(parameters, model_id=model_id, path=path, replica=replica, Plot=False)
+        scores.append(score)
+    scores = np.array(scores)
+    simset = np.array(simset)
+    selected_scores = scores[scores <= percentage]
+    selected_sims = simset[scores <= percentage]
+    return selected_sims, selected_scores, scores
 
 def select_on_prediction(simset, chi_squared, percentage,
-                         Nparams=44,
-                         model_id='init_limit_general_energies_v2',
-                         precalculated=False, score=None,
-                         save_scores=True, filename='select_with_predcitions.txt'
-                         ):
-    '''
-    Select those solutions that whose model prediction on the training data differs no more than x% from
-    the prediction belonging to the solution with the lowest chi-squared value in the set of simulations.
-    '''
-    if not precalculated:
-        # ----- Start selection: Retrieve the best fit first --------
-        chi_squared = np.array(chi_squared)
-        best_fit = simset[np.argmin(chi_squared)]
-        parameters = gpf.load_simm_anneal(best_fit, Nparams)
-        _, model_best, _ = plt_B.calc_predictions(parameters=parameters, model_id=model_id)
-        # model_best = replace_lower_triangle(model_best)
-
-        # ----- Compare difference in model prediction to this best fit ---
-        score = []
-        for sim in simset:
-            parameters = gpf.load_simm_anneal(sim, Nparams)
-            _, model, _ = plt_B.calc_predictions(parameters=parameters, model_id=model_id)
-            diff = difference_model_predictions(model, model_best)
-            score.append(  diff )
-        score = np.array(score)
-
-    # ----- select simulations whose difference in predicted values differs less then x% from the best fit ----
-    selected_scores = score[score <= percentage]
-
-    simset = np.array(simset)
-    selected_sims = simset[score <= percentage]
-
-    # ---- return selected_sims and selected_scores ------
-    if save_scores:
-        np.savetxt(filename, score)
-
-    return selected_sims, selected_scores, score
-
-
-
-
-
-
-
-
-
+                          Nparams=44,
+                          model_id='init_limit_general_energies_v2',
+                          precalculated=False, score=None,
+                          save_scores=True, filename='select_with_predcitions.txt'
+                          ):
+     '''
+     Select those solutions that whose model prediction on the training data differs no more than x% from
+     the prediction belonging to the solution with the lowest chi-squared value in the set of simulations.
+     '''
+     if not precalculated:
+         # ----- Start selection: Retrieve the best fit first --------
+         chi_squared = np.array(chi_squared)
+         best_fit = simset[np.argmin(chi_squared)]
+         parameters = gpf.load_simm_anneal(best_fit, Nparams)
+         _, model_best, _ = plt_B.calc_predictions(parameters=parameters, model_id=model_id)
+         # model_best = replace_lower_triangle(model_best)
+ 
+         # ----- Compare difference in model prediction to this best fit ---
+         score = []
+         for sim in simset:
+             parameters = gpf.load_simm_anneal(sim, Nparams)
+             _, model, _ = plt_B.calc_predictions(parameters=parameters, model_id=model_id)
+             diff = difference_model_predictions(model, model_best)
+             score.append(  diff )
+         score = np.array(score)
+ 
+     # ----- select simulations whose difference in predicted values differs less then x% from the best fit ----
+     selected_scores = score[score <= percentage]
+ 
+     simset = np.array(simset)
+     selected_sims = simset[score <= percentage]
+ 
+     # ---- return selected_sims and selected_scores ------
+     if save_scores:
+         np.savetxt(filename, score)
+ 
+     return selected_sims, selected_scores, score
 
 
 
