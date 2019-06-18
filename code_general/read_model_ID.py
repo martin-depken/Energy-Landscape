@@ -214,6 +214,52 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         forward_rates[1] = rate_PAM_to_R1
         forward_rates[-1] = rate_clv
     
+    elif model_id == 'First_bump_fixed_for_engineered_cas':
+        if len(parameters)!=25:
+            print('Wrong number of parameters')
+            return
+        
+        epsilon[0] = -100.0 #predefined epsilon PAM at saturation
+        epsilon[1:9] = [-2.81040538514, 0.128379438824, -1.3398902138600002, 2.7652185198900003,
+ -2.14593791558, -3.32591676706, 0.660542944429, 1.44885468799] #first bump from ../fits_Stijn/13_6_2019/fit_13_6_2019_sim_2.txt
+        epsilon[9:21] = parameters[0:12] #rest of landscape
+        epsilon[21:29] = [6.21210100464, 4.15685735918, 5.83016614093, 6.3469277879299995, 5.0974118607,
+ 6.11732311667, 6.71550763398, 5.800000188080001] #mismatches from ../fits_Stijn/13_6_2019/fit_13_6_2019_sim_2.txt
+        epsilon[29:41] = parameters[12:24] #rest of mismatches
+        
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
+        rate_PAM_to_R1 = 10**2.5336611063
+        rate_internal = 10**2.5336611063
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
+    elif model_id == 'First_bump_fixed_for_engineered_cas_on':
+        if len(parameters)!=24:
+            print('Wrong number of parameters')
+            return
+        
+        epsilon[0] = 1.4 
+        epsilon[1:9] = [-2.81040538514, 0.128379438824, -1.3398902138600002, 2.7652185198900003,
+ -2.14593791558, -3.32591676706, 0.660542944429, 1.44885468799] #first bump from ../fits_Stijn/13_6_2019/fit_13_6_2019_sim_2.txt
+        epsilon[9:21] = parameters[0:12] #rest of landscape
+        epsilon[21:29] = [6.21210100464, 4.15685735918, 5.83016614093, 6.3469277879299995, 5.0974118607,
+ 6.11732311667, 6.71550763398, 5.800000188080001] #mismatches from ../fits_Stijn/13_6_2019/fit_13_6_2019_sim_2.txt
+        epsilon[29:41] = parameters[12:24] #rest of mismatches
+        
+        rate_sol_to_PAM = 10**-2.4 #predefined at saturation
+        rate_PAM_to_R1 = 10**2.5336611063
+        rate_internal = 10**2.5336611063
+        rate_clv = 0
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+    
     elif model_id == 'Clv_Saturated_general_energies_v2':
         if len(parameters)!=42:
             print('Wrong number of parameters')
@@ -859,5 +905,12 @@ def combined_model(parameters,model_ID):
             return
         parameters_clv = np.append(parameters[0:4],parameters[5:7])
         parameters_on = np.array(parameters[0:6])
+        
+    elif model_ID == 'First_bump_fixed_for_engineered_cas+First_bump_fixed_for_engineered_cas_on':
+        if len(parameters)!=25:
+            print('Wrong number of parameters')
+            return
+        parameters_clv = parameters
+        parameters_on = parameters[:-1]
     
     return model_ID_clv, model_ID_on, parameters_clv, parameters_on
