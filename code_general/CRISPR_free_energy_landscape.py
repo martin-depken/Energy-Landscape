@@ -41,12 +41,12 @@ def plot_free_energy_landscape(parameters,model_id,show_plot=True):
     if show_plot:
         plt.figure()
         plt.plot(range(-1,21),landscape, marker='s');
-        plt.xlabel('targeting progression', fontsize=15)
-        plt.ylabel(r'(approx.) free-energy ($k_BT$)',fontsize=15)
+        plt.xlabel('targeting progression', fontsize=10)
+        plt.ylabel(r'(approx.) free-energy ($k_BT$)',fontsize=10)
         plt.xticks(range(-1,21),
                    [ 'S','P',1,'', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
-                   ,fontsize=15);
-        plt.yticks(fontsize=15)
+                   ,fontsize=10);
+        plt.yticks(fontsize=10)
         plt.grid('on')
         sns.despine()
 
@@ -57,12 +57,12 @@ def plot_free_energy_landscape(parameters,model_id,show_plot=True):
     if show_plot:
         plt.figure()
         plt.plot(range(0,21),free_energy, marker='s');
-        plt.xlabel('targeting progression', fontsize=15)
-        plt.ylabel(r'(approx.) free-energy ($k_BT$)',fontsize=15)
+        plt.xlabel('targeting progression', fontsize=10)
+        plt.ylabel(r' free-energy bound molecule ($k_BT$)',fontsize=10)
         plt.xticks(range(0,21),
                    [ 'P',1,'', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
-                   ,fontsize=15);
-        plt.yticks(fontsize=15)
+                   ,fontsize=10);
+        plt.yticks(fontsize=10)
         plt.grid('on')
         sns.despine()
 
@@ -92,9 +92,13 @@ def plot_landscape(parameters, model_id, mismatch_positions, show_plot=True, axi
 
     if show_plot:
         if axis:
-            axis.plot(range(-1, 21), landscape, marker='s');
-            axis.set_xlabel('targeting progression', fontsize=15)
-            axis.set_ylabel(r'(approx.) free-energy ($k_BT$)', fontsize=15)
+            axis.plot(range(-1, 21), landscape,
+                 marker="o",
+                 markersize=8,
+                 markeredgewidth=2,
+                 markerfacecolor="white");
+            axis.set_xlabel('targeting progression', fontsize=10)
+            axis.set_ylabel(r'free-energy ($k_BT$)', fontsize=10)
             axis.set_xticks(range(-1, 21))
             axis.set_xticklabels(['S', 'P', 1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20],
                        rotation=0
@@ -104,9 +108,13 @@ def plot_landscape(parameters, model_id, mismatch_positions, show_plot=True, axi
             sns.despine(ax=axis)
         else:
             plt.figure()
-            axis = plt.plot(range(-1,21),landscape, marker='s');
-            plt.xlabel('targeting progression', fontsize=15)
-            plt.ylabel(r'(approx.) free-energy ($k_BT$)',fontsize=15)
+            axis = plt.plot(range(-1,21),landscape,
+                            marker="o",
+                            markersize=8,
+                            markeredgewidth=2,
+                            markerfacecolor="white");
+            plt.xlabel('targeting progression', fontsize=10)
+            plt.ylabel(r'free-energy ($k_BT$)',fontsize=10)
             plt.xticks(range(-1,21),
                        [ 'S','P',1,'', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20], rotation=0
                        ,fontsize=10);
@@ -161,13 +169,13 @@ def plot_mismatch_penalties(parameters, model_id,axis=None):
         ax = plt.gca()
     else:
         ax = axis
-    ax.bar(range(1,21), epsilon_I, alpha=0.5)
+    ax.bar([i+0.5 for i in range(1,21)], epsilon_I, alpha=0.5)
     # window dressing:
-    ax.set_xlabel('targeting progression', fontsize=15)
-    ax.set_ylabel(r'mismatch penalties ($k_BT$)',fontsize=15)
+    ax.set_xlabel('targeting progression', fontsize=10)
+    ax.set_ylabel(r'mismatch penalties ($k_BT$)',fontsize=10)
     ax.set_xticks(np.arange(1,21)+0.5)
     ax.set_xticklabels([1, '', '', '', 5, '', '', '', '', 10, '', '', '', '', 15, '', '', '', '', 20],
                        rotation=0,
-                       fontsize=15);
+                       fontsize=10);
     ax.set_yticklabels(ax.get_yticks(),fontsize=15)
     return epsilon_I

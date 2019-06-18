@@ -25,7 +25,6 @@ def unpack_parameters(parameters, model_id,guide_length=20):
     epsilon = np.zeros(2 * guide_length + 1)
     forward_rates = np.ones(guide_length + 2)
 
-
     if model_id == 'fit_landscape_v1':
         '''
         in stead of fitting the epsilon_C, we fit the cummalative sum of them, that is the energies of the bound states 

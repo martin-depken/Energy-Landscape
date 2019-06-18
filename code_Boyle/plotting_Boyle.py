@@ -59,7 +59,7 @@ def calc_predictions(parameters,model_id):
     return Pbound_predict, on_rate_predict, off_rate_predict
 
 
-def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/Weighted_Avarage/',show_plot=True,axis=None,cbar=True):
+def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '/Users/mklein1/Documents/PhD_Martin_Depken_Group/Energy_Landscape_dCas9/Data_Boyle/Weighted_Avarage/',show_plot=True,axis=None,cbar=True):
     '''
     Plot heatmap for double mismatches with Boyle's data in below diagonal and model above the diagonal
     :param model: matrix with double-mismatch values
@@ -115,7 +115,7 @@ def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/Weigh
 
 
         # 5) Adjust ticks and labels to get correct nucleotide positions
-        plt.xticks(fontsize=15)
+        plt.xticks(fontsize=15,rotation=0);
         ax.set_xticklabels(['20', '', '18', '', '16', '', '14', '', '12', '', '10', '', '8', '', '6', '', '4', '', '2', ''])
         plt.yticks(fontsize=15)
         ax.set_yticklabels(['20', '', '18', '', '16', '', '14', '', '12', '', '10', '', '8', '', '6', '', '4', '', '2', ''])
@@ -129,7 +129,7 @@ def plot_heatmap(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/Weigh
         cax.tick_params(labelsize=15)
     return model, experiment
 
-def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '../Data_Boyle/Weighted_Avarage/',show_plot=True, axis=None):
+def plot_single_mismatches(model ,kind='Occupancy', fldr_Boyle_data = '/Users/mklein1/Documents/PhD_Martin_Depken_Group/Energy_Landscape_dCas9/Data_Boyle/Weighted_Avarage/',show_plot=True, axis=None):
     # 1) settings based on physical quantity you want to plot
     if kind == 'Occupancy':
         color = 'green'

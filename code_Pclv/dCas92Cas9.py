@@ -25,7 +25,7 @@ def Weighted_average(row):
     return wa
 
 
-def calc_log_kclv_from_Boyle(mismatch_positions, Boyle_param, clv_rate):
+def calc_log_kclv_from_Boyle(mismatch_positions, Boyle_param, clv_rate,model_id):
     parameters = Boyle_param[1:].copy()
     parameters = np.delete(parameters, -2)
     parameters = np.append(parameters, np.log10(clv_rate))
@@ -37,20 +37,20 @@ def calc_log_kclv_from_Boyle(mismatch_positions, Boyle_param, clv_rate):
 Main
 '''
 
-def predict_clv(Boyle_param, clv_rate=1000.0, Plot=True):
+def predict_clv(Boyle_param, model_id,clv_rate=1000.0, Plot=True):
     ## Watch out: for now this only works with
     ##the Boyle parameters which are related to
     ##the model_id='general_energies_no_kPR'
 
     filename = 'ECas9_cleavage_rate_and_y0_Canonical_OT-r_0-2.csv'
-    path = '../data_nucleaseq_Finkelsteinlab/targetE/'
+    path = '/Users/mklein1/Documents/PhD_Martin_Depken_Group/Energy_Landscape_dCas9/data_nucleaseq_Finkelsteinlab/targetE/'
     x, y, e = process.prepare_multiprocessing_nucleaseq_log(filename, path)
     data = pd.DataFrame(data={'MM_pos': x, 'Log_clv': y, 'error': e})
     wa = []
     for i in data.index:
         wa.append(Weighted_average(data.loc[i]))
     data['WA'] = wa
-    data['prediction'] = data['MM_pos'].apply(lambda x: calc_log_kclv_from_Boyle(x, Boyle_param, clv_rate))
+    data['prediction'] = data['MM_pos'].apply(lambda x: calc_log_kclv_from_Boyle(x, Boyle_param, clv_rate, model_id))
     score = ((data.prediction - data.WA).apply(np.abs) / data.WA.apply(np.abs)).mean()
     corr = data[['WA', 'prediction']].corr()['WA'].iloc[1]
     chi_square = 0
