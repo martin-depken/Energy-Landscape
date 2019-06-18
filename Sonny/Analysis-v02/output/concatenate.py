@@ -33,7 +33,6 @@ def main(argv):
 					dsname = [key for key in hdf.keys()][0]
 					print(dsname)
 					hdf.copy(dsname,mainhdf)
-					print("Done?")
 	return
 
 if __name__ == "__main__":

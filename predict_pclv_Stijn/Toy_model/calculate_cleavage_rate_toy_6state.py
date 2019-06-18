@@ -143,37 +143,60 @@ def combined_rates(parameters,model_id,mismatch_positions):
     epsilon,rates = model.unpack_parameters(parameters,model_id)
     if type(mismatch_positions)==type([]):
             mismatch_positions = np.array(mismatch_positions)
-    
-    #energies
+
     new_epsilon = epsilon.copy()        
-    energies_OT = -1*new_epsilon[0:3]
+    energies_OT = -1*new_epsilon[0:5]
     energies_OT[0] *= -1 #PAM, I, 0, R, 0
-    barrier1 = new_epsilon[3]
-    barrier2 = new_epsilon[4]
+    barrier1 = new_epsilon[5]
+    barrier2 = new_epsilon[6]
     
-    #On target rates
-    rates = rates.copy() #rate from solution and cleavage rate remain
-    rates[1] *= np.exp(-barrier1) #rate over first barrier
-    rates[2] *= np.exp(-barrier2) #rate over second barrier
-    
-    backward = np.zeros(len(rates))
-    backward[0] = 0.0 #no rate backward from solution
-    backward[1] = rates[0]*np.exp(energies_OT[0]) #backward rate from PAM
-    backward[2] = rates[1]*np.exp(energies_OT[1]) #backward rate over first barrier
-    backward[3] = rates[2]*np.exp(energies_OT[2]) #backward rate over second barrier
+    rates_OT = rates.copy()
+    #rates_OT[1] *= np.exp(-barrier1)
+    #rates_OT[2] *= np.exp(-energies_OT[2])
+    #rates_OT[3] *= np.exp(-barrier2)
+    #rates_OT[4] *= np.exp(-energies_OT[4])
 
-    #handling mismatches
     for i in mismatch_positions:
-        if i < 8: #mismatch in the first barrier, could be placed at 8 or 9 or 10. difference can be compensated by mismatch penalty 8,9
-            rates[1] *= np.exp(-new_epsilon[4+i])
-        elif i < 12: #mismatch in first flat part, pretty sure it should be at 12
-            backward[2] *= np.exp(new_epsilon[4+i])
-        elif i < 18: #mismatch in second barrier, does not matter that much I think
-            rates[2] *= np.exp(-new_epsilon[4+i])
+        if i < 10: #mismatch in the first barrier
+            energies_OT[1] += new_epsilon[6+i]
+            barrier1 += new_epsilon[6+i]
+        elif i < 13: #mismatch in first flat part
+            energies_OT[2] += new_epsilon[6+i]
+        elif i < 18: #mismatch in second barrier
+            energies_OT[3] += new_epsilon[6+i]
+            barrier2 += new_epsilon[6+i]
         elif i <21: #mismatch in last flat part
-            backward[3] *= np.exp(new_epsilon[4+i])
+            energies_OT[4] += new_epsilon[6+i]
 
-    return rates, backward
+    #rates_OT = rates.copy()
+    rates_OT[1] *= np.exp(-barrier1)
+    #rates_OT[2] *= np.exp(-energies_OT[2])
+    rates_OT[3] *= np.exp(-barrier2)
+    #rates_OT[4] *= np.exp(-energies_OT[4])
+
+    backward_OT = np.zeros(len(rates_OT))
+    backward_OT[0] = 0.0 #no rate backward from solution
+    backward_OT[1] = rates_OT[0]*np.exp(energies_OT[0]) #backward rate from PAM
+    backward_OT[2] = rates_OT[1]*np.exp(energies_OT[1]) #backward rate over first barrier
+    backward_OT[3] = rates_OT[2]*np.exp(energies_OT[2]) #backward rate over flat part
+    backward_OT[4] = rates_OT[3]*np.exp(energies_OT[3]) #backward rate over second barrier
+    backward_OT[5] = rates_OT[4]*np.exp(energies_OT[4]) #backward rate over flat part
+    
+    #combined rates
+    forward_combined = np.zeros(4)
+    forward_combined[0] = rates_OT[0]
+    forward_combined[1] = (rates_OT[1]*rates_OT[2])/(rates_OT[1] + backward_OT[2] +rates_OT[2])
+    forward_combined[2] = (rates_OT[3]*rates_OT[4])/(rates_OT[3] + backward_OT[4] +rates_OT[4])
+    forward_combined[3] = rates_OT[5]
+
+    backward_combined = np.zeros(4)
+    backward_combined[0] = backward_OT[0]
+    backward_combined[1] = backward_OT[1]
+    backward_combined[2] = (backward_OT[3]*backward_OT[2])/(backward_OT[3] + rates_OT[2] + backward_OT[2])
+    backward_combined[3] = (backward_OT[5]*backward_OT[4])/(backward_OT[5] + rates_OT[4] + backward_OT[4])
+    
+#    return forward_combined, backward_combined
+    return rates_OT, backward_OT
 
 def calc_clv_on(parameters, model_id, mismatch_positions):
     

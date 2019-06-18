@@ -48,6 +48,7 @@ def main(argv):
 	#guide = "GGGUGGGGGGAGUUUGCUCC" #pVC297 VEGF Site#1 from 5' to 3'
 	guide = "GGGTGGGGGGAGTTTGCTCC"
 	PAM = "NGG"
+	calculategenomewide = True # false -> import the genome-wide data from a file
 
 	try:
 		mainpath = open("mainpath.txt","r").readline()
@@ -55,63 +56,126 @@ def main(argv):
 			mainpath += '\\'
 	except:
 		mainpath = "/home/sfdejong/03_21_2019/"
-		filename = "/home/sfdejong/11_03_2019/chrY-B-data.hdf5"
+		filename = mainpath + filename
+	
+	#lut_tar = read_dict("F:\\output\\lookuptable_target")
+	#lut_pam = read_dict("F:\\output\\lookuptable_PAM")
 
-	lut_tar = read_dict(mainpath+"lookuptable_target")
-	lut_pam = read_dict(mainpath+"lookuptable_PAM")
+	lut_tar = read_dict("lookuptable_target")
+	lut_pam = read_dict("lookuptable_PAM")
+
 
 	if filename[-5:] != ".hdf5":
 		filename = filename+".hdf5"
 	
-	dsname = "ChrY"
-	with h5py.File(filename, "r") as hdf:
-		if not dsname in hdf.keys():
-			print("Dataset (ChrY) did not exist.")
-		#for longindex in range(hdf[dsname].shape[0]):
-		score = np.array(hdf[dsname])
 	
-	steps = 100
-	threshholds = np.linspace(np.min(score),np.max(score),steps)
-	P = []
-	N = []
-	for sigma in threshholds:
-		P.append(  np.sum(score >= sigma) )
-		N.append(  np.sum(score < sigma) )
+	# ==============================
+	# CALCULATE WHOLE-GENOME RESULTS
+	# ==============================
 
+	if calculategenomewide:
+	
+		steps = 1000
+		prdP = np.zeros(steps) # predicted positives
+		prdN = np.zeros(steps) # predicted negatives
+		
+		dsname = argv[1]
+		#thresholds = np.linspace(0,2727688,steps)
+		#thresholds = np.linspace(0,204741850000000,steps)
+		#thresholds = np.linspace(5.2,1551786.5,steps)
+		thresholds = np.linspace(24.387,7048387,steps) # minimal to maximal experimental pclv
+		thresholds = np.linspace(24.387,12404500,steps)
+		thresholds = np.linspace(2.5423722e-05,12404500,steps)
+		
+		maxfound = 0
+		minfound = 1000
+	
+		with h5py.File(filename, "r") as hdf: # open HDF5 file
+		
+			for dsname in [key for key in hdf.keys()]: # loop over all datasets within this file
+			
+				print(dsname,[key for key in hdf.keys()])
+				
+				if int(np.ceil(hdf[dsname].shape[0]/1000000)) == 0:
+					# if dataset is less than a million long
+					
+						score = np.array(hdf[dsname][0:None,1])
+						maxfound = max(maxfound,np.max(score))
+						minfound = min(minfound,np.min(score))
+
+				else:
+				
+					for k in range(int(np.ceil(hdf[dsname].shape[0]/1000000))): # divide dataset into pieces of a million
+					
+						print("Now at: ",k)
+					
+						try:
+							score = np.array(hdf[dsname][1000000*k:1000000*(k+1),1])
+							maxfound = max(maxfound,np.max(score))
+							minfound = min(minfound,np.min(score))
+						except:
+							score = np.array(hdf[dsname][1000000*k:None,1])
+							maxfound = max(maxfound,np.max(score))
+							minfound = min(minfound,np.min(score))
+						
+				for index in range(len(thresholds)):
+					prdP[index] += np.sum(score >= thresholds[index])
+					prdN[index] += np.sum(score <  thresholds[index])
+		
+		# print max and min from genome-wide file
+		print("max:",maxfound)
+		print("min:",minfound)
+		
+		print(prdP)
+		print(prdN)
+	
+	else:
+		
+		O = pd.read_csv("analysis-results.csv")
+		prdP = O['prdP']
+		prdN = O['prdN']
+		thresholds = O['thresholds']
+	
+	
+	
+	# ==============================
+	# CALCULATE EXPERIMENTAL RESULTS
+	# ==============================
+	
 	genome_wide = pd.read_csv(mainpath+'genome_wide_precalc_models.csv')
-	subset = genome_wide[(genome_wide['insertion_deletion'] == 'no') &
-                         (genome_wide['truncated_guide'] == 'no') &
-                         (genome_wide['canonical_PAM']=='yes') ]
-						 
-	targets  = subset[subset['guide']==guide+PAM]['target']
+	subset = genome_wide[(genome_wide['Technique']== 'HTGTS') & (genome_wide['InDel'] == False) & ( (genome_wide['PAM'] =='AGG') | (genome_wide['PAM'] =='CGG') | (genome_wide['PAM'] =='GGG') | (genome_wide['PAM'] =='TGG')) &  (genome_wide['name']== 'VEGFA')]
+	
+	# select targets and guides
+	targets = subset[subset['guide']==guide+PAM]['target']
 	guides  = subset[subset['guide']==guide+PAM]['guide']
 	
 	if Cas.complementtarget == True: guide = str( Seq(guide).transcribe() )
 	if Cas.reversetarget == True:    guide = guide[::-1]	
 	
 	guide = str( Seq(guide).complement())
+	
 	truescores = []
+	print("Line 95")
 	for seq in subset['target']:
+		if 'N' in str(seq):
+			print("Found an N!")
+			continue
 		kclv = calculate_kclv(seq,guide,lut_pam,lut_tar,Cas,reverse=False)
-		truescores.append( kclv[1])
+		truescores.append( kclv[0])
+	print("Line 99")
+	expP = np.zeros(len(thresholds))
+	expN = np.zeros(len(thresholds))
+	for index in range(len(thresholds)):
+		expP[index] += np.sum(truescores >= thresholds[index])
+		expN[index] += np.sum(truescores <  thresholds[index])
 	
-	TP = []
-	TN = []
-	for sigma in threshholds:
-		TP.append(  np.sum(truescores >= sigma) )
-		TN.append(  np.sum(truescores < sigma) )
-	print(truescores)
-	print(TP,TN)
-	
-	O = pd.DataFrame()
-	O['threshholds'] = threshholds
-	O['P'] = P
-	O['N'] = N
-	O['TP'] = TP
-	O['TN'] = TN
-	O['FP'] = np.subtract(P , TP)
-	O['FN'] = np.subtract(N , TN)
-	O.to_csv("chrF-data.csv",index=True)
+	O2 = pd.DataFrame()
+	O2['thresholds'] = thresholds
+	O2['prdP'] = prdP
+	O2['prdN'] = prdN
+	O2['expP'] = expP
+	O2['expN'] = expN
+	O2.to_csv("analysis-results.csv",index=True)
 	
 	return
 

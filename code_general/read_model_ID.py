@@ -304,7 +304,35 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         forward_rates = forward_rates * rate_internal #internal rates
         forward_rates[0] = rate_sol_to_PAM
         forward_rates[1] = rate_PAM_to_R1
-        forward_rates[-1] = rate_clv        
+        forward_rates[-1] = rate_clv
+        
+    elif model_id == 'Clv_Saturated_edit_boyle_landscape_flat_constant_ei':
+        if len(parameters)!=6:
+            print('Wrong number of parameters')
+            return
+        
+        landscape = np.zeros(21)
+        landscape[0] = 1.389248-1.389248 #PAM Boyle, minus PAM Boyle :)
+        landscape[1:10] = np.ones(9)*parameters[0] #first bump of constant height
+        landscape[10:13] = [1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
+        landscape[13:18] = np.ones(5)*parameters[1] #second bump of constant height
+        landscape[18:21] = [-0.361180-1.389248,-4.009278-1.389248,-8.223548-1.389248] #well defined second dip, from Boyle
+        
+        epsilon[0] = -100.0 #predefined epsilon PAM at saturation
+        for i in range(1,21):
+            epsilon[i] = -(landscape[i] - landscape[i-1])
+        epsilon[21:37] = parameters[2]
+        epsilon[37:41] = parameters[3]
+        
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
+        rate_PAM_to_R1 = 10**parameters[-2]
+        rate_internal = 10**parameters[-2] #rate from PAM to R is equal to internal rate
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv 
         
     elif model_id == 'On_edit_boyle_landscape':
         if len(parameters)!=35:
@@ -348,6 +376,34 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         for i in range(1,21):
             epsilon[i] = -(landscape[i] - landscape[i-1])
         epsilon[21:41] = parameters[2:22]
+        
+        rate_sol_to_PAM = 10**parameters[-2]
+        rate_PAM_to_R1 = 10**parameters[-1]
+        rate_internal = 10**parameters[-1] #rate from PAM to R is equal to internal rate
+        rate_clv = 0
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
+    elif model_id == 'On_edit_boyle_landscape_flat_constant_ei':
+        if len(parameters)!=6:
+            print('Wrong number of parameters')
+            return
+        
+        landscape = np.zeros(21)
+        landscape[0] = 1.389248-1.389248 #PAM Boyle, minus PAM Boyle :)
+        landscape[1:10] = np.ones(9)*parameters[0] #first bump of constant height
+        landscape[10:13] = [1.547533-1.389248, -0.105180-1.389248, -0.153215-1.389248] #well defined dip, from Boyle
+        landscape[13:18] = np.ones(5)*parameters[1] #second bump of constant height
+        landscape[18:21] = [-0.361180-1.389248,-4.009278-1.389248,-8.223548-1.389248] #well defined second dip, from Boyle
+        
+        epsilon[0] = 1.389248 #Boyle PAM
+        for i in range(1,21):
+            epsilon[i] = -(landscape[i] - landscape[i-1])
+        epsilon[21:37] = parameters[2]
+        epsilon[37:41] = parameters[3]
         
         rate_sol_to_PAM = 10**parameters[-2]
         rate_PAM_to_R1 = 10**parameters[-1]
@@ -795,5 +851,12 @@ def combined_model(parameters,model_ID):
             return
         parameters_clv = np.append(parameters[1:41],parameters[42:44])
         parameters_on = np.array(parameters[0:43])
+        
+    elif model_ID == 'Clv_Saturated_edit_boyle_landscape_flat_constant_ei+On_edit_boyle_landscape_flat_constant_ei':
+        if len(parameters)!=7:
+            print('Wrong number of parameters')
+            return
+        parameters_clv = np.append(parameters[0:4],parameters[5:7])
+        parameters_on = np.array(parameters[0:6])
     
     return model_ID_clv, model_ID_on, parameters_clv, parameters_on
