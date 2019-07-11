@@ -9,10 +9,12 @@ Main functions
 '''
 
 def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combined_fit,
-                     model_id):
+                     model_id,log_on=False):
     
     if not combined_fit:
         k_model = calc_cleavage_rate_fast(parameters, model_id, mismatch_positions)
+        if k_model < 10**-5:
+            k_model = 10**-5
             
         ydata = np.array(ydata)
         yerr = np.array(yerr)
@@ -39,6 +41,9 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combin
     if combined_fit:
         k_model_clv, k_model_on = calc_clv_on(parameters, model_id,
                                               mismatch_positions)
+        if k_model_clv < 10**-5:
+            k_model_clv = 10**-5
+        
         ydata_clv = np.array(ydata[0])
         ydata_on = np.array(ydata[1])
         yerr_clv = np.array(yerr[0])
@@ -51,17 +56,33 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combin
         chi_sqrd_on_single = 0.0
         chi_sqrd_on_double = 0.0
         
-        if len(mismatch_positions)==0:
-            chi_sqrd_clv_perfect = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
-            chi_sqrd_on_perfect = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
         
-        elif len(mismatch_positions)==1:
-            chi_sqrd_clv_single = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
-            chi_sqrd_on_single = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
         
-        elif len(mismatch_positions)==2:
-            chi_sqrd_clv_double = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
-            chi_sqrd_on_double = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
+        if not log_on:
+            if len(mismatch_positions)==0:
+                chi_sqrd_clv_perfect = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+                chi_sqrd_on_perfect = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
+
+            elif len(mismatch_positions)==1:
+                chi_sqrd_clv_single = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+                chi_sqrd_on_single = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
+
+            elif len(mismatch_positions)==2:
+                chi_sqrd_clv_double = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+                chi_sqrd_on_double = np.sum(((ydata_on-k_model_on)/yerr_on)**2)
+        
+        else:
+            if len(mismatch_positions)==0:
+                chi_sqrd_clv_perfect = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+                chi_sqrd_on_perfect = np.sum(((ydata_on-np.log10(k_model_on))/yerr_on)**2)
+
+            elif len(mismatch_positions)==1:
+                chi_sqrd_clv_single = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+                chi_sqrd_on_single = np.sum(((ydata_on-np.log10(k_model_on))/yerr_on)**2)
+
+            elif len(mismatch_positions)==2:
+                chi_sqrd_clv_double = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+                chi_sqrd_on_double = np.sum(((ydata_on-np.log10(k_model_on))/yerr_on)**2)
             
         chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] + chi_sqrd_on_perfect*chi_weights[3] +
                     chi_sqrd_clv_single*chi_weights[1] + chi_sqrd_on_single*chi_weights[4] +
@@ -168,7 +189,7 @@ def combined_rates(parameters,model_id,mismatch_positions):
             rates[1] *= np.exp(-new_epsilon[4+i])
         elif i < 12: #mismatch in first flat part, pretty sure it should be at 12
             backward[2] *= np.exp(new_epsilon[4+i])
-        elif i < 18: #mismatch in second barrier, does not matter that much I think
+        elif i < 18: #mismatch in second barrier, does not matter that much I think(maybe it does for the engineered proteins)
             rates[2] *= np.exp(-new_epsilon[4+i])
         elif i <21: #mismatch in last flat part
             backward[3] *= np.exp(new_epsilon[4+i])

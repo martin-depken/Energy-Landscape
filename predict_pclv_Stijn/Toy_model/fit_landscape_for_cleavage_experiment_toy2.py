@@ -10,7 +10,6 @@ sys.path.append('../../code_Boyle')
 import Nucleaseq_data_processing as processing
 import calculate_cleavage_rate_toy as CRISPR
 import SimulatedAnnealing_Nucleaseq_parallel as SA
-import average_data_processing as avg
 
 from time import time
 '''
@@ -61,9 +60,9 @@ def main(argv):
     #gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [10.0]*2  + [3.0]  + [3.0]
-    lower_bnd =      [-10.0]*2 + [-3.0] + [1.0]
-    initial_guess =  [0.0]*2   + [0.0]  + [2.0]
+    upper_bnd =      [5.0]  + [15.0]  + [7.0]  + [-1.0] + [3.0]*2  + [4.0]
+    lower_bnd =      [-5.0] + [0.0]   + [3.0]  + [-3.0] + [-3.0]*2 + [-1.0]
+    initial_guess =  [0.0]  + [0.0]   + [5.0]  + [-2.0] + [0.0]*2  + [2.0]
     
 
     ###########################
@@ -76,12 +75,10 @@ def main(argv):
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
     if combined_fit:
-#        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,wa,only_single,log_boyle,fill_in_boyle)
-        xdata, ydata, yerr = avg.combined_average_data('1',filename,path_to_dataOn,path_to_dataClv)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,wa,only_single,log_boyle,fill_in_boyle)
     
     if not combined_fit:
-#        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,True)
-        xdata,ydata,yerr = avg.cleavage_average_data(filename,path_to_dataClv)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,True)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata
@@ -106,9 +103,9 @@ def main(argv):
                 #    if xdata[i][0]==6 or xdata[i][0]==7:
                 #        ydata[i][1] = []
                 #        yerr[i][1] = []
-                #if len(xdata[i]) > 0 and (xdata[i][0] == 6 or xdata[i][0] == 7):
-                #    ydata[i][1] = []
-                #    yerr[i][1] = []
+                if len(xdata[i]) > 0 and (xdata[i][0] == 2 or xdata[i][0] == 6 or xdata[i][0] == 7):
+                    ydata[i][1] = []
+                    yerr[i][1] = []
                 if len(xdata[i])==1:
                     singleClv += len(ydata[i][0])
                     singleOn += len(ydata[i][1])
@@ -139,9 +136,9 @@ def main(argv):
             singleClv = 0.0
             singleOn = 0.0
             for i in range(len(xdata)):
-                #if len(xdata[i]) > 0 and (xdata[i][0] == 6 or xdata[i][0] == 7):
-                #    ydata[i][1] = []
-                #    yerr[i][1] = []
+                if len(xdata[i]) > 0 and (xdata[i][0] == 6 or xdata[i][0] == 7):
+                    ydata[i][1] = []
+                    yerr[i][1] = []
                 if len(xdata[i])==1:
                     #if xdata[i][0]==6 or xdata[i][0]==7:
                     #    ydata[i][1] = []
@@ -155,6 +152,8 @@ def main(argv):
     ##############################################
     # /*   Call the Simulated Annealing code   *\#
     ##############################################
+
+
 
     t1 = time()
     fit_result = SA.sim_anneal_fit(xdata=xdata,
