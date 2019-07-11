@@ -49,15 +49,17 @@ def main(argv):
     monitor_file = argv[4]
     fit_result_file = argv[5]
     init_monitor_file = argv[6]
+    fit_to_wa = True
     only_single = False
-    
+    log_on_boyle = True
+    fill_in_boyle = True
     
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [5.0] + [10.]*20   + [10.0]*20 + [-1.] + [3.0] + [4.0]
-    lower_bnd =      [0.0] + [-10.0]*20 + [0.0]*20  + [-3.] + [1.0] + [-1.0]
-    initial_guess =  [2.0] + [0.0]*20   + [5.0]*20  + [-2.] + [2.0] + [1.0]
+    upper_bnd =      [10.]*20   + [4.0]
+    lower_bnd =      [-10.0]*20 + [-1.0]
+    initial_guess =  [0.0]*20   + [1.0]
     
 
     ###########################
@@ -65,17 +67,18 @@ def main(argv):
     ###########################
     KineticModel = functools.partial(CRISPR.calc_chi_squared,
                         guide_length=gRNA_length,
-                        model_id=model_ID)
+                        model_id=model_ID,
+                                    log_on=log_on_boyle)
 
 
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
     if combined_fit:
-        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,True,only_single)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,fit_to_wa,only_single,log_on_boyle,fill_in_boyle)
     
     if not combined_fit:
-        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,True)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,fit_to_wa)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata
@@ -154,7 +157,7 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=100000.,             # infered from run on my computer/other runs on cluster
+                                Tstart=3000.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=0.1,
                                 tol=1E-5,
@@ -174,7 +177,7 @@ def main(argv):
                                 output_file_init_monitor=init_monitor_file,
                                 chi_weights=chi_weights,
                                 NMAC=False, #non-monotonic adaptive cooling
-                                reanneal=True, #reheating when in local minimum, set to False to do no reheating
+                                reanneal=False, #reheating when in local minimum, set to False to do no reheating
                                 combined_fit=combined_fit,
                                 random_step=False
                                 )
