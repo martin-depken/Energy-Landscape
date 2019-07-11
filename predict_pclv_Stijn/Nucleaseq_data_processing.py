@@ -47,10 +47,11 @@ def weighting(yerr): #used for calculating weighted average
     error_of_wa = np.sqrt(1/Z)
     return weights, error_of_wa
 
-def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to_wa=False,only_single=False):
+def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to_wa=False,only_single=False,log_boyle=False,fill_in_boyle=False):
+    
+    reload(processing)
     xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq_log(filename_clv,path_clv)
     xdata_on, ydata_on, yerr_on = processing.prepare_multiprocessing(rep_on,path_on,True,False,False,False,False)
-    
     
     ydata = list()
     yerr = list()
@@ -67,6 +68,15 @@ def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to
                   or (len(xdata_clv[i])==2 and xdata_clv[i][0]==xdata_on[j][1] and xdata_clv[i][1]==xdata_on[j][0])):
                     ydata.append([ydata_clv[i],ydata_on[j][1]])
                     yerr.append([yerr_clv[i],yerr_on[j][1]]) 
+    
+    if log_boyle:
+        for i in range(len(xdata_clv)):
+            for j in range(len(ydata[i][1])):
+                datapoint = ydata[i][1][j]
+                errorpoint = yerr[i][1][j]
+                ydata[i][1][j] = np.log10(datapoint)
+                yerr[i][1][j] = np.log10(1 + 2*errorpoint/(datapoint))
+    
     if fit_to_wa:
         for i in range(len(xdata_clv)):
             weightsclv, errorclv = weighting(yerr[i][0])
@@ -93,6 +103,29 @@ def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to
                 ydata_single.append(ydata[i])
                 yerr_single.append(yerr[i])
         return xdata_single, ydata_single, yerr_single
+    
+                
+    if fill_in_boyle and  fit_to_wa:
+        for a in range(1,20):
+            temp = []
+            temperror = []
+            for i in range(len(xdata_clv)):
+                if len(xdata_clv[i])==2 and xdata_clv[i][0]==a:
+                    if not len(ydata[i][1])==0:
+                        temp.append(ydata[i][1][0])
+                        temperror.append(yerr[i][1][0])
+            
+            avg = np.average(temp,weights=np.reciprocal(temperror))
+            err = np.max(temperror)
+            
+            for i in range(len(xdata_clv)):
+                if len(xdata_clv[i])==2 and xdata_clv[i][0]==a:
+                    if len(ydata[i][1])==0:
+                        ydata[i][1] = [avg]
+                        yerr[i][1] = [err]
+                        
+     
+            
     
     return xdata_clv, ydata, yerr
     
