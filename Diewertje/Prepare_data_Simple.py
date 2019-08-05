@@ -16,6 +16,8 @@ def Prepare_Cdata(path, filename):
     data=pd.read_csv(path+filename)
     
     Grouped = data.groupby('Mutation Positions').agg(lambda x: list(x))
+    # In doing this grouping, we exclude the ontarget values, this did not matter for the deltaABA, but now it actually does
+    # The ontarget measurements should have been included in the fits. 
     Grouped.reset_index(inplace=True)
     
     for i in range(len(Grouped)):
