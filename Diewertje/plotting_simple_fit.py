@@ -3,6 +3,10 @@
 Created on Thu Apr  4 11:58:45 2019
 
 @author: Diewertje
+
+The functions to plot the ABA for single mismatches, but now for the absolute ABA data. 
+You still plot the deltaABA, but you now calculate this separately. 
+(same functions as in plotting_ABA_Diewertje)
 """
 import matplotlib.pylab as plt
 import numpy as np

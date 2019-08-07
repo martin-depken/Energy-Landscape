@@ -3,6 +3,9 @@
 Created on Fri Feb 29 15:43:32 2019
 
 @author: Diewertje
+To make lists with the MMposition, ABA and uncertainty with every measurement. 
+The input is the full data file, output is the lists with the information we need for the simulations.
+FOR ABSOLUTE ABA Data
 """
 import numpy as np 
 import pandas as pd
