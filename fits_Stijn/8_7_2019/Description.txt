@@ -1,0 +1,11 @@
+Using the four-state reference fit, with constant epsilon i, we fit the eSpCas9 data. Left free are  R, kf2, and kclv. Fit to the average data, to make it extra fast.
+
+first five: eSpCas9
+second five: Hypa
+third five: HF1
+
+upper_bnd =      [10.0]  + [3.0]  + [3.0]
+    lower_bnd =      [-10.0] + [-3.0] + [-1.0]
+    initial_guess =  [0.0]   + [0.0]  + [1.0]
+
+        xdata,ydata,yerr = avg.cleavage_average_data(filname,path_to_dataClv)

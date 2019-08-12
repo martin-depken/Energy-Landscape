@@ -1,0 +1,40 @@
+Test fit on Enh data. Free fitting. 
+
+    upper_bnd =      [10.]*20   +  [10.0]*20 +  [3.0] + [4.0]
+    lower_bnd =      [-10.0]*20 +  [0.0]*20  +  [1.0] + [-1.0]
+    initial_guess =  [0.0]*20   +  [5.0]*20  +  [2.0] + [1.0]
+
+
+
+    fit_result = SA.sim_anneal_fit(xdata=xdata,
+                                   ydata=ydata,
+                                   yerr = yerr,
+                                   Xstart= np.array(initial_guess),
+                                   lwrbnd= np.array(lower_bnd),
+                                   upbnd= np.array(upper_bnd),
+                                model='I_am_using_multi_processing_in_stead',
+                                objective_function=KineticModel,
+                                Tstart=3000.,             # infered from run on my computer/other runs on cluster
+                                use_relative_steps=False,
+                                delta=0.1,
+                                tol=1E-5,
+                                Tfinal=0.0,
+                                potential_threshold = 300.,
+                                adjust_factor=1.1,
+                                cooling_rate_high=0.95,
+                                cooling_rate_low=0.99,
+                                N_int=1000,
+                                Ttransition=1000.,
+                                AR_low=40,
+                                AR_high=60,
+                                use_multiprocessing=True,
+                                nprocs=nmbr_cores,
+                                output_file_results = fit_result_file,
+                                output_file_monitor = monitor_file,
+                                output_file_init_monitor=init_monitor_file,
+                                chi_weights=chi_weights,
+                                NMAC=False, #non-monotonic adaptive cooling
+                                reanneal=False, #reheating when in local minimum, set to False to do no reheating
+                                combined_fit=combined_fit,
+                                random_step=False
+                                )

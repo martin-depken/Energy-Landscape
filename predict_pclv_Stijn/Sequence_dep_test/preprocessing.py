@@ -29,6 +29,27 @@ def prepare_multiprocessing_seq_dep(filename, path):
     yerr = grouped_data['error_log'].tolist()
     return xdata, ydata, yerr
 
+def weighting(yerr): #used for calculating weighted average
+    yerr_sqr = np.zeros(len(yerr))
+    for i in range(len(yerr)):
+        yerr_sqr[i] = yerr[i]**2
+    Z = np.sum(np.reciprocal(yerr_sqr))
+    weights = np.zeros(len(yerr))
+    for i in range(len(yerr)):
+        weights[i] = 1/yerr_sqr[i]/Z
+    error_of_wa = np.sqrt(1/Z)
+    return weights, error_of_wa
+
+def prepare_multiprocessing_seq_dep_wa(filename, path):
+    xdata,ydata_full,yerr_full = prepare_multiprocessing_seq_dep(filename, path)
+    ydata = []
+    yerr = []
+    for i in range(len(xdata)):
+        weights,error_of_wa = weighting(yerr_full[i])
+        ydata.append([np.average(ydata_full[i],weights=weights)])
+        yerr.append([error_of_wa])
+    return xdata, ydata, yerr
+
 def prepare_multiprocessing_seq_indep(filename, path):
     data = pd.read_csv(path + filename,
                        usecols=['Mutation Positions','cleavage_rate', 'cleavage_rate_5th_pctl', 'cleavage_rate_95th_pctl'],

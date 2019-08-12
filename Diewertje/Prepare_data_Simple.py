@@ -3,6 +3,9 @@
 Created on Fri Feb 29 15:43:32 2019
 
 @author: Diewertje
+To make lists with the MMposition, ABA and uncertainty with every measurement. 
+The input is the full data file, output is the lists with the information we need for the simulations.
+FOR ABSOLUTE ABA Data
 """
 import numpy as np 
 import pandas as pd
@@ -16,6 +19,8 @@ def Prepare_Cdata(path, filename):
     data=pd.read_csv(path+filename)
     
     Grouped = data.groupby('Mutation Positions').agg(lambda x: list(x))
+    # In doing this grouping, we exclude the ontarget values, this did not matter for the deltaABA, but now it actually does
+    # The ontarget measurements should have been included in the fits. 
     Grouped.reset_index(inplace=True)
     
     for i in range(len(Grouped)):

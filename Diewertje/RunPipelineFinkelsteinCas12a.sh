@@ -2,7 +2,7 @@
 #PBS -l nodes=1:ppn=20
 #PBS -m e
 #PBS -M diewertje@kpnplanet.nl
-parameters=$(sed -n -e "${PBS_ARRAYID}p" /home/dddekker/BEP/27_5_2019_cas12_conc3_WA/jobs_27_5_2019_cas12_conc3_WA_1_25.txt)
+parameters=$(sed -n -e "${PBS_ARRAYID}p" /home/dddekker/BEP/12_6_2019_cas12_conc8/jobs_12_6_2019_cas12_conc8_1_25.txt)
 parameterArray=($parameters) 
 
 ModelID=${parameterArray[0]}

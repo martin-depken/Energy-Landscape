@@ -445,8 +445,11 @@ def Temperature_Cycle(SA, Eavg):
             reanneal(SA)
 
     # check stop condition
-    SA.StopCondition = (tolerance_low_enough and temperature_low_enough and potential_low_enough) or reached_final_temperature
-
+    if SA.reanneal:
+        SA.StopCondition = (tolerance_low_enough and temperature_low_enough and potential_low_enough) or reached_final_temperature
+    else:
+        SA.StopCondition = (tolerance_low_enough and temperature_low_enough) or reached_final_temperature
+        
     # done with equillibrium <--> reset
     SA.EQ = False
     # Monitor (I assumed you come to this point at least once, otherwise there is not much to monitor anyways):

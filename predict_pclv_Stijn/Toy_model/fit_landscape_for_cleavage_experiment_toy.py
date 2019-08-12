@@ -10,6 +10,7 @@ sys.path.append('../../code_Boyle')
 import Nucleaseq_data_processing as processing
 import calculate_cleavage_rate_toy as CRISPR
 import SimulatedAnnealing_Nucleaseq_parallel as SA
+import average_data_processing as avg
 
 from time import time
 '''
@@ -51,31 +52,36 @@ def main(argv):
     monitor_file = argv[4]
     fit_result_file = argv[5]
     init_monitor_file = argv[6]
+    wa = True
     only_single = False
+    log_boyle = True
+    fill_in_boyle = True
     
     
     #gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [3.0] + [10.0]*2 + [7.5]*20 + [3.0]  + [3.0]*2  + [4.0]
-    lower_bnd =      [0.0] + [0.0]*2  + [2.5]*20 + [-3.0] + [-3.0]*2 + [-1.0]
-    initial_guess =  [1.5] + [5.0]*2  + [5.0]*20 + [0.0]  + [0.0] *2 + [1.0]
+    upper_bnd =      [10.0]*2  + [3.0]  + [3.0]
+    lower_bnd =      [-10.0]*2 + [-3.0] + [1.0]
+    initial_guess =  [0.0]*2   + [0.0]  + [2.0]
     
 
     ###########################
     # /* Objective function *\#
     ###########################
-    KineticModel = functools.partial(CRISPR.calc_chi_squared,model_id=model_ID)
+    KineticModel = functools.partial(CRISPR.calc_chi_squared,model_id=model_ID,log_on=log_boyle)
 
 
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
     if combined_fit:
-        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,True,only_single)
+#        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,wa,only_single,log_boyle,fill_in_boyle)
+        xdata, ydata, yerr = avg.combined_average_data('1',filename,path_to_dataOn,path_to_dataClv)
     
     if not combined_fit:
-        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,True)
+#        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,True)
+        xdata,ydata,yerr = avg.cleavage_average_data(filename,path_to_dataClv)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata
@@ -96,10 +102,14 @@ def main(argv):
             doubleClv = 0.0
             doubleOn = 0.0
             for i in range(len(xdata)):
+                #if len(xdata[i])==1:
+                #    if xdata[i][0]==6 or xdata[i][0]==7:
+                #        ydata[i][1] = []
+                #        yerr[i][1] = []
+                #if len(xdata[i]) > 0 and (xdata[i][0] == 6 or xdata[i][0] == 7):
+                #    ydata[i][1] = []
+                #    yerr[i][1] = []
                 if len(xdata[i])==1:
-                    if xdata[i][0]==1 or xdata[i][0]==3 or xdata[i][0]==4 or xdata[i][0]==6 or xdata[i][0]==7:
-                        ydata[i][1] = []
-                        yerr[i][1] = []
                     singleClv += len(ydata[i][0])
                     singleOn += len(ydata[i][1])
                 if len(xdata[i])==2:
@@ -129,10 +139,13 @@ def main(argv):
             singleClv = 0.0
             singleOn = 0.0
             for i in range(len(xdata)):
+                #if len(xdata[i]) > 0 and (xdata[i][0] == 6 or xdata[i][0] == 7):
+                #    ydata[i][1] = []
+                #    yerr[i][1] = []
                 if len(xdata[i])==1:
-                    if xdata[i][0]==1 or xdata[i][0]==3 or xdata[i][0]==4 or xdata[i][0]==6 or xdata[i][0]==7:
-                        ydata[i][1] = []
-                        yerr[i][1] = []
+                    #if xdata[i][0]==6 or xdata[i][0]==7:
+                    #    ydata[i][1] = []
+                    #    yerr[i][1] = []
                     singleClv += len(ydata[i][0])
                     singleOn += len(ydata[i][1])
 
@@ -142,8 +155,6 @@ def main(argv):
     ##############################################
     # /*   Call the Simulated Annealing code   *\#
     ##############################################
-
-
 
     t1 = time()
     fit_result = SA.sim_anneal_fit(xdata=xdata,

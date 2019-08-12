@@ -11,7 +11,7 @@ import SimulatedAnnealing_Finkelstein_parallel as SA
 import Calculate_ABA_Finkelsteinlab_Diewertje as ABA
 
 from time import time
-'''
+''' 
 ********************
 Main script to be run on cluster for Simmulated Annealing fitting of energy landscape to data from Finkelstein.
 
@@ -54,7 +54,8 @@ def main(argv):
     ###########################
     # /* Objective function *\#
     ###########################
-    concentrations = np.array([1,30,100])#[0.1, 0.3, 1, 3, 10, 30, 100, 300]) # in nanoMolair
+    #concentrations = np.array([1,30,100])
+    concentrations = np.array([0.1, 0.3, 1, 3, 10, 30, 100, 300]) # in nanoMolair
     # assume it is for the same concentration points as Cas9
     reference=1 # in nanomolair
     
@@ -75,13 +76,13 @@ def main(argv):
     # xdata=MMpos, ydata=ABA, yerr=Uncertainty
     
     # To fit based on the WA of the dataset
-    WAydata=[]
-    WAyerr=[]
-    for i in range(len(xdata)):
-        WAydata.append([np.average(np.array(ydata[i]),weights=np.array(yerr[i])**-2,axis=0)])
-        WAyerr.append([(1/np.sum((np.array(yerr[i]))**-2))**0.5])
-    ydata=WAydata
-    yerr=WAyerr
+    # WAydata=[]
+    # WAyerr=[]
+    # for i in range(len(xdata)):
+    #     WAydata.append([np.average(np.array(ydata[i]),weights=np.array(yerr[i])**-2,axis=0)])
+    #     WAyerr.append([(1/np.sum((np.array(yerr[i]))**-2))**0.5])
+    # ydata=WAydata
+    # yerr=WAyerr
     
     #filename= 'cas9-target-e-replicate-1-delta-abas_Canonical_OT-r_0-2.csv'
     #xdata,ydata,yerr=Pre.Prepare_Cdata(path_to_data,filename)
