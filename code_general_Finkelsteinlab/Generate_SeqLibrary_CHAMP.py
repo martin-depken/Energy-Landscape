@@ -3,20 +3,21 @@ import numpy as np
 import pickle
 import Process_SeqLibrary_Finkelsteinlab as Finkellib
 from scipy.optimize import curve_fit
-
+import matplotlib.pylab as plt
 
 def Generate_SeqLibrary(filename,
                         concentrations,
                         nmbr_boot,
                         on_target_seq,
                         non_specific_seq='AAGGCCGAATTCTCACCGGCCCCAAGGTATTCAAG',
-                        mode='ref_concentration',
+                        mode='ref_sequence',
                         Cas='Cas9'):
 
     raw_CHAMP = unpickle_datadict(filename)
 
     df_CHAMP = collect_all_clusters(raw_CHAMP, concentrations, on_target_seq,Cas)
 
+    del raw_CHAMP
     SeqLibrary = build_dataframe_for_fitting(df_CHAMP,
                                              nmbr_boot,
                                              concentrations,
@@ -68,18 +69,18 @@ def collect_all_clusters(CHAMP_data, concentrations, target_seq, Cas):
 
 def build_dataframe_for_fitting(full_data, nmbr_boot, concentrations,
                                 non_specific_seq='AAGGCCGAATTCTCACCGGCCCCAAGGTATTCAAG',
-                                mode='ref_concentration'):
-    # remove the clusters for which there is not a complete binding curve available:
+                                mode='ref_sequence'):
+       # remove the clusters for which there is not a complete binding curve available:
     full_data.dropna(axis=0, inplace=True)
 
     # --- substract background ----
-    if mode == 'ref_concentration':
+    if mode == 'ref_sequence':
         minus_Imin = subtract_background_ref_sequence(full_data, non_specific_seq, concentrations)
     elif mode == 'lowest_concentration':
         minus_Imin = subtract_background_low_concentration(full_data, concentrations)
 
     # --- saturation level (to convert into bound fraction) ----
-    Imax = find_saturation(full_data, concentrations)
+    Imax = find_saturation(minus_Imin, concentrations)
 
     # --- for every sequence: use bootstrapping to find avg. ABA and errorbar ABA ----
     sequences = []
@@ -105,22 +106,50 @@ def build_dataframe_for_fitting(full_data, nmbr_boot, concentrations,
     return processed_data
 
 
+def get_binding_curves(df, concentrations, non_specific_seq='AAGGCCGAATTCTCACCGGCCCCAAGGTATTCAAG',mode='ref_sequence'):
+    df.dropna(axis=0, inplace=True)
+    # --- substract background ----
+    if mode == 'ref_sequence':
+        minus_Imin = subtract_background_ref_sequence(df, non_specific_seq, concentrations)
+    elif mode == 'lowest_concentration':
+        minus_Imin = subtract_background_low_concentration(df, concentrations)
+    Imax = find_saturation(minus_Imin, concentrations)
+
+    binding_curves = minus_Imin.drop(['On Target', 'PAM', 'Canonical'], axis=1).copy()
+
+    median_binding_curves = binding_curves.groupby('sequence').median()
+
+    # median_binding_curves.set_index('sequence', inplace=True)
+    median_binding_curves /= Imax
+    return median_binding_curves
+
+
 #####################################################################################
 def bootstrap_ABA(grouped, nmbr_runs, Imax, concentrations):
     bstrp_ABA = []
-    for run in range(nmbr_runs):
-        # --- bootstrap sample cluster (per given sequence) -----
-        bstrp_sample = grouped.sample(n=len(grouped), replace=True)
+    if nmbr_runs>0:
+        for run in range(nmbr_runs):
+            # --- bootstrap sample cluster (per given sequence) -----
+            bstrp_sample = grouped.sample(n=len(grouped), replace=True)
 
-        # --- get our new 'median' binding curve ----
-        bstrp_med = bstrp_sample.median()
+            # --- get our new 'median' binding curve ----
+            bstrp_med = bstrp_sample.median()
+            bstrp_binding_curve = row_to_list(bstrp_med, concentrations) / Imax
+            # --- calculate ABA ---
+            try:
+                bstrp_ABA.append(np.log(curve_fit(Hill_eq, concentrations, bstrp_binding_curve, maxfev=1000)[0][0]))
+            except RuntimeError:
+                bstrp_ABA.append(np.nan)
+    else:
+        bstrp_med = grouped.median()
         bstrp_binding_curve = row_to_list(bstrp_med, concentrations) / Imax
-
-        # --- calculate ABA ---
-        bstrp_ABA.append(np.log(curve_fit(Hill_eq, concentrations[1:], bstrp_binding_curve[1:])[0][0]))
-
+        try:
+            bstrp_ABA.append(np.log(curve_fit(Hill_eq, concentrations[concentrations>0],
+                                              bstrp_binding_curve[concentrations>0], maxfev=1000)[0][0]))
+        except RuntimeError:
+            bstrp_ABA.append(np.nan)
     bstrp_ABA = np.array(bstrp_ABA)
-    return np.mean(bstrp_ABA), np.std(bstrp_ABA)
+    return np.nanmean(bstrp_ABA), np.nanstd(bstrp_ABA)
 
 
 def subtract_background_low_concentration(df, concentrations):
