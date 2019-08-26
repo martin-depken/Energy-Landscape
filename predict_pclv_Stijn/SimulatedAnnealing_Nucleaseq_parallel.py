@@ -9,7 +9,6 @@
 #############################################################
 import numpy as np
 import multiprocessing as mp
-import calculate_cleavage_rate as CRISPR
 import sys
 '''
 Main function
@@ -546,11 +545,8 @@ def multiprocessing_main_worker(InQ, OutQ,calc_objective_function):
         chi_weights = job[4]
         combined_fit = job[5]
 
-        if len(job)>6:
-            addidtional_argument = job[6]
-            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights,combined_fit,addidtional_argument)
-        else:
-            output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights,combined_fit)
+
+        output = calc_objective_function(parameter_values, xdata, ydata, yerr, chi_weights)
         # Perform the job:
         OutQ.put(output)
 

@@ -8,10 +8,10 @@ import read_model_ID_toy as model
 Main functions
 '''
 
-def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combined_fit,
-                     model_id,log_on=False):
+def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combined_boyle,combined_CHAMP,
+                     model_id,log_on=False,concentrations=0,reference=0):
     
-    if not combined_fit:
+    if not combined_boyle and not combined_CHAMP:
         k_model = calc_cleavage_rate_fast(parameters, model_id, mismatch_positions)
         if k_model < 10**-5:
             k_model = 10**-5
@@ -38,12 +38,14 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combin
         
         return chi_sqrd
 
-    if combined_fit:
+    if combined_boyle:
         k_model_clv, k_model_on = calc_clv_on(parameters, model_id,
                                               mismatch_positions)
+        
+        #Threshold for accurate measurement is around 10**-5 Hz, values that are actually lower are given as 10**-5 Hz in the dataset
         if k_model_clv < 10**-5:
             k_model_clv = 10**-5
-        
+            
         ydata_clv = np.array(ydata[0])
         ydata_on = np.array(ydata[1])
         yerr_clv = np.array(yerr[0])
@@ -55,8 +57,6 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combin
         chi_sqrd_on_perfect = 0.0
         chi_sqrd_on_single = 0.0
         chi_sqrd_on_double = 0.0
-        
-        
         
         if not log_on:
             if len(mismatch_positions)==0:
@@ -83,10 +83,50 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combin
             elif len(mismatch_positions)==2:
                 chi_sqrd_clv_double = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
                 chi_sqrd_on_double = np.sum(((ydata_on-np.log10(k_model_on))/yerr_on)**2)
-            
+
+        
         chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] + chi_sqrd_on_perfect*chi_weights[3] +
                     chi_sqrd_clv_single*chi_weights[1] + chi_sqrd_on_single*chi_weights[4] +
                     chi_sqrd_clv_double*chi_weights[2] + chi_sqrd_on_double*chi_weights[5])
+        
+        return chi_sqrd
+    
+    if combined_CHAMP:
+        k_model_clv, k_model_aba = calc_clv_aba(parameters, model_id,
+                                              mismatch_positions,concentrations,reference)
+        
+        #Threshold for accurate measurement is around 10**-5 Hz, values that are actually lower are given as 10**-5 Hz in the dataset
+        if k_model_clv < 10**-5:
+            k_model_clv = 10**-5
+            
+        ydata_clv = np.array(ydata[0])
+        ydata_aba = np.array(ydata[1])
+        yerr_clv = np.array(yerr[0])
+        yerr_aba = np.array(yerr[1])
+        
+        chi_sqrd_clv_perfect = 0.0
+        chi_sqrd_clv_single = 0.0
+        chi_sqrd_clv_double = 0.0
+        chi_sqrd_aba_perfect = 0.0
+        chi_sqrd_aba_single = 0.0
+        chi_sqrd_aba_double = 0.0
+        
+        if len(mismatch_positions)==0:
+            chi_sqrd_clv_perfect = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+            chi_sqrd_aba_perfect = np.sum(((ydata_aba-k_model_aba)/yerr_aba)**2)
+
+        elif len(mismatch_positions)==1:
+            chi_sqrd_clv_single = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+            chi_sqrd_aba_single = np.sum(((ydata_aba-k_model_aba)/yerr_aba)**2)
+
+        elif len(mismatch_positions)==2:
+            chi_sqrd_clv_double = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+            chi_sqrd_aba_double = np.sum(((ydata_aba-k_model_aba)/yerr_aba)**2)
+
+        
+        chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] + chi_sqrd_aba_perfect*chi_weights[3] +
+                    chi_sqrd_clv_single*chi_weights[1] + chi_sqrd_aba_single*chi_weights[4] +
+                    chi_sqrd_clv_double*chi_weights[2] + chi_sqrd_aba_double*chi_weights[5])
         
         return chi_sqrd
 
@@ -185,7 +225,7 @@ def combined_rates(parameters,model_id,mismatch_positions):
 
     #handling mismatches
     for i in mismatch_positions:
-        if i < 8: #mismatch in the first barrier, could be placed at 8 or 9 or 10. difference can be compensated by mismatch penalty 8,9
+        if i < 9: #mismatch in the first barrier, could be placed at 8 or 9 or 10. difference can be compensated by mismatch penalty 8,9
             rates[1] *= np.exp(-new_epsilon[4+i])
         elif i < 12: #mismatch in first flat part, pretty sure it should be at 12
             backward[2] *= np.exp(new_epsilon[4+i])
@@ -224,6 +264,61 @@ def calc_clv_on(parameters, model_id, mismatch_positions):
     k_on = calc_association_rate(rate_matrix=matrix_on,timepoints=[500.,1000.,1500.])
     
     return k_clv, k_on
+
+def calc_clv_aba(parameters, model_id, mismatch_positions,concentrations,reference):
+    
+    matrix_clv, matrix_on = get_master_equation_clv_on(parameters,
+                                                       mismatch_positions,
+                                                       model_id)
+    
+    ## Calculating cleavage rate
+    M_clv = -1 * matrix_clv
+    everything_unbound = np.array([1.0] + [0.0] * (len(matrix_clv[0])-1))
+#    try:
+    Minv_clv = np.linalg.inv(M_clv)
+    vec_clv = np.ones(len(Minv_clv))
+    MFPT_clv = vec_clv.dot(Minv_clv.dot(everything_unbound))
+    k_clv = 1/MFPT_clv
+#    except:
+#        print 'INVERTING MATRIX FAILED, USE SLOWER METHOD'
+#        sys.stdout.flush()
+#        if len(parameters)==44:
+#            parameters_clv = parameters[1:42] + parameters[42:44]
+#        if len(parameters)==43:
+#            parameters_clv = parameters[0:40] + parameters[41:43]
+#        k_clv = calc_clv_rate(parameters_clv, model_id[0], mismatch_positions, guide_length)
+    
+    
+    ## Calculating on rate
+    aba = calc_aba(matrix_aba=matrix_on,concentrations=concentrations,reference=reference)
+    
+    return k_clv, aba
+
+def calc_aba(matrix_aba,concentrations,reference):
+    T = 600
+    rel_concentration = concentrations/reference
+    everything_unbound = np.array([1.0] + [0.0] * (len(matrix_aba[0])-1))
+    Pbound = []
+    for c in rel_concentration:
+        new_rate_matrix = matrix_aba.copy()
+        new_rate_matrix[0][0] *= c
+        new_rate_matrix[1][0] *= c
+        Probability = get_Probability(new_rate_matrix, everything_unbound, T)
+        Pbound.append(np.sum(Probability[1:]))
+    Pbound = np.array(Pbound)
+    conc3=False
+    if(conc3==False):
+        Kd, _ = curve_fit(Hill_eq, concentrations,Pbound,maxfev=10000)
+    #print('at the end', concentrations)
+    if(conc3==True):
+        try: # because you do not always get a result from the fit
+            Kd, _ = curve_fit(Hill_eq, concentrations,Pbound,maxfev=1000)
+        except:
+            Kd[0]= 0.0001 # 'error'
+        if(Kd[0]<0): 
+            Kd[0]=0.0001
+    aba = np.log(Kd)
+    return aba
 
 def get_master_equation_clv_on(parameters,mismatch_positions,model_id):
     
@@ -293,3 +388,6 @@ def get_Probability(rate_matrix, initial_condition,T=12*3600):
 
 def least_squares_line_through_origin(x_points, y_points):
     return np.sum( x_points*y_points )/np.sum( x_points*x_points )
+
+def Hill_eq(C, Kd):
+    return (1.0+Kd/C)**(-1)
