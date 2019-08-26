@@ -221,7 +221,7 @@ def calc_Boyle(CalcOccupancy, CalcOffRate, CalcOnRate,
 
     return bound_fraction, association_rate, dissociation_rate
 
-def calc_association_rate(rate_matrix,timepoints=[500.,1000.,1500.],guide_length=20,rel_concentration=0.1):
+def calc_association_rate(rate_matrix,timepoints=[500.,1000.,1500.],guide_length=20,rel_concentration=1):
     '''
     Association experiment for the effective on-rate:
     (repeating the protocol as used in Boyle et al.)

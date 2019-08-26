@@ -1,0 +1,23 @@
+-> If molecule is not specified, it is Cas9
+
+ 	These simulations did not have a lower bound on epsilon_i, so it was allowed to be negative, for later simulations this is corrected
+1_3_2019 			first try of simulation of the experiment of Finkelstein, using all 8 concentration points, using DELTA ABA data
+1_4_2019			using all 8 concentration points, using the rawABA data
+1_4_2019_simple 		using all 8 concentration points, using the rawABA data, assuming equilibrium, so using the boltzmann sum
+8_4_2019_conc2 			using only 2 concentration points (which one are tested for in jupyter notebook file ...), using rawABA data
+8_4_2019_conc3			using only 3 concentration points (which one are tested for in jupyter notebook file ...), using rawABA data
+25_4_2019_conc3			... (I do not remember what the difference is with the previous one) ...
+
+	From now on all the simulations have a lower bound for epsilon_i, so it cannot be negative
+2_5_2019_fixedrates_conc3	using only 3 concentration points, using rawABA data, fixing the rates on the values found by simulation from Boyle
+2_5_2019_var_rates_conc3	using only 3 concentration points, using rawABA data, letting the rates free to be determined by this simulation
+15_5_2019_var_rates_conc3_eq	using only 3 concentration points, using rawABA data, letting the rates free to be determined by this simulation, asssuming
+				equilibrium
+19_5_2019_cas12_conc3		first simulation Cas12, using delta ABA data, but using the code as if it was raw ABA, so the command in green is added to 	
+				the code, for if you want to change between rawABA data and deltaABA data (chi-squared code)
+24_5_2019_cas12_conc3		using 3 concentration points, using delta ABA data combined with the code for delta ABA (chi-squared code)
+26_5_2019_cas12_conc3_eq	using 3 concentration points, using delta ABA data combined with the code for delta ABA (chi-squared code), assuming 
+ 				equilibrium (so boltsmann sum)
+27_5_2019_cas12_conc3_WA	using 3 concentration points, using delta ABA data combined with the code for delta ABA (chi-squared code), but now the fits  				are selected/compared to the weighted avarage of the data instead of the median
+12_6_2019_cas12_conc8		using 8 concentration points, using delta ABA data combined with the code for delta ABA (chi-squared code), selection on WA
+				(these results are not looked at yet during my thesis)

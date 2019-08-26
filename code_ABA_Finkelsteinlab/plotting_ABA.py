@@ -207,7 +207,7 @@ def predict_block_mismatches(parameters, model_id, T=60 * 10, guide_length=20, s
 def predict_1D_mmblocks(parameters, model_id, T=60 * 10, guide_length=20, show_plot=True, show_data=True,
                         data_file='../Data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/cas9-target-e-replicate-1-delta-abas-processed.csv'):
     concentrations = 2 ** np.array(range(0, 11)) * 0.5
-    reference_conc = 10
+    reference_conc = 10.
     ontarget_ABA = CalcABA.calc_ABA(parameters, concentrations, reference_conc,
                                     mismatch_positions=[],
                                     model_id=model_id,
@@ -271,7 +271,7 @@ def predict_1D_mmblocks(parameters, model_id, T=60 * 10, guide_length=20, show_p
 def predict_single_mm(parameters, model_id, T=60 * 10, guide_length=20, show_plot=True, show_data=True,
                       data_file='../Data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/cas9-target-e-replicate-1-delta-abas-processed.csv'):
     concentrations = 2 ** np.array(range(0, 11)) * 0.5
-    reference_conc = 10
+    reference_conc = 10.
     ontarget_ABA = CalcABA.calc_ABA(parameters, concentrations, reference_conc,
                                     mismatch_positions=[],
                                     model_id=model_id,

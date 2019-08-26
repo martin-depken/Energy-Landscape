@@ -5,13 +5,6 @@ sns.set_style('ticks')
 import read_model_ID
 reload(read_model_ID);
 
-
-
-
-
-
-
-
 def plot_free_energy_landscape(parameters,model_id,show_plot=True):
     '''
     Plot the approximate the free-energy landscape for the on-target
@@ -70,9 +63,13 @@ def plot_free_energy_landscape(parameters,model_id,show_plot=True):
 
 
 
-def plot_landscape(parameters, model_id, mismatch_positions, show_plot=True, axis=None):
+def plot_landscape(parameters, model_id, mismatch_positions, show_plot=True, axis=None, rel_concentration=1.):
     '''
     Plot the (free-)energy landscape of the on-target
+
+    Added option to plot at different concentrations.
+    Default is now set to 1 nM, the parameters are ASSUMED to be at 1 nM as well, hence concentration=0.1
+
     :param parameters:
     :param model_id:
     :return:
@@ -80,10 +77,12 @@ def plot_landscape(parameters, model_id, mismatch_positions, show_plot=True, axi
 
     # ---- retrieve model parameters from fit result -----
     epsilon, fwrd_rates = read_model_ID.unpack_parameters(parameters, model_id, guide_length=20)
+    # epsilon[0] -= np.log(rel_concentration)
+    # fwrd_rates[0] += np.log10(rel_concentration)
 
     # ---- Get (possibly) mismatched energy landscape ----
     energies = get_energies(epsilon, mismatch_positions, guide_length=20)
-
+    energies[0] -= np.log(rel_concentration)
 
     # ---- Determine free-energy landscape ----
     landscape = [0.0] + list(np.cumsum(energies))
@@ -155,7 +154,7 @@ def get_energies(epsilon,mismatch_positions, guide_length=20):
 
 
 
-def plot_mismatch_penalties(parameters, model_id,axis=None):
+def plot_mismatch_penalties(parameters, model_id,axis=None, color=None):
     '''
     plot mismatch penalties VS position as a bar plot
     :param parameters:
@@ -169,7 +168,10 @@ def plot_mismatch_penalties(parameters, model_id,axis=None):
         ax = plt.gca()
     else:
         ax = axis
-    ax.bar([i+0.5 for i in range(1,21)], epsilon_I, alpha=0.5)
+    if color:
+        ax.bar([i+0.5 for i in range(1,21)], epsilon_I, color=color)
+    else:
+        ax.bar([i + 0.5 for i in range(1, 21)], epsilon_I)
     # window dressing:
     ax.set_xlabel('targeting progression', fontsize=10)
     ax.set_ylabel(r'mismatch penalties ($k_BT$)',fontsize=10)

@@ -104,7 +104,7 @@ def process_SA_fits(simset,Nparams=44, model_id='init_limit_general_energies_v2'
 
     for filename in simset:
         parameters = gpf.load_simm_anneal(filename, Nparams)
-        parameters[0]=3.5 # If we want to fix epsilon PAM
+        #parameters[0]=3.5 # If we want to fix epsilon PAM
         epsilon, fwd_rates = unpack_parameters(parameters, model_id)
         Energy_landscape, FreeEnergy_landscape = FreeEnergy.plot_free_energy_landscape(parameters, model_id,
                                                                                        show_plot=False);

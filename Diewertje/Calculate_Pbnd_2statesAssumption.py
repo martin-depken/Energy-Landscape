@@ -3,6 +3,7 @@
 Created on Mon Apr 22 15:05:16 2019
 
 @author: Diewertje
+To calculate the occupancy under the assumption that we only have 2 states, sol and PAM
 """
 from scipy import *
 from pylab import *

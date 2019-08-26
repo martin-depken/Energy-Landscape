@@ -1,0 +1,57 @@
+The python code:
+There are a number of files which are copies of the code of Behrouz and Misha, only with a few alterations to make it work in Python3. Those files have the same name, only with _Diewertje behind it. So this actually means 'python3'. This is the case for the following files:
+
+analysis_SA_fits_Diewertje
+Calculate_ABA_Finkelsteinlab_Diewertje
+CRISPR_free_energy_landscape_Diewertje
+CRISPR_Kinetic_model_Diewertje
+get_paramters_fit_Diewertje
+plotting_ABA_Diewertje			(for absolute ABA data)
+plotting_ABA_Diewertje_deltaABA		(for delta ABA data)
+plotting_Boyle_Diewertje
+plotting_Finkelsteinlab_Diewertje
+Weighted_Average_Diewertje
+SimulatedAnnealing_Finkelstein_parallel (but now for python 3 again)
+
+
+The following files are not copies from already existed code:
+
+Calculate_Pbnd_2statesAssumption	To calculate the Occupancy if we have only 2 states.
+Chisq_Finkelstein			To calculate the chi-squared for every fit (used for both absolute and delta ABA, in the file itself it is commented 					how to adjust this)
+Chisq_F_Simple				To calculate the chi-squared for every fit when equilibrium is assumed, for absolute ABA data
+Chisq_F_Simple_deltaABA			To calculate the chi-squared for every fit when equilibrium is assumed, for deltaABA data
+Pipeline_fit_Finkelstein		The pipeline to execute the simmulated annealing to find a best fit. This is for rawABA data, used for Cas9 data
+Pipeline_fit_Finkelstein_Simple		The pipeline to execute the simmulated annealing to find a best fit. This is for rawABA data, used for Cas9 data, 						assuming Equilibrium
+Pipeline_fit_Finkelstein_cas12		The pipeline to execute the simmulated annealing to find a best fit. This is for delta ABA data, used for Cas12 data
+Pipeline_fit_Finkelstein_cas12_eq	The pipeline to execute the simmulated annealing to find a best fit. This is for delta ABA data, used for Cas12 						data, assuming Equilibrium
+plotting_simple_fit			The functions to plot the ABA for single mismatches, but now for the absolute ABA data. You still plot the deltaABA,  					but you now calculate this separately. 	(same functions as in plotting_ABA_Diewertje)
+Prepare_data				To make lists with the MMposition, ABA and uncertainty with every measurement. FOR delta ABA data
+Prepare_data_Simple			To make lists with the MMposition, ABA and uncertainty with every measurement. FOR absolute ABA data
+
+
+3 sh-files to run the code on the cluster. all 3 work the same, I have 3 because I ran multiple jobs at the same time. But by only adjusting the path and the files it should work for all, there is nothing specific to them. 
+
+#################################################
+The jupyter notebooks:
+
+2 state assumption test 		To test if the 2 state assumptions gives the correct occupancy
+Compare Cas9 - Cas12			Comparison Cas9 and Cas12 + Comparison Cas9 Finkelstein and Boyle + plot thesis: difference experimental methods
+Make WA out of data			To find the WA of the data, this is code that is also/can be added to the pipeline
+make_jobs_Diewertje			To make the job file
+To make the code faster			To see if we can use less concentration points and which combinations give the best results
+
+
+Look at the results of different simulations: 				(data of the simulation that is displayed in this notebook)
+	Cas12 8 concentration points					12-6-2019	
+	Fixed_Rates_3_Concentrationpoints				25-4-2019
+	Fixed_Rates_3c_correct_low_bound				2-5-2019	
+	Look at fits with less concentration points			8-4-2019 conc2 and conc3
+	Plots result fit on rawABA(normal and assumed equilibrium) 	1-4-2019 (normal and simple)
+	Plotting energylandscape from model				1-3-2019
+	Variable_Rates_3c_Cas12						19-5-2019
+	Variable_Rates_3c_Cas12_delta					24-5-2019
+	Variable_Rates_3c_Cas12_delta_WA				27-5-2019
+	Variable_Rates_3c_Cas12_eq					26-5-2019
+	Variable_Rates_3c_correct_low_bound				2-5-2019
+	Variable_Rates_3c_correct_low_bound_equilibrium 		15-5-2019
+
