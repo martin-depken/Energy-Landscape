@@ -128,6 +128,91 @@ def prepare_multiprocessing_combined(rep_on,filename_clv,path_on,path_clv,fit_to
             
     
     return xdata_clv, ydata, yerr
+
+def prepare_multiprocessing_combined_delta_aba(filename_aba,filename_clv,path_aba,path_clv,fit_to_wa=False):
+    
+    xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq_log(filename_clv,path_clv)
+    xdata_aba, ydata_aba, yerr_aba = Prepare_delta_aba_data(filename_aba,path_aba)
+    
+    ydata = list()
+    yerr = list()
+    
+    #delta ABA has no OT data
+    ydata.append([ydata_clv[0],[]])
+    yerr.append([yerr_clv[0],[]])
+    
+    for i in range(len(xdata_clv)):
+        for j in range(len(xdata_aba)):
+            if (len(xdata_clv[i])==len(xdata_aba[j])):
+                if(len(xdata_clv[i])==0 and len(xdata_aba[j])==0):
+                    ydata.append([ydata_clv[i],ydata_aba[j]])
+                    yerr.append([yerr_clv[i],yerr_aba[j]])
+                if(len(xdata_clv[i])==1 and xdata_clv[i][0]==xdata_aba[j][0]):
+                    ydata.append([ydata_clv[i],ydata_aba[j]])
+                    yerr.append([yerr_clv[i],yerr_aba[j]])
+                if((len(xdata_clv[i])==2 and xdata_clv[i][0]==xdata_aba[j][0] and xdata_clv[i][1]==xdata_aba[j][1])
+                  or (len(xdata_clv[i])==2 and xdata_clv[i][0]==xdata_aba[j][1] and xdata_clv[i][1]==xdata_aba[j][0])):
+                    ydata.append([ydata_clv[i],ydata_aba[j]])
+                    yerr.append([yerr_clv[i],yerr_aba[j]]) 
+    
+    if fit_to_wa:
+        for i in range(len(xdata_clv)):
+            weightsclv, errorclv = weighting(yerr[i][0])
+            ydata[i][0] = [np.average(ydata[i][0],weights=weightsclv)]
+            if len(ydata[i][1])==0:
+                ydata[i][1] = []
+            else:
+                weightsaba, erroraba = weighting(yerr[i][1])
+                ydata[i][1] = [np.average(ydata[i][1],weights=weightsaba)]
+            
+            yerr[i][0] = [errorclv]
+            if len(ydata[i][1])==0:
+                yerr[i][1] = []
+            else:
+                yerr[i][1] = [erroraba]           
+    
+    return xdata_clv, ydata, yerr
+
+def prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_aba,path_clv,fit_to_wa=False):
+    
+    xdata_clv, ydata_clv, yerr_clv = prepare_multiprocessing_nucleaseq_log(filename_clv,path_clv)
+    xdata_aba, ydata_aba, yerr_aba = Prepare_aba_data(filename_aba,path_aba)
+    
+    ydata = list()
+    yerr = list()
+    
+    
+    for i in range(len(xdata_clv)):
+        for j in range(len(xdata_aba)):
+            if (len(xdata_clv[i])==len(xdata_aba[j])):
+                if(len(xdata_clv[i])==0 and len(xdata_aba[j])==0):
+                    ydata.append([ydata_clv[i],ydata_aba[j]])
+                    yerr.append([yerr_clv[i],yerr_aba[j]])
+                if(len(xdata_clv[i])==1 and xdata_clv[i][0]==xdata_aba[j][0]):
+                    ydata.append([ydata_clv[i],ydata_aba[j]])
+                    yerr.append([yerr_clv[i],yerr_aba[j]])
+                if((len(xdata_clv[i])==2 and xdata_clv[i][0]==xdata_aba[j][0] and xdata_clv[i][1]==xdata_aba[j][1])
+                  or (len(xdata_clv[i])==2 and xdata_clv[i][0]==xdata_aba[j][1] and xdata_clv[i][1]==xdata_aba[j][0])):
+                    ydata.append([ydata_clv[i],ydata_aba[j]])
+                    yerr.append([yerr_clv[i],yerr_aba[j]]) 
+    
+    if fit_to_wa:
+        for i in range(len(xdata_clv)):
+            weightsclv, errorclv = weighting(yerr[i][0])
+            ydata[i][0] = [np.average(ydata[i][0],weights=weightsclv)]
+            if len(ydata[i][1])==0:
+                ydata[i][1] = []
+            else:
+                weightsaba, erroraba = weighting(yerr[i][1])
+                ydata[i][1] = [np.average(ydata[i][1],weights=weightsaba)]
+            
+            yerr[i][0] = [errorclv]
+            if len(ydata[i][1])==0:
+                yerr[i][1] = []
+            else:
+                yerr[i][1] = [erroraba]           
+    
+    return xdata_clv, ydata, yerr
     
 def prepare_multiprocessing_nucleaseq_log(filename, path, fit_to_wa=False):
     data = pd.read_csv(path + filename,
@@ -155,3 +240,39 @@ def prepare_multiprocessing_nucleaseq_log(filename, path, fit_to_wa=False):
             yerr[i] = [errorclv]
         
     return xdata, ydata, yerr
+
+def Prepare_delta_aba_data(filename, path):
+    # function berouz to get this csv file!
+    data=pd.read_csv(path + filename)
+    
+    Grouped = data.groupby('Mutation Positions').agg(lambda x: list(x))
+    Grouped.reset_index(inplace=True)
+    
+    for i in range(len(Grouped)):
+        s=Grouped['Mutation Positions'][i]
+        Grouped['Mutation Positions'][i] = np.array(s.split('|')).astype(int)
+    
+    MMpos=Grouped['Mutation Positions'].tolist()
+    ABA=Grouped['Delta ABA (kBT)'].tolist()
+    Uncertainty=Grouped['Uncertainty'].tolist()
+    
+    return MMpos, ABA, Uncertainty
+
+def Prepare_aba_data(filename, path):
+    # function berouz to get this csv file!
+    data=pd.read_csv(path + filename)
+    data['Mutation Positions'].fillna('',inplace=True)
+    
+    Grouped = data.groupby('Mutation Positions').agg(lambda x: list(x))
+    Grouped.reset_index(inplace=True)
+    
+    for i in range(len(Grouped)):
+        s=Grouped['Mutation Positions'][i]
+        Grouped['Mutation Positions list'] = Grouped['Mutation Positions'].apply(
+        lambda x: map(int, x.split('|')) if not x == '' else [])
+    
+    MMpos=Grouped['Mutation Positions list'].tolist()
+    ABA=Grouped['ABA'].tolist()
+    Uncertainty=Grouped['error'].tolist()
+    
+    return MMpos, ABA, Uncertainty

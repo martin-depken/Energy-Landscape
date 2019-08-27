@@ -1,0 +1,74 @@
+1-5
+Sequence dependent fit, direct pairs. Only fit to single mismatches. Adjusting the mismatch penalties of fit 18-7 nr 17.
+
+6-10
+Same, but nearest neighbour interaction is included.
+
+Boundary is just a bit tight for one or two mismatch types, can adjust those manually.
+
+fit_to_wa = True
+    
+    gRNA_length = 20
+    #fit_to_median = False   
+    
+    upper_bnd =      [3.]*12
+    lower_bnd =      [-3.]*12
+    initial_guess =  [0.]*12
+    
+
+    ###########################
+    # /* Objective function *\#
+    ###########################
+    
+    KineticModel = functools.partial(CRISPR.calc_chi_squared,
+                        guide_length=gRNA_length,
+                        model_id=model_ID)
+
+
+    #############################################
+    # /* Preprocess the data from Boyle et al. *\#
+    ##############################################
+    if fit_to_wa:
+        xdata, ydata, yerr = processing.prepare_multiprocessing_seq_dep_wa(filename_clv,path_to_dataClv)
+    else:
+        xdata, ydata, yerr = processing.prepare_multiprocessing_seq_dep(filename_clv,path_to_dataClv)
+    
+     
+    ##############################################
+    # /*   Call the Simulated Annealing code   *\#
+    ##############################################
+
+
+
+    t1 = time()
+    fit_result = SA.sim_anneal_fit(xdata=xdata,
+                                   ydata=ydata,
+                                   yerr = yerr,
+                                   Xstart= np.array(initial_guess),
+                                   lwrbnd= np.array(lower_bnd),
+                                   upbnd= np.array(upper_bnd),
+                                model='I_am_using_multi_processing_in_stead',
+                                objective_function=KineticModel,
+                                Tstart=100.,             # infered from run on my computer/other runs on cluster
+                                use_relative_steps=False,
+                                delta=0.1,
+                                tol=1E-5,
+                                Tfinal=0.0,
+                                potential_threshold = 300.,
+                                adjust_factor=1.1,
+                                cooling_rate_high=0.95,
+                                cooling_rate_low=0.99,
+                                N_int=1000,
+                                Ttransition=1000.,
+                                AR_low=40,
+                                AR_high=60,
+                                use_multiprocessing=True,
+                                nprocs=nmbr_cores,
+                                output_file_results = fit_result_file,
+                                output_file_monitor = monitor_file,
+                                output_file_init_monitor=init_monitor_file,
+                                NMAC=False, #non-monotonic adaptive cooling
+                                reanneal=False, #reheating when in local minimum, set to False to do no reheating
+                                random_step=False
+                                )
+

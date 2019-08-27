@@ -11,10 +11,10 @@ import read_model_ID as model
 Main functions
 '''
 
-def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combined_fit,log_on,
-                    guide_length, model_id):
+def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights=np.ones(3),combined_boyle=False,log_on=False,combined_CHAMP=False,
+                    guide_length=20, model_id='Clv_Saturated_general_energies_v2',concentrations=0,reference=0):
     
-    if not combined_fit:
+    if not combined_boyle and not combined_CHAMP:
         k_model = calc_clv_rate_fast(parameters, model_id, mismatch_positions,
                                 guide_length)
         
@@ -44,7 +44,7 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combin
         
         return chi_sqrd
 
-    if combined_fit:
+    if combined_boyle:
         k_model_clv, k_model_on = calc_clv_on(parameters, model_id,
                                               mismatch_positions, guide_length)
         
@@ -94,6 +94,45 @@ def calc_chi_squared(parameters,mismatch_positions,ydata,yerr,chi_weights,combin
         chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] + chi_sqrd_on_perfect*chi_weights[3] +
                     chi_sqrd_clv_single*chi_weights[1] + chi_sqrd_on_single*chi_weights[4] +
                     chi_sqrd_clv_double*chi_weights[2] + chi_sqrd_on_double*chi_weights[5])
+        
+        return chi_sqrd
+    
+    if combined_CHAMP:
+        k_model_clv, k_model_aba = calc_clv_aba(parameters, model_id,
+                                              mismatch_positions, guide_length,concentrations,reference)
+        
+        #Threshold for accurate measurement is around 10**-5 Hz, values that are actually lower are given as 10**-5 Hz in the dataset
+        if k_model_clv < 10**-5:
+            k_model_clv = 10**-5
+            
+        ydata_clv = np.array(ydata[0])
+        ydata_aba = np.array(ydata[1])
+        yerr_clv = np.array(yerr[0])
+        yerr_aba = np.array(yerr[1])
+        
+        chi_sqrd_clv_perfect = 0.0
+        chi_sqrd_clv_single = 0.0
+        chi_sqrd_clv_double = 0.0
+        chi_sqrd_aba_perfect = 0.0
+        chi_sqrd_aba_single = 0.0
+        chi_sqrd_aba_double = 0.0
+        
+        if len(mismatch_positions)==0:
+            chi_sqrd_clv_perfect = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+            chi_sqrd_aba_perfect = np.sum(((ydata_aba-k_model_aba)/yerr_aba)**2)
+
+        elif len(mismatch_positions)==1:
+            chi_sqrd_clv_single = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+            chi_sqrd_aba_single = np.sum(((ydata_aba-k_model_aba)/yerr_aba)**2)
+
+        elif len(mismatch_positions)==2:
+            chi_sqrd_clv_double = np.sum(((ydata_clv-np.log10(k_model_clv))/yerr_clv)**2)
+            chi_sqrd_aba_double = np.sum(((ydata_aba-k_model_aba)/yerr_aba)**2)
+
+        
+        chi_sqrd = (chi_sqrd_clv_perfect*chi_weights[0] + chi_sqrd_aba_perfect*chi_weights[3] +
+                    chi_sqrd_clv_single*chi_weights[1] + chi_sqrd_aba_single*chi_weights[4] +
+                    chi_sqrd_clv_double*chi_weights[2] + chi_sqrd_aba_double*chi_weights[5])
         
         return chi_sqrd
 
@@ -206,13 +245,112 @@ def calc_clv_on(parameters, model_id, mismatch_positions, guide_length):
                                                  guide_length=guide_length)
     
     return k_clv, k_on
+
+def calc_clv_daba(parameters, model_id, mismatch_positions, guide_length,concentrations,reference,ontarget_ABA):
+    model_id_clv,model_id_aba,parameters_clv,parameters_aba = model.combined_model(parameters,model_id)
+    matrix_clv, matrix_aba = get_master_equation_clv_aba(parameters,mismatch_positions,model_id,guide_length)
+    
+    ## Calculating cleavage rate
+    M_clv = -1 * matrix_clv
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    try:
+        Minv_clv = np.linalg.inv(M_clv)
+        vec_clv = np.ones(len(Minv_clv))
+        MFPT_clv = vec_clv.dot(Minv_clv.dot(everything_unbound))
+        k_clv = 1/MFPT_clv
+    except:
+        print 'INVERTING MATRIX FAILED, USE SLOWER METHOD'
+        sys.stdout.flush()
+        if len(parameters)==44:
+            parameters_clv = parameters[1:42] + parameters[42:44]
+        if len(parameters)==43:
+            parameters_clv = parameters[0:40] + parameters[41:43]
+        k_clv = calc_clv_rate(parameters_clv, model_id[0], mismatch_positions, guide_length)
+        
+    ## Calculating delta ABA
+    T = 600
+    rel_concentration = concentrations/reference
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    Pbound = []
+    for c in rel_concentration:
+        new_rate_matrix = matrix_aba.copy()
+        new_rate_matrix[0][0] *= c
+        new_rate_matrix[1][0] *= c
+        Probability = get_Probability(new_rate_matrix, everything_unbound, T)
+        Pbound.append(np.sum(Probability[1:]))
+    Pbound = np.array(Pbound)
+    conc3=True
+    if(conc3==False):
+        Kd, _ = curve_fit(Hill_eq, concentrations,Pbound,maxfev=10000)
+    #print('at the end', concentrations)
+    if(conc3==True):
+        try: # because you do not always get a result from the fit
+            Kd, _ = curve_fit(Hill_eq, concentrations,Pbound,maxfev=1000)
+        except:
+            Kd[0]= 0.0001 # 'error'
+        if(Kd[0]<0): 
+            Kd[0]=0.0001
+    delta_aba = np.log(Kd) - ontarget_ABA
+    
+    return k_clv, delta_aba
+
+def calc_clv_aba(parameters, model_id, mismatch_positions, guide_length,concentrations,reference):
+
+    model_id_clv,model_id_aba,parameters_clv,parameters_aba = model.combined_model(parameters,model_id)
+    matrix_clv, matrix_aba = get_master_equation_clv_aba(parameters,mismatch_positions,model_id,guide_length)
+    
+    ## Calculating cleavage rate
+    M_clv = -1 * matrix_clv
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    try:
+        Minv_clv = np.linalg.inv(M_clv)
+        vec_clv = np.ones(len(Minv_clv))
+        MFPT_clv = vec_clv.dot(Minv_clv.dot(everything_unbound))
+        k_clv = 1/MFPT_clv
+    except:
+        print 'INVERTING MATRIX FAILED, USE SLOWER METHOD'
+        sys.stdout.flush()
+        if len(parameters)==44:
+            parameters_clv = parameters[1:42] + parameters[42:44]
+        if len(parameters)==43:
+            parameters_clv = parameters[0:40] + parameters[41:43]
+        k_clv = calc_clv_rate(parameters_clv, model_id[0], mismatch_positions, guide_length)
+        
+    ## Calculating ABA
+    T = 600
+    rel_concentration = concentrations/reference
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    Pbound = []
+    for c in rel_concentration:
+        new_rate_matrix = matrix_aba.copy()
+        new_rate_matrix[0][0] *= c
+        new_rate_matrix[1][0] *= c
+        Probability = get_Probability(new_rate_matrix, everything_unbound, T)
+        Pbound.append(np.sum(Probability[1:]))
+    Pbound = np.array(Pbound)
+    conc3=False
+    if(conc3==False):
+        Kd, _ = curve_fit(Hill_eq, concentrations,Pbound,maxfev=10000)
+    #print('at the end', concentrations)
+    if(conc3==True):
+        try: # because you do not always get a result from the fit
+            Kd, _ = curve_fit(Hill_eq, concentrations,Pbound,maxfev=1000)
+        except:
+            Kd[0]= 0.0001 # 'error'
+        if(Kd[0]<0): 
+            Kd[0]=0.0001
+    aba = np.log(Kd)
+    
+    return k_clv, aba
     
 '''
 Helper functions 
 '''
 
+def Hill_eq(C, Kd):
+    return (1.0+Kd/C)**(-1)
+
 def get_master_equation_clv_on(parameters,mismatch_positions,model_id,guide_length):
-    
     model_id_clv,model_id_on,parameters_clv,parameters_on = model.combined_model(parameters,model_id)
     
     epsilon_on, forward_rates_on = model.unpack_parameters(parameters_on, model_id_on, guide_length)
@@ -241,6 +379,38 @@ def get_master_equation_clv_on(parameters,mismatch_positions,model_id,guide_leng
     matrix_clv[2][2] = -(backward_rates_clv[2]+forward_rates_clv[2])
     
     return matrix_clv, matrix_on
+
+def get_master_equation_clv_aba(parameters,mismatch_positions,model_id,guide_length):
+    model_id_clv,model_id_aba,parameters_clv,parameters_aba = model.combined_model(parameters,model_id)
+    
+    epsilon_aba, forward_rates_aba = model.unpack_parameters(parameters_aba, model_id_aba, guide_length)
+    energies_aba = get_energies(epsilon_aba,mismatch_positions, guide_length)
+    backward_rates_aba = get_backward_rates(energies_aba, forward_rates_aba,guide_length )
+    matrix_aba = build_rate_matrix(forward_rates_aba, backward_rates_aba)
+    
+    epsilon_clv, forward_rates_clv = model.unpack_parameters(parameters_clv, model_id_clv, guide_length)
+    energies_clv = get_energies(epsilon_clv,mismatch_positions, guide_length)
+    backward_rates_clv = get_backward_rates(energies_clv,forward_rates_clv,guide_length)
+    
+    #most of the matrix entries are equal
+    matrix_clv = matrix_aba.copy()
+    
+    #different rate from solution
+    matrix_clv[0][0] = -forward_rates_clv[0]
+    matrix_clv[1][0] = forward_rates_clv[0]
+    
+    #different cleavage rate
+    matrix_clv[-1][-1] = -(forward_rates_clv[-1]+backward_rates_clv[-1]) 
+    
+    #different ePAM
+    matrix_clv[0][1] = backward_rates_clv[1]
+    matrix_clv[1][1] = -(backward_rates_clv[1]+forward_rates_clv[1])
+    matrix_clv[1][2] = backward_rates_clv[2]
+    matrix_clv[2][2] = -(backward_rates_clv[2]+forward_rates_clv[2])
+    
+    return matrix_clv, matrix_aba
+
+
 
 def get_master_equation(parameters, mismatch_positions, model_id, guide_length):
     '''
@@ -365,3 +535,54 @@ def get_Probability(rate_matrix, initial_condition,T=12*3600):
 
 def least_squares_line_through_origin(x_points, y_points):
     return np.sum( x_points*y_points )/np.sum( x_points*x_points )
+
+def calc_binding_curve(parameters, concentration, reference, mismatch_positions, T_list, model_id='general_energies', guide_length=20):
+
+    rate_matrix = get_master_equation(parameters, mismatch_positions, model_id, guide_length)
+    rel_concentration = concentration/reference
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    new_rate_matrix = rate_matrix.copy()
+    new_rate_matrix[0][0] *= rel_concentration
+    new_rate_matrix[1][0] *= rel_concentration
+    Probability = map(lambda t: 1-get_Probability(new_rate_matrix, everything_unbound, t)[0], T_list)
+    return Probability
+
+def calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):
+    #print('at the beginning', concentrations)
+    rate_matrix = get_master_equation(parameters, mismatch_positions, model_id, guide_length)
+    rel_concentration = concentrations/reference
+    everything_unbound = np.array([1.0] + [0.0] * (guide_length + 1))
+    Pbound = []
+    for c in rel_concentration:
+        new_rate_matrix = rate_matrix.copy()
+        new_rate_matrix[0][0] *= c
+        new_rate_matrix[1][0] *= c
+        Probability = get_Probability(new_rate_matrix, everything_unbound, T)
+        Pbound.append(np.sum(Probability[1:]))
+    Pbound = np.array(Pbound)
+    concentrations = np.array(concentrations)
+    conc3=True
+    if(conc3==False):
+        Kd, _ = curve_fit(Hill_eq, concentrations,Pbound,maxfev=10000)
+    #print('at the end', concentrations)
+    if(conc3==True):
+        try: # because you do not always get a result from the fit
+            Kd, _ = curve_fit(Hill_eq, concentrations,Pbound,maxfev=1000)
+        except:
+            Kd[0]= 0.0001 # 'error'
+        if(Kd[0]<0): 
+            Kd[0]=0.0001
+    return Kd[0], Pbound, concentrations
+
+
+def calc_ABA(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):
+    Kd, _,_ = calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id, guide_length, T)
+    return np.log(Kd)
+
+def calc_delta_ABA(parameters, concentrations, reference, mismatch_positions,ontarget_ABA, model_id = 'general_energies', guide_length = 20, T=10*60):
+    ABA = calc_ABA(parameters, concentrations, reference, mismatch_positions, model_id, guide_length, T)
+    return ABA-ontarget_ABA
+
+def calc_Kd(parameters, concentrations, reference, mismatch_positions, model_id = 'general_energies', guide_length = 20, T=10*60):
+    Kd, _,_ = calc_Pbound(parameters, concentrations, reference, mismatch_positions, model_id, guide_length, T)
+    return Kd

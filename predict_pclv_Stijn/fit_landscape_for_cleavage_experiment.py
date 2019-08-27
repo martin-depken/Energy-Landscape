@@ -27,58 +27,66 @@ def main(argv):
     # /* Settings *\#
     #################
     # Loading the data
-    use_cluster = bool(int(argv[7]))
+    use_cluster = bool(int(argv[8]))
     if use_cluster:
         path_to_dataClv= PATH_HPC05+'data_nucleaseq_Finkelsteinlab/targetE/'
-        path_to_dataOn= path_to_dataClv
+        path_to_dataAba= path_to_dataClv
         nmbr_cores = 19
     else:
         # On my laptop use this line in stead:
         path_to_dataClv = '../' + '/data_nucleaseq_Finkelsteinlab/targetE/'
-        path_to_dataOn = '../Data_Boyle/'
+        path_to_dataAba = '../data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/'
         nmbr_cores = 2
 
     # Simmulated Annealing
-    combined_fit = bool(int(argv[8]))
+    combined_fit = bool(int(argv[9]))
     
-    filename = argv[1]
+    filename_clv = argv[1]
+    filename_aba = argv[2]
+    model_ID_aba = argv[4]
     if combined_fit:
-        model_ID =  argv[2] + '+' + argv[3]
+        model_ID =  argv[3] + '+' + argv[4]
     else:
-        model_ID = argv[2]
-    monitor_file = argv[4]
-    fit_result_file = argv[5]
-    init_monitor_file = argv[6]
+        model_ID = argv[3]
+    monitor_file = argv[5]
+    fit_result_file = argv[6]
+    init_monitor_file = argv[7]
     fit_to_wa = True
     only_single = False
-    log_on_boyle = True
-    fill_in_boyle = True
+    log_on_boyle = False
+    fill_in_boyle = False
     
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [10.]*20   + [4.0]
-    lower_bnd =      [-10.0]*20 + [-1.0]
-    initial_guess =  [0.0]*20   + [1.0]
+    upper_bnd =      [10.]*20   + [10.]*20 + [3.]  + [4.]
+    lower_bnd =      [-10.]*20  + [0.]*20  + [1.]  + [-1.]
+    initial_guess =  [0.]*20    + [5.]*20  + [2.]  + [1.]
     
 
     ###########################
     # /* Objective function *\#
     ###########################
+    
+    #concentrations = np.array([1.,30.,100.])
+    concentrations = np.array([0.1, 0.3, 1., 3., 10., 30., 100., 300.]) # in nanoMolair
+    reference=10. # in nanomolair, important: use float, not int
+    
     KineticModel = functools.partial(CRISPR.calc_chi_squared,
                         guide_length=gRNA_length,
                         model_id=model_ID,
-                                    log_on=log_on_boyle)
+                                    log_on=log_on_boyle,combined_boyle=False, combined_CHAMP=combined_fit,
+                                    concentrations=concentrations, reference=reference)
 
 
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
     if combined_fit:
-        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,fit_to_wa,only_single,log_on_boyle,fill_in_boyle)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa)
     
     if not combined_fit:
-        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,fit_to_wa)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename_clv,path_to_dataClv,fit_to_wa)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata
@@ -100,9 +108,6 @@ def main(argv):
             doubleOn = 0.0
             for i in range(len(xdata)):
                 if len(xdata[i])==1:
-                    if xdata[i][0]==6 or xdata[i][0]==7:
-                        ydata[i][1] = []
-                        yerr[i][1] = []
                     singleClv += len(ydata[i][0])
                     singleOn += len(ydata[i][1])
                 if len(xdata[i])==2:
@@ -157,7 +162,7 @@ def main(argv):
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=3000.,             # infered from run on my computer/other runs on cluster
+                                Tstart=80000.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=0.1,
                                 tol=1E-5,

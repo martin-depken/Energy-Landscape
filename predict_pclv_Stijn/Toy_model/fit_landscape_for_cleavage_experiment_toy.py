@@ -30,58 +30,67 @@ def main(argv):
     # /* Settings *\#
     #################
     # Loading the data
-    use_cluster = bool(int(argv[7]))
+    use_cluster = bool(int(argv[8]))
     if use_cluster:
         path_to_dataClv= PATH_HPC05+'data_nucleaseq_Finkelsteinlab/targetE/'
-        path_to_dataOn= path_to_dataClv
+        path_to_dataAba= path_to_dataClv
         nmbr_cores = 19
     else:
         # On my laptop use this line in stead:
-        path_to_dataClv = '../../' + '/data_nucleaseq_Finkelsteinlab/targetE/'
-        path_to_dataOn = '../../Data_Boyle/'
+        path_to_dataClv = '../..' + '/data_nucleaseq_Finkelsteinlab/targetE/'
+        path_to_dataAba = '../../data_ABA_Finkelsteinlab/champ-cas9-cas12a-data/'
         nmbr_cores = 2
 
     # Simmulated Annealing
-    combined_fit = bool(int(argv[8]))
+    combined_fit = bool(int(argv[9]))
     
-    filename = argv[1]
+    filename_clv = argv[1]
+    filename_aba = argv[2]
+    model_ID_aba = argv[4]
     if combined_fit:
-        model_ID =  argv[2] + '+' + argv[3]
+        model_ID =  argv[3] + '+' + argv[4]
     else:
-        model_ID = argv[2]
-    monitor_file = argv[4]
-    fit_result_file = argv[5]
-    init_monitor_file = argv[6]
-    wa = True
+        model_ID = argv[3]
+    monitor_file = argv[5]
+    fit_result_file = argv[6]
+    init_monitor_file = argv[7]
+    fit_to_wa = True
     only_single = False
-    log_boyle = True
-    fill_in_boyle = True
+    log_on_boyle = False
+    fill_in_boyle = False
     
     
     #gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [10.0]*2  + [3.0]  + [3.0]
-    lower_bnd =      [-10.0]*2 + [-3.0] + [1.0]
-    initial_guess =  [0.0]*2   + [0.0]  + [2.0]
+    upper_bnd =      [4.0] + [10.0]*2  + [7.5]*20 + [0.0] +  [3.0]*2  + [4.0]
+    lower_bnd =      [0.0] + [-10.0]*2 + [2.5]*20 + [-4.0] + [-3.0]*2 + [-1.0]
+    initial_guess =  [2.0] + [0.0]*2   + [5.0]*20 + [-2.0] + [0.0]*2  + [1.0]
     
 
     ###########################
     # /* Objective function *\#
     ###########################
-    KineticModel = functools.partial(CRISPR.calc_chi_squared,model_id=model_ID,log_on=log_boyle)
+    #concentrations = np.array([1.,30.,100.])
+    concentrations = np.array([0.1, 0.3, 1., 3., 10., 30., 100., 300.]) # in nanoMolair
+    reference=10. # in nanomolair, important: use float, not int
+    
+    KineticModel = functools.partial(CRISPR.calc_chi_squared,
+                        model_id=model_ID,
+                                    log_on=log_on_boyle,combined_boyle=False, combined_CHAMP=combined_fit,
+                                    concentrations=concentrations, reference=reference)
 
 
     #############################################
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
     if combined_fit:
-#        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename,path_to_dataOn,path_to_dataClv,wa,only_single,log_boyle,fill_in_boyle)
-        xdata, ydata, yerr = avg.combined_average_data('1',filename,path_to_dataOn,path_to_dataClv)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa)
+#        xdata, ydata, yerr = avg.combined_average_data_aba(filename_aba,filename_clv,path_to_dataAba,path_to_dataClv)
     
     if not combined_fit:
-#        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,True)
-        xdata,ydata,yerr = avg.cleavage_average_data(filename,path_to_dataClv)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename,path_to_dataClv,fit_to_wa)
+#        xdata,ydata,yerr = avg.cleavage_average_data(filename_clv,path_to_dataClv)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata
