@@ -1,20 +1,16 @@
-1-5
-Sequence dependent fit, direct pairs. Only fit to single mismatches. Now no position dependent part of the mismatch penalty.
+1-5 Mismatch sequence dependent fit, nearest neighbours counting only the neighbour after the position.
 
-6-10
-Same, but nearest neighbour interaction is included.
+6-10 Mismatch sequence dependent fit, nearest neighbours before and after the position.
 
-11-20
-Same, but with free position dependent ei
 
 fit_to_wa = True
     
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [10.]*12
-    lower_bnd =      [0.]*12
-    initial_guess =  [5.]*12
+    upper_bnd =      [4.]*30
+    lower_bnd =      [-4.]*30
+    initial_guess =  [0.]*30
     
 
     ###########################
@@ -50,12 +46,12 @@ fit_to_wa = True
                                    upbnd= np.array(upper_bnd),
                                 model='I_am_using_multi_processing_in_stead',
                                 objective_function=KineticModel,
-                                Tstart=100.,             # infered from run on my computer/other runs on cluster
+                                Tstart=10000.,             # infered from run on my computer/other runs on cluster
                                 use_relative_steps=False,
                                 delta=0.1,
                                 tol=1E-5,
                                 Tfinal=0.0,
-                                potential_threshold = 300.,
+                                potential_threshold = 500.,
                                 adjust_factor=1.1,
                                 cooling_rate_high=0.95,
                                 cooling_rate_low=0.99,
@@ -72,4 +68,3 @@ fit_to_wa = True
                                 reanneal=False, #reheating when in local minimum, set to False to do no reheating
                                 random_step=False
                                 )
-
