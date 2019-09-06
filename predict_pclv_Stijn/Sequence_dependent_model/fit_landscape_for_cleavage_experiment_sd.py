@@ -49,9 +49,9 @@ def main(argv):
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [4.]*33  + [10.]*20
-    lower_bnd =      [-4.]*33 + [0.]*20
-    initial_guess =  [0.]*33  + [5.]*20
+    upper_bnd =      [4.]*45
+    lower_bnd =      [-4.]*45
+    initial_guess =  [0.]*45
     
 
     ###########################
