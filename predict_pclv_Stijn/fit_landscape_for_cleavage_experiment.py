@@ -59,9 +59,9 @@ def main(argv):
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [10.]*20   + [10.]*20 + [3.]  + [4.]
-    lower_bnd =      [-10.]*20  + [0.]*20  + [1.]  + [-1.]
-    initial_guess =  [0.]*20    + [5.]*20  + [2.]  + [1.]
+    upper_bnd =      [10.]*12   + [4.0]
+    lower_bnd =      [-10.0]*12 + [0.0]
+    initial_guess =  [0.0]*12   + [1.0]
     
 
     ###########################
@@ -69,13 +69,13 @@ def main(argv):
     ###########################
     
     #concentrations = np.array([1.,30.,100.])
-    concentrations = np.array([0.1, 0.3, 1., 3., 10., 30., 100., 300.]) # in nanoMolair
+    concentrations = [1.] #np.array([0.1, 0.3, 1., 3., 10., 30., 100., 300.]) # in nanoMolair
     reference=10. # in nanomolair, important: use float, not int
     
     KineticModel = functools.partial(CRISPR.calc_chi_squared,
                         guide_length=gRNA_length,
                         model_id=model_ID,
-                                    log_on=log_on_boyle,combined_boyle=False, combined_CHAMP=combined_fit,
+                                    log_on=log_on_boyle,combined_boyle=False, combined_CHAMP=False,
                                     concentrations=concentrations, reference=reference)
 
 
@@ -83,10 +83,11 @@ def main(argv):
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
     if combined_fit:
-        xdata, ydata, yerr = processing.prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa)
+        #xdata, ydata, yerr = processing.prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa,only_single,log_on_boyle,fill_in_boyle)
     
     if not combined_fit:
-        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename_clv,path_to_dataClv,fit_to_wa)
+        xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename_clv,path_to_dataClv,fit_to_wa,only_single)
     #xdata, ydata, yerr = cr.create_fake_data()
     #print xdata, ydata, yerr
     # print ydata
@@ -108,9 +109,13 @@ def main(argv):
             doubleOn = 0.0
             for i in range(len(xdata)):
                 if len(xdata[i])==1:
+                    if xdata[i][0] == 6 or xdata[i][0] == 7:
+                        ydata[i][1] = []; yerr[i][1] = [];
                     singleClv += len(ydata[i][0])
                     singleOn += len(ydata[i][1])
                 if len(xdata[i])==2:
+                    if xdata[i][0] == 6 or xdata[i][0] == 7 or xdata[i][1] == 6 or xdata[i][1] == 7:
+                        ydata[i][1] = []; yerr[i][1] = [];
                     doubleClv += len(ydata[i][0])
                     doubleOn += len(ydata[i][1])
 
@@ -145,6 +150,11 @@ def main(argv):
                     singleOn += len(ydata[i][1])
 
             chi_weights = [1/perfectClv,1/singleClv,1/perfectOn,1/singleOn]
+            
+        else:
+            perfectClv = np.float(len(ydata[0]))
+            singleClv = 20.
+            chi_weights = [1/perfectClv,1/singleClv,0.]
     
     
     ##############################################

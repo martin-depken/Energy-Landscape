@@ -214,7 +214,7 @@ def prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_aba,path
     
     return xdata_clv, ydata, yerr
     
-def prepare_multiprocessing_nucleaseq_log(filename, path, fit_to_wa=False):
+def prepare_multiprocessing_nucleaseq_log(filename, path, fit_to_wa=False, only_single=False):
     data = pd.read_csv(path + filename,
                        usecols=['Mutation Positions', 'Mutation ID',
                                 'cleavage_rate', 'cleavage_rate_5th_pctl', 'cleavage_rate_95th_pctl'],
@@ -238,6 +238,17 @@ def prepare_multiprocessing_nucleaseq_log(filename, path, fit_to_wa=False):
             weightsclv, errorclv = weighting(yerr[i])
             ydata[i] = [np.average(ydata[i],weights=weightsclv)]
             yerr[i] = [errorclv]
+            
+    if only_single:
+        xdata_single = []
+        ydata_single = []
+        yerr_single = []
+        for i in range(len(xdata)):
+            if len(xdata[i])<2:
+                xdata_single.append(xdata[i])
+                ydata_single.append(ydata[i])
+                yerr_single.append(yerr[i])
+        return xdata_single, ydata_single, yerr_single
         
     return xdata, ydata, yerr
 
