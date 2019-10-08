@@ -48,6 +48,60 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         forward_rates[0] = rate_sol_to_PAM
         forward_rates[-1] = 0.0  # dCas9 does not cleave
 
+    elif model_id == 'Fixed_barrier_1+valley_free_ei_free_kclv':
+        if len(parameters)!=29:
+            print('Wrong number of parameters')
+            return
+        
+        epsilon[0] = -100.0 #predefined epsilon PAM at saturation
+        epsilon[1:13] = [-6.333715891930001, -1.3649045526199999, 4.4446667591199995, -1.53708382417, 0.852684737896, 
+                        -0.055977932609400004, -2.48652563315, 1.4324592539399998, 3.7556719419099998, 1.15654483726,
+                        1.0245442149600001,  0.619640712364] 
+                        #first bump from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+            
+            
+        epsilon[13:21] = parameters[0:8] #rest of landscape
+        epsilon[21:41] = parameters[8:28]
+        
+        
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
+        rate_PAM_to_R1 = 10**2.80705381635
+        rate_internal = 10**2.80705381635 #from: ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
+        
+    elif model_id == 'Fixed_barrier_1+valley_free_ei_aba':
+        if len(parameters)!=29:
+            print('Wrong number of parameters')
+            return
+        
+        epsilon[0] = 2.73766502381 #from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        epsilon[1:13] = [-6.333715891930001, -1.3649045526199999, 4.4446667591199995, -1.53708382417, 0.852684737896, 
+                        -0.055977932609400004, -2.48652563315, 1.4324592539399998, 3.7556719419099998, 1.15654483726,
+                        1.0245442149600001,  0.619640712364] 
+                        #first bump from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+            
+            
+        epsilon[13:21] = parameters[0:8] #rest of landscape
+        epsilon[21:41] = parameters[8:28]
+        
+        
+        rate_sol_to_PAM = 8.58596308e-04 #from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        rate_PAM_to_R1 = 10**2.80705381635
+        rate_internal = 10**2.80705381635 #from: ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        rate_clv = 0.
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+    
+    
     elif model_id == 'Fixed_barrier_1_free_ei_free_kclv':
         if len(parameters)!=33:
             print('Wrong number of parameters')
@@ -72,6 +126,30 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         forward_rates[1] = rate_PAM_to_R1
         forward_rates[-1] = rate_clv
         
+    elif model_id == 'Fixed_barrier_1_free_ei_aba':
+        if len(parameters)!=33:
+            print('Wrong number of parameters')
+            return
+        
+        epsilon[0] = 2.73766502381 #from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        epsilon[1:9] = [-6.333715891930001, -1.3649045526199999, 4.4446667591199995, -1.53708382417, 0.852684737896, 
+                        -0.055977932609400004, -2.48652563315, 1.4324592539399998] 
+                        #first bump from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        
+        epsilon[9:21] = parameters[0:12] #rest of landscape
+        epsilon[21:41] = parameters[12:32]
+        
+        
+        rate_sol_to_PAM = 8.58596308e-04 #from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        rate_PAM_to_R1 = 10**2.80705381635
+        rate_internal = 10**2.80705381635 #from: ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        rate_clv = 0.
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
     elif model_id == 'Fixed_barrier_1_fixed_ei_free_kclv':
         if len(parameters)!=13:
             print('Wrong number of parameters')
@@ -86,6 +164,58 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         epsilon[21:41] = [5.65333843414, 4.11041237185, 6.4824076359200005, 6.9767208316, 6.26648140987, 7.3885677834, 6.899487638360001, 
                           6.22048036118, 8.99420177438, 7.2536151786800005, 7.40355907947, 7.02417975261, 7.73956089271, 7.88443131328,
                           7.6448096557500005, 6.35536811387, 5.13351785131, 4.24795057861, 5.83044257892, 2.41878154505] 
+                          #mismatches from: ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        
+        
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
+        rate_PAM_to_R1 = 10**2.80705381635
+        rate_internal = 10**2.80705381635 #from: ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        rate_clv = 10**parameters[-1]
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
+    elif model_id == 'Fixed_barrier_1_fixed_ei_aba':
+        if len(parameters)!=13:
+            print('Wrong number of parameters')
+            return
+        
+        epsilon[0] = 2.73766502381 #from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        epsilon[1:9] = [-6.333715891930001, -1.3649045526199999, 4.4446667591199995, -1.53708382417, 0.852684737896, 
+                        -0.055977932609400004, -2.48652563315, 1.4324592539399998] 
+                        #first bump from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        
+        epsilon[9:21] = parameters[0:12] #rest of landscape
+        epsilon[21:41] = [5.65333843414, 4.11041237185, 6.4824076359200005, 6.9767208316, 6.26648140987, 7.3885677834, 6.899487638360001, 
+                          6.22048036118, 8.99420177438, 7.2536151786800005, 7.40355907947, 7.02417975261, 7.73956089271, 7.88443131328,
+                          7.6448096557500005, 6.35536811387, 5.13351785131, 4.24795057861, 5.83044257892, 2.41878154505] 
+                          #mismatches from: ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        
+        
+        rate_sol_to_PAM = 8.58596308e-04 #from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        rate_PAM_to_R1 = 10**2.80705381635
+        rate_internal = 10**2.80705381635 #from: ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        rate_clv = 0.
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
+    elif model_id == 'Fixed_barrier_1_constant_ei_free_kclv':
+        if len(parameters)!=13:
+            print('Wrong number of parameters')
+            return
+        
+        epsilon[0] = -100.0 #predefined epsilon PAM at saturation
+        epsilon[1:9] = [-6.333715891930001, -1.3649045526199999, 4.4446667591199995, -1.53708382417, 0.852684737896, 
+                        -0.055977932609400004, -2.48652563315, 1.4324592539399998] 
+                        #first bump from ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
+        
+        epsilon[9:21] = parameters[0:12] #rest of landscape
+        epsilon[21:41] = 6.9 
                           #mismatches from: ../fits_Stijn/18_7_2019/fit_18_7_2019_sim_17.txt
         
         
