@@ -51,32 +51,37 @@ def main(argv):
     monitor_file = argv[5]
     fit_result_file = argv[6]
     init_monitor_file = argv[7]
+    
+    ----------
+    # FILL IN:
     fit_to_wa = True
     only_single = False
+    combined_boyle = False
     log_on_boyle = False
     fill_in_boyle = False
+    combined_CHAMP = False
     
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [10.]*12   + [4.0]
-    lower_bnd =      [-10.0]*12 + [0.0]
-    initial_guess =  [0.0]*12   + [1.0]
-    
+    upper_bnd =      [10.]*8   + [10.]*20  + [4.0]
+    lower_bnd =      [-10.0]*8 + [0.0]*20  + [0.0]
+    initial_guess =  [0.0]*8   + [5.0]*20  + [1.0]
+    ----------
 
     ###########################
     # /* Objective function *\#
     ###########################
     
     #concentrations = np.array([1.,30.,100.])
-    concentrations = [1.] #np.array([0.1, 0.3, 1., 3., 10., 30., 100., 300.]) # in nanoMolair
-    reference=10. # in nanomolair, important: use float, not int
+    concentrations = np.array([0.1, 0.3, 1., 3., 10., 30., 100., 300.]) # in nanoMolair
+    reference = 10. # in nanomolair, important: use float, not int
     
     KineticModel = functools.partial(CRISPR.calc_chi_squared,
                         guide_length=gRNA_length,
                         model_id=model_ID,
-                                    log_on=log_on_boyle,combined_boyle=False, combined_CHAMP=False,
-                                    concentrations=concentrations, reference=reference)
+                        log_on=log_on_boyle,combined_boyle=combined_boyle, combined_CHAMP=combined_CHAMP,
+                        concentrations=concentrations, reference=reference)
 
 
     #############################################
