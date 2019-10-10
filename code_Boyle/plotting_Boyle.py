@@ -20,12 +20,12 @@ def load_simm_anneal(filename, Nparams, fatch_solution='final'):
     :param Nparams:
     :return:
     '''
-    fit = pd.read_csv(filename, delimiter='\t', index_col=Nparams+2)
-    fit = fit.reset_index()
+    fit = pd.read_csv(filename, delimiter='\t', index_col=False)
+    fit.reset_index(inplace=True)
+    fit.drop("index", axis=1, inplace=True)
     final_result = []
     for param in range(1, Nparams + 1):
         col = 'Parameter ' + str(param)
-
         if fatch_solution == 'final':
             final_result.append(fit[col].iloc[-1])
         else:
