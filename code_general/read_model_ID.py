@@ -596,6 +596,43 @@ def unpack_parameters(parameters, model_id,guide_length=20):
         forward_rates[1] = rate_PAM_to_R1
         forward_rates[-1] = rate_clv
         
+    elif model_id == 'Clv_init_limit_Saturated_general_energies_fixed_koff':
+        if len(parameters)!=43:
+            print('Wrong number of parameters')
+            return
+        
+        rate_sol_to_PAM = 1000.0 #predefined at saturation
+        rate_PAM_to_R1 = 10**parameters[-3]
+        rate_internal = 10**parameters[-2] #rate from PAM to R is equal to internal rate
+        rate_clv = 10**parameters[-1]
+        
+        epsilon[0] = -100. #-np.log(rate_sol_to_PAM) #since rate_PAM_to_sol == 1 Hz
+        epsilon[1:] = parameters[:-3]
+        
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
+    elif model_id == 'Bnd_init_limit_general_energies_fixed_koff':
+        # ---- have the rate from PAM into R-loop the same as the forward rate within R-loop
+        if len(parameters)!=43:
+            print('Wrong number of parameters')
+            return
+        # General position dependency
+        epsilon[:] = parameters[:-2]
+
+        # --- rates: sol->PAM (concentration dependent), 1 constant forward rate for all remaining transitions
+        rate_sol_to_PAM = np.exp(-epsilon[0]) #since rate_PAM_to_sol == 1 Hz
+        rate_PAM_to_R1 = 10**parameters[-2]
+        rate_internal = 10**parameters[-1] #rate from PAM to R is equal to internal rate
+        rate_clv = 0. #dCas9
+
+        forward_rates = forward_rates * rate_internal #internal rates
+        forward_rates[0] = rate_sol_to_PAM
+        forward_rates[1] = rate_PAM_to_R1
+        forward_rates[-1] = rate_clv
+        
     elif model_id == 'Clv_Saturated_general_energies_landscape':
         if len(parameters)!=42:
             print('Wrong number of parameters')
@@ -1243,6 +1280,13 @@ def combined_model(parameters,model_ID):
             print('Wrong number of parameters')
             return
         parameters_clv = parameters
+        parameters_on = parameters[:-1]
+        
+    elif model_ID == 'Clv_init_limit_Saturated_general_energies_fixed_koff+Bnd_init_limit_general_energies_fixed_koff':
+        if len(parameters)!=44:
+            print('Wrong number of parameters')
+            return
+        parameters_clv = parameters[1:]
         parameters_on = parameters[:-1]
     
     return model_ID_clv, model_ID_on, parameters_clv, parameters_on

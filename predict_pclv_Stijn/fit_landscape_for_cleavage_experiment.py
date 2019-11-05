@@ -52,22 +52,22 @@ def main(argv):
     fit_result_file = argv[6]
     init_monitor_file = argv[7]
     
-    ----------
+    #----------
     # FILL IN:
     fit_to_wa = True
     only_single = False
     combined_boyle = False
     log_on_boyle = False
     fill_in_boyle = False
-    combined_CHAMP = False
+    combined_CHAMP = True
     
     gRNA_length = 20
     #fit_to_median = False   
     
-    upper_bnd =      [10.]*8   + [10.]*20  + [4.0]
-    lower_bnd =      [-10.0]*8 + [0.0]*20  + [0.0]
-    initial_guess =  [0.0]*8   + [5.0]*20  + [1.0]
-    ----------
+    upper_bnd =      [5.]  + [10.]*20   + [10.]*20 + [5.]    + [3.]  + [4.]
+    lower_bnd =      [-1.]  + [-10.]*20  + [0.]*20  + [-5.]   + [1.]  + [-1.]
+    initial_guess =  [2.]  + [0.]*20    + [5.]*20  + [0.]  + [2.]  + [2.]
+    #----------
 
     ###########################
     # /* Objective function *\#
@@ -88,8 +88,11 @@ def main(argv):
     # /* Preprocess the data from Boyle et al. *\#
     ##############################################
     if combined_fit:
+        if combined_CHAMP:
         #xdata, ydata, yerr = processing.prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa)
-        xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa,only_single,log_on_boyle,fill_in_boyle)
+            xdata, ydata, yerr = processing.prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa)
+        if combined_boyle:
+            xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa,only_single,log_on_boyle,fill_in_boyle)
     
     if not combined_fit:
         xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename_clv,path_to_dataClv,fit_to_wa,only_single)
