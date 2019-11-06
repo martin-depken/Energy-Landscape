@@ -54,15 +54,14 @@ def main(argv):
     
     #----------
     # FILL IN:
-    fit_to_wa = True
-    only_single = False
-    combined_boyle = False
-    log_on_boyle = False
-    fill_in_boyle = False
-    combined_CHAMP = True
+    fit_to_wa = True #Fit to the weighted average instead of full data
+    only_single = False #Fit only to single mismatches and on-target data
+    combined_boyle = False #Combine Nucleaseq data with Boyle data
+    log_on_boyle = False #Use logarithmic values when fitting to Boyle data
+    fill_in_boyle = False #Fill in missing values with estimates when fitting to Boyle data
+    combined_CHAMP = True #Combine Nucleaseq data with CHAMP data
     
     gRNA_length = 20
-    #fit_to_median = False   
     
     upper_bnd =      [5.]  + [10.]*20   + [10.]*20 + [5.]    + [3.]  + [4.]
     lower_bnd =      [-1.]  + [-10.]*20  + [0.]*20  + [-5.]   + [1.]  + [-1.]
@@ -89,18 +88,12 @@ def main(argv):
     ##############################################
     if combined_fit:
         if combined_CHAMP:
-        #xdata, ydata, yerr = processing.prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa)
             xdata, ydata, yerr = processing.prepare_multiprocessing_combined_aba(filename_aba,filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa)
         if combined_boyle:
             xdata, ydata, yerr = processing.prepare_multiprocessing_combined('1',filename_clv,path_to_dataAba,path_to_dataClv,fit_to_wa,only_single,log_on_boyle,fill_in_boyle)
     
     if not combined_fit:
         xdata, ydata, yerr = processing.prepare_multiprocessing_nucleaseq_log(filename_clv,path_to_dataClv,fit_to_wa,only_single)
-    #xdata, ydata, yerr = cr.create_fake_data()
-    #print xdata, ydata, yerr
-    # print ydata
-    # print "test ... " + ' \n'
-    # KineticModel(np.array(initial_guess),xdata,ydata,np.array([]),1.0)
     
     
     #######################
@@ -117,19 +110,17 @@ def main(argv):
             doubleOn = 0.0
             for i in range(len(xdata)):
                 if len(xdata[i])==1:
-                    if xdata[i][0] == 6 or xdata[i][0] == 7:
+                    if xdata[i][0] == 6 or xdata[i][0] == 7: #Here I eliminate some of the Boyle data points, comment out if not necessary
                         ydata[i][1] = []; yerr[i][1] = [];
                     singleClv += len(ydata[i][0])
                     singleOn += len(ydata[i][1])
                 if len(xdata[i])==2:
-                    if xdata[i][0] == 6 or xdata[i][0] == 7 or xdata[i][1] == 6 or xdata[i][1] == 7:
+                    if xdata[i][0] == 6 or xdata[i][0] == 7 or xdata[i][1] == 6 or xdata[i][1] == 7: #And here
                         ydata[i][1] = []; yerr[i][1] = [];
                     doubleClv += len(ydata[i][0])
                     doubleOn += len(ydata[i][1])
 
             chi_weights = [1/perfectClv,1/singleClv,1/doubleClv,1/perfectOn,1/singleOn,1/doubleOn]
-            #chi_weights = [1.0,1.0,1.0,1.0,1.0,1.0] 
-            #perfClv, sinClv, doubClv, perfOn, sinOn, doubOn
 
         else:
             perfectClv = np.float(len(ydata[0]))
@@ -151,7 +142,7 @@ def main(argv):
             singleOn = 0.0
             for i in range(len(xdata)):
                 if len(xdata[i])==1:
-                    if xdata[i][0]==1 or xdata[i][0]==3 or xdata[i][0]==4 or xdata[i][0]==6 or xdata[i][0]==7:
+                    if xdata[i][0]==1 or xdata[i][0]==3 or xdata[i][0]==4 or xdata[i][0]==6 or xdata[i][0]==7: #And here
                         ydata[i][1] = []
                         yerr[i][1] = []
                     singleClv += len(ydata[i][0])
@@ -185,12 +176,12 @@ def main(argv):
                                 delta=0.1,
                                 tol=1E-5,
                                 Tfinal=0.0,
-                                potential_threshold = 300.,
+                                potential_threshold = 300., #used when reanneal is True, above this threshold no solution is accepted
                                 adjust_factor=1.1,
-                                cooling_rate_high=0.95,
-                                cooling_rate_low=0.99,
+                                cooling_rate_high=0.95, #cooling rate for high T
+                                cooling_rate_low=0.99, #cooling rate for low T
                                 N_int=1000,
-                                Ttransition=1000.,
+                                Ttransition=1000., #at this temp, change cooling rate
                                 AR_low=40,
                                 AR_high=60,
                                 use_multiprocessing=True,
@@ -198,11 +189,11 @@ def main(argv):
                                 output_file_results = fit_result_file,
                                 output_file_monitor = monitor_file,
                                 output_file_init_monitor=init_monitor_file,
-                                chi_weights=chi_weights,
-                                NMAC=False, #non-monotonic adaptive cooling
+                                chi_weights=chi_weights, #automatically determined above
+                                NMAC=False, #non-monotonic adaptive cooling, tested this to avoid local minima, but does not do much
                                 reanneal=False, #reheating when in local minimum, set to False to do no reheating
-                                combined_fit=combined_fit,
-                                random_step=False
+                                combined_fit=combined_fit, #set in job file
+                                random_step=False #every cycle takes steps not for all parameters, but only for randomly chosen set 
                                 )
 
     t2 = time()
